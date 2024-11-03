@@ -1,0 +1,23 @@
+version: '3.1'
+
+services:
+  mysql_db:
+    image: mysql:8
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: gbook
+      MYSQL_USER: gbook
+      MYSQL_PASSWORD: gbook
+    volumes:
+      - ./dbdata:/var/lib/mysql/
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - "8033:80"
+    environment:
+      PMA_HOST: mysql_db
+      MYSQL_ROOT_PASSWORD: root
