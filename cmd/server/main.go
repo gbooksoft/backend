@@ -1,17 +1,18 @@
 package main
 
 import (
-	"fmt"
-
+	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	r := gin.Default()
+	e := gin.Default()
 
-	r.GET("/", func(ctx *gin.Context) {
-		ctx.Writer.Write([]byte("Hello, World!"))
-	})
-	r.Run(":8080")
-	fmt.Println()
+	routing.Add(e)
+
+	log.Debug().Msg("Server started: http://localhost:8080")
+	if err := e.Run("localhost:8080"); err != nil {
+		log.Fatal().Msgf("server shutdown %v", err)
+	}
 }
