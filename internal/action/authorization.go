@@ -4,6 +4,7 @@ import (
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type loggedResponse struct {
@@ -57,11 +58,24 @@ type signUpRequest struct {
 	Email    string `form:"email" json:"email" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 }
+type signUpResponse struct {
+	UserId string `json:"user_id"`
+}
 
 func (a *Authorize) SignUp(ctx *gin.Context) {
 	var req signUpRequest
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindWith(&req, binding.Form); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
 	}
+
+	userId, err := a.service.Register(req.Email, req.Password)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(201).Struct(signUpResponse{UserId: userId}).Write()
+	return
 }

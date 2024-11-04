@@ -5,12 +5,19 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type Service struct {
 	db *sql.DB
+}
+
+func NewService(db *sql.DB) *Service {
+	return &Service{
+		db: db,
+	}
 }
 
 type Token struct {
@@ -55,8 +62,33 @@ func (s *Service) SignInUser(email string, password string) (Token, error) {
 	}, nil
 }
 
-func NewService(db *sql.DB) *Service {
-	return &Service{
-		db: db,
+func (s *Service) Register(email string, password string) (string, error) {
+	var exists sql.NullBool
+	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
+
+	if err == nil {
+		return "", gerr.NewBusinessLogicErr("can not register user with email", nil)
 	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return "", err
+	}
+
+	// todo: check password length
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return "", err
+	}
+
+	userId := uuid.New().String()
+	_, err = s.db.Exec("INSERT INTO users (id, email, password) VALUES (?, ?, ?)", userId, email, hash)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("can not create user while register %s", email)
+		return "", err
+	}
+
+	return userId, nil
 }
