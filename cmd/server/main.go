@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"github.com/gbooksoft/backend/internal/database"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,7 @@ func main() {
 	}
 
 	e := gin.Default()
+	e.LoadHTMLGlob("templates/*")
 
 	_, err = database.SetUpConnection(ctx)
 
@@ -44,7 +46,7 @@ func main() {
 
 	go func() {
 		log.Debug().Msg("Server started: http://localhost:8080")
-		if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err = srv.ListenAndServe(); err != nil && !errors.Is(http.ErrServerClosed, err) {
 			log.Fatal().Err(err).Msg("server shutdown")
 		}
 	}()

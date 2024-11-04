@@ -10,7 +10,7 @@ func newClientStore() *store.ClientStore {
 	clientStore.Set("000000", &models.Client{
 		ID:     "000000",
 		Secret: "999999",
-		Domain: "http://localhost",
+		Domain: "http://localhost:8080",
 	})
 
 	return clientStore

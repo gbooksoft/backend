@@ -10,11 +10,13 @@ import (
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/golang-jwt/jwt"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
 
 var invalidCredentials = errors.New("invalid_credential")
+var invalidClientDomain = errors.New("invalid_client_domain")
 
 func CreateOAuthServer() *server.Server {
 	manager := manage.NewDefaultManager()
@@ -29,10 +31,26 @@ func CreateOAuthServer() *server.Server {
 		IsGenerateRefresh: true,
 	})
 
+	manager.SetValidateURIHandler(func(baseURI, redirectURI string) error {
+		base, err := url.Parse(baseURI)
+		if err != nil {
+			return err
+		}
+		redirect, err := url.Parse(redirectURI)
+		if err != nil {
+			return err
+		}
+		if base.Host == redirect.Host {
+			return nil
+		}
+
+		return invalidClientDomain
+	})
+
 	srv := server.NewDefaultServer(manager)
-	srv.SetAllowGetAccessRequest(false)
+	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
-	srv.SetAllowedGrantType(oauth2.PasswordCredentials)
+	srv.SetAllowedGrantType(oauth2.PasswordCredentials, oauth2.Refreshing)
 
 	srv.SetPasswordAuthorizationHandler(func(ctx context.Context, clientID, username, password string) (userID string, err error) {
 		if username == "admin" && password == "admin" {
@@ -40,6 +58,13 @@ func CreateOAuthServer() *server.Server {
 		}
 
 		return "", invalidCredentials
+	})
+
+	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (userID string, err error) {
+		r.Form.Get("")
+		w.Header().Set("Location", "/oauth/authorization?"+r.URL.RawQuery)
+		w.WriteHeader(http.StatusFound)
+		return
 	})
 
 	srv.SetInternalErrorHandler(func(err error) (re *errors2.Response) {
