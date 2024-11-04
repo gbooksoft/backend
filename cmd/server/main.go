@@ -29,8 +29,6 @@ func main() {
 	}
 
 	e := gin.Default()
-	e.LoadHTMLGlob("templates/*")
-
 	_, err = database.SetUpConnection(ctx)
 
 	if err != nil {

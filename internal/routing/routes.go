@@ -5,7 +5,8 @@ import (
 )
 
 func Add(e *gin.Engine) {
-	infoRoutes(e)
-	oAuthRoutes(e)
+	initializeDependencies()
 
+	infoRoutes(e)
+	authRoutes(e)
 }
