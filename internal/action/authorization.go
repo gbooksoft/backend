@@ -4,14 +4,12 @@ import (
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
+	"os"
 )
 
 type loggedResponse struct {
-	AccessToken           string `json:"access_token"`
-	ExpiresAt             int64  `json:"expires_at"`
-	RefreshToken          string `json:"refresh_token"`
-	RefreshTokenExpiresAt int64  `json:"refresh_token_expires_at"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type Authorize struct {
@@ -25,13 +23,13 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 }
 
 type signInRequest struct {
-	Email    string `form:"email" json:"email" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
+	Email    string `json:"email" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 func (a *Authorize) SignIn(ctx *gin.Context) {
 	var req signInRequest
-	if err := ctx.ShouldBind(&req); err != nil {
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
 	}
@@ -44,11 +42,11 @@ func (a *Authorize) SignIn(ctx *gin.Context) {
 	}
 
 	rsp := loggedResponse{
-		AccessToken:           token.AccessToken,
-		ExpiresAt:             token.AccessTokenExp,
-		RefreshToken:          token.RefreshToken,
-		RefreshTokenExpiresAt: token.RefreshTokenExp,
+		AccessToken:  token.AccessToken,
+		RefreshToken: token.RefreshToken,
 	}
+
+	ctx.SetCookie("refreshToken", token.RefreshToken, 3600*24*7, "/", os.Getenv("APP_DOMAIN"), true, true)
 
 	response.Json(ctx.Writer).StatusCode(200).Struct(rsp).Write()
 	return
@@ -64,7 +62,7 @@ type signUpResponse struct {
 
 func (a *Authorize) SignUp(ctx *gin.Context) {
 	var req signUpRequest
-	if err := ctx.ShouldBindWith(&req, binding.Form); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
 	}

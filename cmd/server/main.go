@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/gbooksoft/backend/internal/database"
 	"github.com/gbooksoft/backend/internal/routing"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -29,6 +30,16 @@ func main() {
 	}
 
 	e := gin.Default()
+
+	e.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	_, err = database.SetUpConnection(ctx)
 
 	if err != nil {

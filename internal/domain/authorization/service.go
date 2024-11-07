@@ -47,7 +47,7 @@ func (s *Service) SignInUser(email string, password string) (Token, error) {
 		return Token{}, fmt.Errorf("email or password invalid %w", err)
 	}
 
-	at, atExp, rt, rtExp, err := CreateTokens(uUserId, uEmail)
+	at, rt, err := CreateTokens(uUserId, uEmail)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not create user when signing in %s", email)
@@ -55,10 +55,8 @@ func (s *Service) SignInUser(email string, password string) (Token, error) {
 	}
 
 	return Token{
-		AccessToken:     at,
-		AccessTokenExp:  atExp,
-		RefreshToken:    rt,
-		RefreshTokenExp: rtExp,
+		AccessToken:  at,
+		RefreshToken: rt,
 	}, nil
 }
 
