@@ -11,11 +11,17 @@ type errResponse struct {
 	Code int    `json:"error_code"`
 	Msg  string `json:"error_message"`
 }
+
+type errResponses struct {
+	Code int               `json:"error_code"`
+	Msgs map[string]string `json:"error_messages"`
+}
 type JsonResponse struct {
-	w             gin.ResponseWriter
-	msg           string
-	statusCode    int
-	isErrResponse bool
+	w                  gin.ResponseWriter
+	msg                string
+	statusCode         int
+	isErrResponse      bool
+	validationMessages map[string]string
 }
 
 func (r *JsonResponse) Struct(strct any) *JsonResponse {
@@ -49,9 +55,18 @@ func (r *JsonResponse) Write() {
 	r.w.WriteHeader(r.statusCode)
 
 	if r.isErrResponse {
-		rsp := errResponse{
-			Code: r.statusCode,
-			Msg:  r.msg,
+		var rsp any
+
+		if len(r.validationMessages) > 0 {
+			rsp = errResponses{
+				Code: r.statusCode,
+				Msgs: r.validationMessages,
+			}
+		} else {
+			rsp = errResponse{
+				Code: r.statusCode,
+				Msg:  r.msg,
+			}
 		}
 
 		byteRsp, _ := json.Marshal(rsp)
@@ -64,8 +79,11 @@ func (r *JsonResponse) Write() {
 }
 
 func (r *JsonResponse) ErrValidation(err error) *JsonResponse {
+	messages := parseValidationErr(err)
 	r.StatusCode(http.StatusBadRequest)
-	return r.ErrMsg("Input validation error: " + err.Error())
+	r.isErrResponse = true
+	r.validationMessages = messages
+	return r
 }
 
 func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
@@ -75,8 +93,9 @@ func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
 
 func Json(writer gin.ResponseWriter) *JsonResponse {
 	return &JsonResponse{
-		w:             writer,
-		statusCode:    200,
-		isErrResponse: false,
+		w:                  writer,
+		statusCode:         200,
+		isErrResponse:      false,
+		validationMessages: make(map[string]string),
 	}
 }
