@@ -54,8 +54,10 @@ func (a *Authorize) SignIn(ctx *gin.Context) {
 }
 
 type signUpRequest struct {
-	Email    string `form:"email" json:"email" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	FirstName string `json:"first_name" binding:"required"`
+	LastName  string `json:"last_name" binding:"required"`
+	Password  string `json:"password" binding:"required"`
 }
 type signUpResponse struct {
 	UserId string `json:"user_id"`
@@ -68,7 +70,7 @@ func (a *Authorize) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	userId, err := a.service.Register(req.Email, req.Password)
+	userId, err := a.service.Register(req.Email, req.Password, req.FirstName, req.LastName)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)

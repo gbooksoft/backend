@@ -60,7 +60,7 @@ func (s *Service) SignInUser(email string, password string) (Token, error) {
 	}, nil
 }
 
-func (s *Service) Register(email string, password string) (string, error) {
+func (s *Service) Register(email, password, firstName, lastName string) (string, error) {
 	var exists sql.NullBool
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
 
@@ -74,14 +74,14 @@ func (s *Service) Register(email string, password string) (string, error) {
 
 	// todo: check password length
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return "", err
 	}
 
 	userId := uuid.New().String()
-	_, err = s.db.Exec("INSERT INTO users (id, email, password) VALUES (?, ?, ?)", userId, email, hash)
+	_, err = s.db.Exec("INSERT INTO users (id, email, password, first_name, last_name) VALUES (?, ?, ?, ?, ?)", userId, email, passwordHash, firstName, lastName)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not create user while register %s", email)
