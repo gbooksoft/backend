@@ -4,12 +4,14 @@ import (
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"os"
 )
 
-type loggedResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+const refreshTokenCookieName = "refreshToken"
+
+type atResponse struct {
+	AccessToken string `json:"access_token"`
 }
 
 type Authorize struct {
@@ -41,12 +43,11 @@ func (a *Authorize) SignIn(ctx *gin.Context) {
 		return
 	}
 
-	rsp := loggedResponse{
-		AccessToken:  token.AccessToken,
-		RefreshToken: token.RefreshToken,
+	rsp := atResponse{
+		AccessToken: token.AccessToken,
 	}
 
-	ctx.SetCookie("refreshToken", token.RefreshToken, 3600*24*7, "/", os.Getenv("APP_DOMAIN"), true, true)
+	a.setRefreshTokenCookie(ctx, token.RefreshToken)
 
 	response.Json(ctx.Writer).StatusCode(200).Struct(rsp).Write()
 	return
@@ -76,4 +77,67 @@ func (a *Authorize) SignUp(ctx *gin.Context) {
 
 	response.Json(ctx.Writer).StatusCode(201).Struct(signUpResponse{UserId: userId}).Write()
 	return
+}
+
+func (a *Authorize) Refresh(ctx *gin.Context) {
+	rt, err := a.getRefreshTokenFromCookie(ctx)
+
+	if err != nil {
+		response.Json(ctx.Writer).StatusCode(http.StatusUnauthorized).ErrMsg("refresh token not found in cookie").Write()
+		return
+	}
+
+	token, err := a.service.RefreshToken(rt)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	rsp := atResponse{
+		AccessToken: token.AccessToken,
+	}
+
+	a.setRefreshTokenCookie(ctx, token.RefreshToken)
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(rsp).Write()
+	return
+}
+
+func (a *Authorize) Logout(ctx *gin.Context) {
+	rt, err := a.getRefreshTokenFromCookie(ctx)
+
+	if err != nil {
+		response.Json(ctx.Writer).StatusCode(http.StatusUnauthorized).ErrMsg("refresh token not found in cookie").Write()
+		return
+	}
+
+	err = a.service.Logout(rt)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	a.deleteRefreshTokenCookie(ctx)
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+}
+
+func (a *Authorize) setRefreshTokenCookie(ctx *gin.Context, refreshToken string) {
+	ctx.SetCookie(refreshTokenCookieName, refreshToken, 3600*24*7, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
+}
+
+func (a *Authorize) deleteRefreshTokenCookie(ctx *gin.Context) {
+
+	ctx.SetCookie(refreshTokenCookieName, "refreshToken", -1, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
+}
+
+func (a *Authorize) getRefreshTokenFromCookie(ctx *gin.Context) (string, error) {
+	rt, err := ctx.Cookie(refreshTokenCookieName)
+
+	if err != nil {
+		return "", err
+	}
+
+	return rt, nil
 }

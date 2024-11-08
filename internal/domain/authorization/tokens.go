@@ -1,10 +1,16 @@
 package authorization
 
 import (
-	"github.com/gbooksoft/backend/internal/database"
+	"database/sql"
+	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"os"
 	"time"
+)
+
+var (
+	atLifetime = 15 * time.Minute
+	rtLifetime = 7 * 24 * time.Hour
 )
 
 type CustomClaims struct {
@@ -12,10 +18,48 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func CreateTokens(userId, email string) (string, string, error) {
+func IsTokenExpired(claims *CustomClaims) bool {
+	if claims.ExpiresAt == nil {
+		return true
+	}
+
+	return claims.ExpiresAt.Before(time.Now().UTC())
+}
+
+func ParseToken(tokenString string) (*jwt.Token, *CustomClaims, error) {
+	claims := &CustomClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("неверный метод подписи: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("JWT_KEY")), nil
+	})
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !token.Valid {
+		return nil, nil, fmt.Errorf("токен не валиден")
+	}
+
+	return token, claims, nil
+}
+
+func deleteByRefreshToken(db *sql.DB, rt string) error {
+	_, err := db.Exec("DELETE FROM auth_token WHERE refresh = ?", rt)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func createTokens(db *sql.DB, userId, email string) (string, string, error) {
 	issuedAt := time.Now()
-	atExp := issuedAt.Add(2 * time.Hour)
-	rtExp := issuedAt.Add(7 * 24 * time.Hour)
+	atExp := issuedAt.Add(atLifetime)
+	rtExp := issuedAt.Add(rtLifetime)
 
 	claims := CustomClaims{
 		Email: email,
@@ -41,8 +85,6 @@ func CreateTokens(userId, email string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-
-	db := database.GetDBPool()
 
 	_, err = db.Exec(`
 INSERT INTO auth_token (expired_at, access, refresh) VALUES (?, ?, ?)`,
