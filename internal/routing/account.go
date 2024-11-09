@@ -11,4 +11,5 @@ func accountRoutes(e *gin.Engine) {
 	account.Use(middleware.AuthRequired())
 
 	account.GET("/profile", actionAccount.GetProfile)
+	account.POST("/settings", actionAccount.UpdateSettings)
 }

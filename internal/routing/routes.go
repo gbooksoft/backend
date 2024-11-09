@@ -7,7 +7,6 @@ import (
 func Add(e *gin.Engine) {
 	initializeDependencies()
 
-	infoRoutes(e)
 	authRoutes(e)
 	accountRoutes(e)
 }

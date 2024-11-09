@@ -104,7 +104,7 @@ func (a *Authorize) Refresh(ctx *gin.Context) {
 	rt, err := a.getRefreshTokenFromCookie(ctx)
 
 	if err != nil {
-		response.Json(ctx.Writer).StatusCode(http.StatusUnauthorized).ErrMsg("refresh token not found in cookie").Write()
+		response.Json(ctx.Writer).StatusCode(http.StatusForbidden).ErrMsg("refresh token not found in cookie").Write()
 		return
 	}
 
@@ -129,7 +129,7 @@ func (a *Authorize) Logout(ctx *gin.Context) {
 	rt, err := a.getRefreshTokenFromCookie(ctx)
 
 	if err != nil {
-		response.Json(ctx.Writer).StatusCode(http.StatusUnauthorized).ErrMsg("refresh token not found in cookie").Write()
+		response.Json(ctx.Writer).StatusCode(http.StatusForbidden).ErrMsg("refresh token not found in cookie").Write()
 		return
 	}
 
