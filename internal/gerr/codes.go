@@ -16,4 +16,5 @@ const (
 
 const (
 	_ ErrorCode = 2000 + iota
+	AccountUserNotFound
 )

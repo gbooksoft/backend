@@ -27,14 +27,21 @@ func IsTokenExpired(claims *CustomClaims) bool {
 	return claims.ExpiresAt.Before(time.Now().UTC())
 }
 
-func ParseToken(tokenString string) (*jwt.Token, *CustomClaims, error) {
+func ParseToken(tokenString string, shouldSkipClaimsValidation bool) (*jwt.Token, *CustomClaims, error) {
 	claims := &CustomClaims{}
+
+	var options []jwt.ParserOption
+
+	if shouldSkipClaimsValidation {
+		options = append(options, jwt.WithoutClaimsValidation())
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("неверный метод подписи: %v", token.Header["alg"])
 		}
 		return []byte(os.Getenv("JWT_KEY")), nil
-	})
+	}, options...)
 
 	if err != nil {
 		return nil, nil, err

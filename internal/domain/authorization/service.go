@@ -93,7 +93,7 @@ func (s *Service) Register(email, password, firstName, lastName string) (string,
 }
 
 func (s *Service) RefreshToken(rt string) (Token, error) {
-	_, rtClaims, err := ParseToken(rt)
+	_, rtClaims, err := ParseToken(rt, true)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not parse refresh token")
@@ -116,9 +116,10 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 		return Token{}, err
 	}
 
-	_, atClaims, err := ParseToken(at)
+	_, atClaims, err := ParseToken(at, true)
 
 	if err != nil {
+		log.Error().Err(err).Msgf("can not parse refresh token")
 		return Token{}, err
 	}
 
@@ -142,7 +143,7 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 }
 
 func (s *Service) Logout(rt string) error {
-	_, rtClaims, err := ParseToken(rt)
+	_, rtClaims, err := ParseToken(rt, false)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not parse refresh token")

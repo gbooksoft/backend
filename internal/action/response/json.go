@@ -93,6 +93,12 @@ func (r *JsonResponse) Write() {
 	r.w.Write([]byte(r.msg))
 }
 
+func (r *JsonResponse) Unauthorized(message string) *JsonResponse {
+	r.StatusCode(http.StatusUnauthorized)
+
+	return r.ErrMsg("Unauthorized: " + message)
+}
+
 func Json(writer gin.ResponseWriter) *JsonResponse {
 	return &JsonResponse{
 		w:                  writer,

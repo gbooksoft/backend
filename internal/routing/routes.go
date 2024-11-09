@@ -9,4 +9,5 @@ func Add(e *gin.Engine) {
 
 	infoRoutes(e)
 	authRoutes(e)
+	accountRoutes(e)
 }
