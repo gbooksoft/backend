@@ -8,7 +8,7 @@ import (
 )
 
 type errResponse struct {
-	Code int    `json:"error_code"`
+	Code int64  `json:"error_code"`
 	Msg  string `json:"error_message"`
 }
 
@@ -22,6 +22,7 @@ type JsonResponse struct {
 	statusCode         int
 	isErrResponse      bool
 	validationMessages map[string]string
+	code               int64
 }
 
 func (r *JsonResponse) Struct(strct any) *JsonResponse {
@@ -50,6 +51,20 @@ func (r *JsonResponse) InternalError() *JsonResponse {
 	return r.ErrMsg("Internal Error")
 }
 
+func (r *JsonResponse) ErrValidation(err error) *JsonResponse {
+	messages := parseValidationErr(err)
+	r.StatusCode(http.StatusBadRequest)
+	r.isErrResponse = true
+	r.validationMessages = messages
+	return r
+}
+
+func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
+	r.StatusCode(http.StatusUnprocessableEntity)
+	r.code = err.Code.ToInt()
+	return r.ErrMsg(err.Msg)
+}
+
 func (r *JsonResponse) Write() {
 	r.w.Header().Add("Content-Type", "application/json")
 	r.w.WriteHeader(r.statusCode)
@@ -64,7 +79,7 @@ func (r *JsonResponse) Write() {
 			}
 		} else {
 			rsp = errResponse{
-				Code: r.statusCode,
+				Code: r.code,
 				Msg:  r.msg,
 			}
 		}
@@ -76,19 +91,6 @@ func (r *JsonResponse) Write() {
 	}
 
 	r.w.Write([]byte(r.msg))
-}
-
-func (r *JsonResponse) ErrValidation(err error) *JsonResponse {
-	messages := parseValidationErr(err)
-	r.StatusCode(http.StatusBadRequest)
-	r.isErrResponse = true
-	r.validationMessages = messages
-	return r
-}
-
-func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
-	r.StatusCode(http.StatusUnprocessableEntity)
-	return r.ErrMsg(err.Msg)
 }
 
 func Json(writer gin.ResponseWriter) *JsonResponse {

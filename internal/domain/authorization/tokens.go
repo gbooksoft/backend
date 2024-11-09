@@ -14,7 +14,8 @@ var (
 )
 
 type CustomClaims struct {
-	Email string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 	jwt.RegisteredClaims
 }
 
@@ -56,13 +57,14 @@ func deleteByRefreshToken(db *sql.DB, rt string) error {
 	return nil
 }
 
-func createTokens(db *sql.DB, userId, email string) (string, string, error) {
+func createTokens(db *sql.DB, userId, firstName, lastName string) (string, string, error) {
 	issuedAt := time.Now()
 	atExp := issuedAt.Add(atLifetime)
 	rtExp := issuedAt.Add(rtLifetime)
 
 	claims := CustomClaims{
-		Email: email,
+		FirstName: firstName,
+		LastName:  lastName,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:   userId,
 			Audience:  jwt.ClaimStrings{"web-front"},

@@ -29,12 +29,13 @@ type Token struct {
 
 func (s *Service) SignInUser(email string, password string) (Token, error) {
 	var uPass string
-	var uEmail string
 	var uUserId string
-	err := s.db.QueryRow("SELECT id, email, password FROM users WHERE email = ?", email).Scan(&uUserId, &uEmail, &uPass)
+	var uFirstName string
+	var uLastName string
+	err := s.db.QueryRow("SELECT id, first_name, last_name, password FROM users WHERE email = ?", email).Scan(&uUserId, &uFirstName, &uLastName, &uPass)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Token{}, gerr.NewBusinessLogicErr("email or password invalid", err)
+			return Token{}, gerr.NewBusinessLogicErr("email or password invalid", gerr.AuthorizationUserNotFound, err)
 		}
 
 		log.Error().Err(err).Msgf("can not fetch user while auth %s", email)
@@ -44,14 +45,14 @@ func (s *Service) SignInUser(email string, password string) (Token, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(uPass), []byte(password))
 
 	if err != nil {
-		return Token{}, fmt.Errorf("email or password invalid %w", err)
+		return Token{}, gerr.NewBusinessLogicErr("email or password invalid", gerr.AuthorizationUserNotFound, err)
 	}
 
-	at, rt, err := createTokens(s.db, uUserId, uEmail)
+	at, rt, err := createTokens(s.db, uUserId, uFirstName, uLastName)
 
 	if err != nil {
-		log.Error().Err(err).Msgf("can not create user when signing in %s", email)
-		return Token{}, fmt.Errorf("can not create user when signing in %w", err)
+		log.Error().Err(err).Msgf("can not create token when signing in %s", email)
+		return Token{}, fmt.Errorf("can not create token when signing in %w", err)
 	}
 
 	return Token{
@@ -65,7 +66,7 @@ func (s *Service) Register(email, password, firstName, lastName string) (string,
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
 
 	if err == nil {
-		return "", gerr.NewBusinessLogicErr("can not register user with email", err)
+		return "", gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUserAlreadyExists, err)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -96,41 +97,41 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not parse refresh token")
-		return Token{}, gerr.NewBusinessLogicErr("can not parse refresh token", err)
+		return Token{}, err
 	}
 
 	if IsTokenExpired(rtClaims) {
-		return Token{}, gerr.NewBusinessLogicErr("token expired", err)
+		return Token{}, gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired, err)
 	}
 
 	var at string
 	err = s.db.QueryRow("SELECT access FROM auth_token WHERE refresh = ?", rt).Scan(&at)
 
 	if err != nil {
-		log.Error().Err(err).Msgf("can not refresh token")
-		return Token{}, gerr.NewBusinessLogicErr("can not refresh token", err)
-	}
+		if errors.Is(err, sql.ErrNoRows) {
+			return Token{}, gerr.NewBusinessLogicErr("refresh not found", gerr.AuthorizationRefreshTokenNotFound, err)
+		}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return Token{}, gerr.NewBusinessLogicErr("refresh not found", err)
+		log.Error().Err(err).Msgf("can not refresh token")
+		return Token{}, err
 	}
 
 	_, atClaims, err := ParseToken(at)
 
 	if err != nil {
-		return Token{}, gerr.NewBusinessLogicErr("can not refresh token, login again", err)
+		return Token{}, err
 	}
 
 	err = deleteByRefreshToken(s.db, rt)
 	if err != nil {
 		log.Error().Err(err).Msgf("can not delete refresh token")
-		return Token{}, gerr.NewBusinessLogicErr("can not delete refresh token", err)
+		return Token{}, err
 	}
 
-	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.Email)
+	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.FirstName, atClaims.LastName)
 
 	if err != nil {
-		log.Error().Err(err).Msgf("can not create user when refreshing in %s", atClaims.Email)
+		log.Error().Err(err).Msgf("can not create user when refreshing in %s", atClaims.Subject)
 		return Token{}, fmt.Errorf("can not create user when refreshing in %w", err)
 	}
 
@@ -145,17 +146,17 @@ func (s *Service) Logout(rt string) error {
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not parse refresh token")
-		return gerr.NewBusinessLogicErr("can not parse refresh token", err)
+		return err
 	}
 
 	if IsTokenExpired(rtClaims) {
-		return gerr.NewBusinessLogicErr("token expired", err)
+		return gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired, err)
 	}
 
 	err = deleteByRefreshToken(s.db, rt)
 	if err != nil {
 		log.Error().Err(err).Msgf("can not delete refresh token")
-		return gerr.NewBusinessLogicErr("can not delete refresh token", err)
+		return err
 	}
 
 	return nil

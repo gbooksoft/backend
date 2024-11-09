@@ -1,12 +1,13 @@
 package gerr
 
 type BusinessLogicErr struct {
-	Msg string
-	err error
+	Msg  string
+	Code ErrorCode
+	err  error
 }
 
-func NewBusinessLogicErr(msg string, err error) BusinessLogicErr {
-	return BusinessLogicErr{Msg: msg, err: err}
+func NewBusinessLogicErr(msg string, code ErrorCode, err error) BusinessLogicErr {
+	return BusinessLogicErr{Msg: msg, Code: code, err: err}
 }
 
 func (err BusinessLogicErr) Error() string {
