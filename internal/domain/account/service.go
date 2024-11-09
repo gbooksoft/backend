@@ -10,6 +10,12 @@ type Service struct {
 	db *sql.DB
 }
 
+func NewService(db *sql.DB) *Service {
+	return &Service{
+		db: db,
+	}
+}
+
 func (s *Service) GetUserEmail(userId string) (string, error) {
 	var uEmail sql.NullString
 	err := s.db.QueryRow("SELECT email FROM users WHERE id = ?", userId).Scan(&uEmail)
@@ -26,10 +32,4 @@ func (s *Service) GetUserEmail(userId string) (string, error) {
 	}
 
 	return uEmail.String, nil
-}
-
-func NewService(db *sql.DB) *Service {
-	return &Service{
-		db: db,
-	}
 }
