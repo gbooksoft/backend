@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 )
 
 type Service struct {
@@ -127,6 +128,57 @@ func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error
 	return result, nil
 }
 
+func (s *Service) ConfirmEmailChange(token string) error {
+	var createdAtStr string
+	var newEmail string
+	var userId string
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	err = tx.QueryRow("SELECT created_at, new_email, user_id FROM email_change_requests WHERE token = ?", token).Scan(&createdAtStr, &newEmail, &userId)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return gerr.NewBusinessLogicErr("token not found", gerr.AccountEmailChangeRequestNotFound, err)
+		}
+
+		log.Error().Err(err).Msgf("failed to find email change with token %s", token)
+		return err
+	}
+
+	layout := "2006-01-02 15:04:05"
+	createdAt, err := time.Parse(layout, createdAtStr)
+	if err != nil {
+		return err
+	}
+
+	if time.Since(createdAt) >= 15*time.Minute {
+		return gerr.NewBusinessLogicErr("token expired", gerr.AccountEmailChangeRequestExpired, nil)
+	}
+
+	_, err = tx.Exec("UPDATE users SET email = ? WHERE id = ?", newEmail, userId)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to confirm user email")
+		return err
+	}
+
+	_, err = tx.Exec("DELETE FROM email_change_requests WHERE token = ?", token)
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete email change request")
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *Service) existsUserWithEmail(email string) bool {
 	var exists sql.NullBool
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
@@ -169,7 +221,7 @@ func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) err
 
 	// update and return
 	if err == nil {
-		_, err = tx.Exec("UPDATE email_change_requests SET new_email = ?, token = ? WHERE user_id = ?", newEmail, newToken, userId)
+		_, err = tx.Exec("UPDATE email_change_requests SET new_email = ?, token = ?, created_at = NOW() WHERE user_id = ?", newEmail, newToken, userId)
 		if err != nil {
 			return err
 		}

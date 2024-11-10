@@ -22,4 +22,6 @@ const (
 	AccountUserAlreadyExists
 	AccountUserWithEmailAlreadyExists
 	AccountEmailChangeRequestWithEmailAlreadyExists
+	AccountEmailChangeRequestNotFound
+	AccountEmailChangeRequestExpired
 )
