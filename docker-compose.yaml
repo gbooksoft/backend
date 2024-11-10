@@ -11,6 +11,7 @@ services:
       MYSQL_DATABASE: gbook
       MYSQL_USER: gbook
       MYSQL_PASSWORD: gbook
+      TZ: "UTC"  # Устанавливаем временную зону на UTC
     volumes:
       - ./dbdata:/var/lib/mysql/
   phpmyadmin:
@@ -21,3 +22,8 @@ services:
     environment:
       PMA_HOST: mysql_db
       MYSQL_ROOT_PASSWORD: root
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"  # SMTP порт для отправки писем
+      - "8025:8025"  # Веб-интерфейс для просмотра сообщений

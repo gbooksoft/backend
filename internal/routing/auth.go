@@ -12,4 +12,5 @@ func authRoutes(e *gin.Engine) {
 	oauth.POST("/register", actionAuthorize.SignUp)
 	oauth.POST("/refresh", actionAuthorize.Refresh)
 	oauth.POST("/logout", actionAuthorize.Logout)
+	oauth.POST("/confirm-registration", actionAuthorize.ConfirmRegistration)
 }

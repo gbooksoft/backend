@@ -12,6 +12,7 @@ const (
 	AuthorizationUserAlreadyExists
 	AuthorizationRefreshTokenExpired
 	AuthorizationRefreshTokenNotFound
+	AuthorizationConfirmationNoFound
 )
 
 const (

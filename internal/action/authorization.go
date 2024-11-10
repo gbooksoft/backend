@@ -96,7 +96,7 @@ func (a *Authorize) SignUp(ctx *gin.Context) {
 		return
 	}
 
-	response.Json(ctx.Writer).StatusCode(201).Struct(signUpResponse{UserId: userId}).Write()
+	response.Json(ctx.Writer).StatusCode(http.StatusCreated).Struct(signUpResponse{UserId: userId}).Write()
 	return
 }
 
@@ -141,6 +141,28 @@ func (a *Authorize) Logout(ctx *gin.Context) {
 	}
 
 	a.deleteRefreshTokenCookie(ctx)
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+}
+
+type confirmationRegistrationRequest struct {
+	UserId string `json:"user_id"`
+	Hash   string `json:"token"`
+}
+
+func (a *Authorize) ConfirmRegistration(ctx *gin.Context) {
+	var req confirmationRegistrationRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	err := a.service.ConfirmRegistration(req.UserId, req.Hash)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
