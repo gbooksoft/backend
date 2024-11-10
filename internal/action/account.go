@@ -40,11 +40,18 @@ func (a *Account) GetProfile(ctx *gin.Context) {
 	})
 }
 
-type updateSettings struct {
+type updateSettingsRequest struct {
 	Email     string `json:"email" validate:"omitempty,email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Password  string `json:"password"`
+}
+
+type updateSettingsResponse struct {
+	Email     bool `json:"email"`
+	FirstName bool `json:"first_name"`
+	LastName  bool `json:"last_name"`
+	Password  bool `json:"password"`
 }
 
 func (a *Account) UpdateSettings(ctx *gin.Context) {
@@ -54,7 +61,7 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		return
 	}
 
-	var req updateSettings
+	var req updateSettingsRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
@@ -87,13 +94,18 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		settings.Password = &req.Password
 	}
 
-	err = a.service.Update(claims.Subject, settings)
+	updatedFields, err := a.service.Update(claims.Subject, settings)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
 
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(updateSettingsResponse{
+		Email:     updatedFields.Email,
+		FirstName: updatedFields.FirstName,
+		LastName:  updatedFields.LastName,
+		Password:  updatedFields.Password,
+	}).Write()
 	return
 }

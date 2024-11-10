@@ -11,7 +11,12 @@ func NewBusinessLogicErr(msg string, code ErrorCode, err error) BusinessLogicErr
 }
 
 func (err BusinessLogicErr) Error() string {
-	return "business logic error: " + err.err.Error()
+	msg := err.Msg
+	if err.err != nil {
+		msg = err.err.Error()
+	}
+
+	return "business logic error: " + msg
 }
 
 type ValidationError struct {

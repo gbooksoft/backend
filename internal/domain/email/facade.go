@@ -23,8 +23,8 @@ func NewFacade(queue *queue.EmailQueue, templateGenerator *queue.TemplateGenerat
 	}
 }
 
-func (f *Facade) mergeWithDefault(title string, data RegistrationConfirmationData) any {
-	return map[string]interface{}{
+func (f *Facade) mergeWithDefault(title string, data any) any {
+	return map[string]any{
 		"Base": f.getBaseData(title),
 		"Data": data,
 	}

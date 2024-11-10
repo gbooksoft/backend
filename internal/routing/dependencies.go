@@ -20,6 +20,6 @@ func initializeDependencies() {
 		authorization.NewService(dbPool, emailFacade),
 	)
 	actionAccount = action.NewAccount(
-		account.NewService(dbPool),
+		account.NewService(dbPool, emailFacade),
 	)
 }

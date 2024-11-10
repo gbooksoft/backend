@@ -4,19 +4,25 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
+	"net/url"
+	"os"
 	"strings"
 )
 
 type Service struct {
-	db *sql.DB
+	db          *sql.DB
+	emailFacade *email.Facade
 }
 
-func NewService(db *sql.DB) *Service {
+func NewService(db *sql.DB, emailFacade *email.Facade) *Service {
 	return &Service{
-		db: db,
+		db:          db,
+		emailFacade: emailFacade,
 	}
 }
 
@@ -43,29 +49,30 @@ type UpdateFields struct {
 	Password  *string
 }
 
-func (s *Service) Update(userId string, data UpdateFields) error {
+type UpdatedFields struct {
+	Email     bool
+	FirstName bool
+	LastName  bool
+	Password  bool
+}
+
+func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error) {
 	var setClauses []string
 	var args []interface{}
 	argIndex := 1
-
-	if data.Email != nil {
-		if s.existsUserWithEmail(*data.Email) {
-			return gerr.NewBusinessLogicErr("can not set this email", gerr.AccountUserAlreadyExists, nil)
-		}
-		setClauses = append(setClauses, fmt.Sprintf("email = ?"))
-		args = append(args, *data.Email)
-		argIndex++
-	}
+	var result UpdatedFields
 
 	if data.FirstName != nil {
 		setClauses = append(setClauses, fmt.Sprintf("first_name = ?"))
 		args = append(args, *data.FirstName)
 		argIndex++
+		result.FirstName = true
 	}
 	if data.LastName != nil {
 		setClauses = append(setClauses, fmt.Sprintf("last_name = ?"))
 		args = append(args, *data.LastName)
 		argIndex++
+		result.LastName = true
 	}
 	if data.Password != nil {
 		// В реальном приложении пароль нужно шифровать перед сохранением
@@ -73,29 +80,51 @@ func (s *Service) Update(userId string, data UpdateFields) error {
 		passwordHash, err := bcrypt.GenerateFromPassword([]byte(*data.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			return err
+			return UpdatedFields{}, err
 		}
 
 		args = append(args, passwordHash)
 		argIndex++
+		result.Password = true
 	}
 
-	if len(setClauses) == 0 {
-		return gerr.NewBusinessLogicErr("nothing to update", gerr.AccountNothingToUpdate, nil)
-	}
-
-	query := fmt.Sprintf("UPDATE users SET %s WHERE id = ?", strings.Join(setClauses, ", "))
-	args = append(args, userId)
-
-	// Выполняем SQL запрос
-	_, err := s.db.Exec(query, args...)
-
+	tx, err := s.db.Begin()
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to update user")
-		return err
+		return UpdatedFields{}, err
+	}
+	defer tx.Rollback()
+
+	// обновляем обычные поля
+	if len(setClauses) > 0 {
+		query := fmt.Sprintf("UPDATE users SET %s WHERE id = ?", strings.Join(setClauses, ", "))
+		args = append(args, userId)
+
+		// Выполняем SQL запрос
+		_, err = tx.Exec(query, args...)
+
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to update user")
+			return UpdatedFields{}, err
+		}
 	}
 
-	return nil
+	// составляем запрос на смену email
+	if data.Email != nil {
+		err = s.addChangeEmailRequest(tx, userId, *data.Email)
+
+		if err != nil {
+			log.Error().Err(err).Msg("failed to update users email")
+			return UpdatedFields{}, err
+		}
+
+		result.Email = true
+	}
+
+	if err = tx.Commit(); err != nil {
+		return UpdatedFields{}, err
+	}
+
+	return result, nil
 }
 
 func (s *Service) existsUserWithEmail(email string) bool {
@@ -107,4 +136,97 @@ func (s *Service) existsUserWithEmail(email string) bool {
 	}
 
 	return false
+}
+
+func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) error {
+	var exists sql.NullBool
+	err := tx.QueryRow("SELECT 1 FROM users WHERE email = ?", newEmail).Scan(&exists)
+	if err == nil {
+		return gerr.NewBusinessLogicErr("user with this email already exists", gerr.AccountUserWithEmailAlreadyExists, nil)
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	err = tx.QueryRow("SELECT 1 FROM email_change_requests WHERE new_email = ?", newEmail).Scan(&exists)
+
+	if err == nil {
+		return gerr.NewBusinessLogicErr("request on this email already exists", gerr.AccountEmailChangeRequestWithEmailAlreadyExists, nil)
+	}
+
+	if !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	newToken, err := token.GenerateRandHash(64)
+
+	if err != nil {
+		return err
+	}
+
+	err = tx.QueryRow("SELECT 1 FROM email_change_requests WHERE user_id = ?", userId).Scan(&exists)
+
+	// update and return
+	if err == nil {
+		_, err = tx.Exec("UPDATE email_change_requests SET new_email = ?, token = ? WHERE user_id = ?", newEmail, newToken, userId)
+		if err != nil {
+			return err
+		}
+	}
+
+	// insert and return
+	if errors.Is(err, sql.ErrNoRows) {
+		_, err = tx.Exec("INSERT INTO email_change_requests (user_id, new_email, token) VALUES (?, ?, ?)", userId, newEmail, newToken)
+		if err != nil {
+			return err
+		}
+	}
+
+	var oldEmail sql.NullString
+	var firstName sql.NullString
+	var lastName sql.NullString
+	err = tx.QueryRow("SELECT email, first_name, last_name FROM users WHERE id = ?", userId).Scan(&oldEmail, &firstName, &lastName)
+	if err != nil {
+		return err
+	}
+
+	confirmationLink, err := s.generateConfirmationLink(newToken)
+	if err != nil {
+		return err
+	}
+	err = s.emailFacade.EmailChangeRequestConfirmationTx(tx, newEmail, email.EmailChangeRequestConfirmationData{
+		FirstName:        firstName.String,
+		LastName:         lastName.String,
+		ConfirmationLink: confirmationLink,
+	})
+	if err != nil {
+		return err
+	}
+
+	err = s.emailFacade.EmailChangeRequestInformationTx(tx, oldEmail.String, email.EmailChangeRequestInformationData{
+		FirstName: firstName.String,
+		LastName:  lastName.String,
+		NewEmail:  newEmail,
+	})
+	if err != nil {
+		return err
+	}
+
+	return err
+
+}
+
+func (s *Service) generateConfirmationLink(hash string) (string, error) {
+	u, err := url.Parse(os.Getenv("WEB_FRONT_EMAIL_CHANGE_REQUEST_CONFIRMATION_URL"))
+	if err != nil {
+		return "", err
+	}
+
+	params := url.Values{}
+	params.Add("token", hash)
+
+	u.RawQuery = params.Encode()
+
+	return u.String(), nil
 }

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
@@ -90,7 +91,7 @@ func (s *Service) Register(userEmail, password, firstName, lastName string) (str
 		return "", err
 	}
 
-	confirmationHash, err := s.generateConfirmationHash()
+	confirmationHash, err := token.GenerateRandHash(64)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not generate confirmation hash for user %s", userEmail)
@@ -218,7 +219,7 @@ func (s *Service) generateConfirmationHash() (string, error) {
 }
 
 func (s *Service) generateConfirmationLink(userId, hash string) (string, error) {
-	u, err := url.Parse(os.Getenv("WEB_FRONT_CONFIRMATION_URL"))
+	u, err := url.Parse(os.Getenv("WEB_FRONT_REGISTRATION_CONFIRMATION_URL"))
 	if err != nil {
 		return "", err
 	}

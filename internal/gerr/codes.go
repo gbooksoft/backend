@@ -20,4 +20,6 @@ const (
 	AccountUserNotFound
 	AccountNothingToUpdate
 	AccountUserAlreadyExists
+	AccountUserWithEmailAlreadyExists
+	AccountEmailChangeRequestWithEmailAlreadyExists
 )
