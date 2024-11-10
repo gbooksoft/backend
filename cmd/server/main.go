@@ -2,13 +2,17 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/gbooksoft/backend/internal/database"
+	"github.com/gbooksoft/backend/internal/domain/email/queue"
+	"github.com/gbooksoft/backend/internal/domain/email/worker"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
+	"github.com/wneessen/go-mail"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,7 +36,7 @@ func main() {
 	e := gin.Default()
 
 	e.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowOrigins:     []string{os.Getenv("WEB_FRONT_FULL_DOMAIN")},
 		AllowMethods:     []string{"GET", "POST"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
@@ -40,7 +44,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	_, err = database.SetUpConnection(ctx)
+	db, err := database.SetUpConnection(ctx)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("can not connect to database")
@@ -59,6 +63,24 @@ func main() {
 			log.Fatal().Err(listenErr).Msg("server shutdown")
 		}
 	}()
+
+	client, err := mail.NewClient(
+		"localhost",
+		mail.WithPort(1025),
+		mail.WithSMTPAuth(mail.SMTPAuthNoAuth),
+		mail.WithTimeout(10*time.Second),
+		mail.WithTLSPolicy(mail.NoTLS),
+	)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Ошибка создания SMTP клиента")
+	}
+
+	go func(db *sql.DB, client *mail.Client) {
+		emailWorker := worker.NewEmailWorker(queue.NewEmailQueue(db), client)
+
+		// Запускаем воркера
+		emailWorker.StartSending()
+	}(db, client)
 
 	<-ctx.Done()
 

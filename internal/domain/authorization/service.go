@@ -252,7 +252,7 @@ func (s *Service) ConfirmRegistration(userId string, hash string) error {
 		return err
 	}
 
-	_, err = tx.Exec("UPDATE users SET confirmation_hash = \"\", confirmed = 1 WHERE id = ?", userId)
+	_, err = tx.Exec("UPDATE users SET confirmation_hash = NULL, confirmed = 1 WHERE id = ?", userId)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not confirm registration")
