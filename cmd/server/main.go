@@ -55,8 +55,8 @@ func main() {
 
 	go func() {
 		log.Debug().Msg("Server started: http://localhost:8080")
-		if err = srv.ListenAndServe(); err != nil && !errors.Is(http.ErrServerClosed, err) {
-			log.Fatal().Err(err).Msg("server shutdown")
+		if listenErr := srv.ListenAndServe(); listenErr != nil && !errors.Is(http.ErrServerClosed, listenErr) {
+			log.Fatal().Err(listenErr).Msg("server shutdown")
 		}
 	}()
 
@@ -70,8 +70,8 @@ func main() {
 	// the request it is currently handling
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	if err = srv.Shutdown(ctx); err != nil {
-		log.Fatal().Err(err).Msg("server forced to shutdown")
+	if shutdownErr := srv.Shutdown(ctx); shutdownErr != nil {
+		log.Fatal().Err(shutdownErr).Msg("server forced to shutdown")
 	}
 
 	log.Info().Msg("Server exiting")
