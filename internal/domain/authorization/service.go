@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
+	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/internal/gerr"
 	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/google/uuid"
@@ -69,7 +70,7 @@ func (s *Service) SignInUser(userEmail string, password string) (Token, error) {
 	}, nil
 }
 
-func (s *Service) Register(userEmail, password, firstName, lastName string) (string, error) {
+func (s *Service) Register(userEmail, uPassword, firstName, lastName string) (string, error) {
 	var exists sql.NullBool
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", userEmail).Scan(&exists)
 
@@ -82,9 +83,13 @@ func (s *Service) Register(userEmail, password, firstName, lastName string) (str
 		return "", err
 	}
 
-	// todo: check password length
+	validationResult := password.ValidatePassword(uPassword)
 
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if len(validationResult.Errors) > 0 {
+		return "", validationResult
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(uPassword), bcrypt.DefaultCost)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can hash password while register user %s", userEmail)
@@ -179,8 +184,8 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.FirstName, atClaims.LastName)
 
 	if err != nil {
-		log.Error().Err(err).Msgf("can not create user when refreshing in %s", atClaims.Subject)
-		return Token{}, fmt.Errorf("can not create user when refreshing in %w", err)
+		log.Error().Err(err).Msgf("can not create access token when refreshing in %s", atClaims.Subject)
+		return Token{}, fmt.Errorf("can not create access token when refreshing in %w", err)
 	}
 
 	return Token{

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
+	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/internal/gerr"
 	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/rs/zerolog/log"
@@ -269,6 +270,10 @@ func (s *Service) generateChangeEmailConfirmationLink(hash string) (string, erro
 }
 
 func (s *Service) UpdatePassword(userId string, currentPassword string, newPassword string) error {
+	validationResult := password.ValidatePassword(newPassword)
+	if len(validationResult.Errors) > 0 {
+		return validationResult
+	}
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err

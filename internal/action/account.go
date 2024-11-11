@@ -1,8 +1,10 @@
 package action
 
 import (
+	"errors"
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account"
+	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -129,6 +131,10 @@ type updatePasswordRequest struct {
 	NewPassword     string `json:"new_password" validate:"required"`
 }
 
+type updatePasswordPasswordValidationErrorResponse struct {
+	PasswordErrors []string `json:"password_errors"`
+}
+
 func (a *Account) UpdatePassword(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
@@ -154,9 +160,18 @@ func (a *Account) UpdatePassword(ctx *gin.Context) {
 	err = a.service.UpdatePassword(claims.Subject, req.CurrentPassword, req.NewPassword)
 
 	if err != nil {
+		var passErr *password.PasswordValidationResult
+		if errors.As(err, &passErr) {
+			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(updatePasswordPasswordValidationErrorResponse{
+				PasswordErrors: passErr.Errors,
+			}).Write()
+			return
+		}
+
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	return
 }

@@ -1,8 +1,10 @@
 package action
 
 import (
+	"errors"
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
+	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -72,6 +74,9 @@ type signUpRequest struct {
 type signUpResponse struct {
 	UserId string `json:"user_id"`
 }
+type signUpPasswordErrorResponse struct {
+	PasswordErrors []string `json:"password_errors"`
+}
 
 func (a *Authorize) SignUp(ctx *gin.Context) {
 	var req signUpRequest
@@ -92,6 +97,14 @@ func (a *Authorize) SignUp(ctx *gin.Context) {
 	userId, err := a.service.Register(req.Email, req.Password, req.FirstName, req.LastName)
 
 	if err != nil {
+		var passErr *password.PasswordValidationResult
+		if errors.As(err, &passErr) {
+			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(signUpPasswordErrorResponse{
+				PasswordErrors: passErr.Errors,
+			}).Write()
+			return
+		}
+
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
