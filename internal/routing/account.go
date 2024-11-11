@@ -13,5 +13,6 @@ func accountRoutes(e *gin.Engine) {
 
 	account.GET("/profile", actionAccount.GetProfile)
 	account.POST("/settings", actionAccount.UpdateSettings)
+	account.POST("/settings/password", actionAccount.UpdatePassword)
 	accountWithoutAuth.POST("/confirm-email-change", actionAccount.ConfirmEmailChange)
 }

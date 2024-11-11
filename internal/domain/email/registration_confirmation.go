@@ -15,7 +15,7 @@ type RegistrationConfirmationData struct {
 }
 
 func (f *Facade) RegistrationConfirmationTx(tx *sql.Tx, recipient string, data RegistrationConfirmationData) error {
-	body, err := f.templateGenerator.ToString(TemplateRegistrationConfirmation, f.mergeWithDefault("Подтверждение регистрации", data))
+	body, err := f.templateGenerator.ToString(TemplateRegistrationConfirmation, f.mergeWithDefault(SubjectRegistrationConfirmation, data))
 
 	if err != nil {
 		return err

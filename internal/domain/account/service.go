@@ -47,14 +47,12 @@ type UpdateFields struct {
 	Email     *string
 	FirstName *string
 	LastName  *string
-	Password  *string
 }
 
 type UpdatedFields struct {
 	Email     bool
 	FirstName bool
 	LastName  bool
-	Password  bool
 }
 
 func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error) {
@@ -74,19 +72,6 @@ func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error
 		args = append(args, *data.LastName)
 		argIndex++
 		result.LastName = true
-	}
-	if data.Password != nil {
-		// В реальном приложении пароль нужно шифровать перед сохранением
-		setClauses = append(setClauses, fmt.Sprintf("password = ?"))
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte(*data.Password), bcrypt.DefaultCost)
-
-		if err != nil {
-			return UpdatedFields{}, err
-		}
-
-		args = append(args, passwordHash)
-		argIndex++
-		result.Password = true
 	}
 
 	tx, err := s.db.Begin()
@@ -243,7 +228,7 @@ func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) err
 		return err
 	}
 
-	confirmationLink, err := s.generateConfirmationLink(newToken)
+	confirmationLink, err := s.generateChangeEmailConfirmationLink(newToken)
 	if err != nil {
 		return err
 	}
@@ -269,7 +254,7 @@ func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) err
 
 }
 
-func (s *Service) generateConfirmationLink(hash string) (string, error) {
+func (s *Service) generateChangeEmailConfirmationLink(hash string) (string, error) {
 	u, err := url.Parse(os.Getenv("WEB_FRONT_EMAIL_CHANGE_REQUEST_CONFIRMATION_URL"))
 	if err != nil {
 		return "", err
@@ -281,4 +266,75 @@ func (s *Service) generateConfirmationLink(hash string) (string, error) {
 	u.RawQuery = params.Encode()
 
 	return u.String(), nil
+}
+
+func (s *Service) UpdatePassword(userId string, currentPassword string, newPassword string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var uPassword string
+	var uEmail string
+	var uFirstName string
+	var uLastName string
+	err = tx.QueryRow("SELECT email, first_name, last_name, password FROM users WHERE id = ?", userId).Scan(&uEmail, &uFirstName, &uLastName, &uPassword)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound, nil)
+		}
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(uPassword), []byte(currentPassword))
+
+	if err != nil {
+		return gerr.NewBusinessLogicErr("current password is incorrect", gerr.AccountPasswordIsIncorrect, nil)
+	}
+
+	if currentPassword == newPassword {
+		err = s.emailFacade.PasswordChangedTx(tx, uEmail, email.PasswordChangedData{
+			FirstName: uFirstName,
+			LastName:  uLastName,
+		})
+		if err != nil {
+			return err
+		}
+
+		if err = tx.Commit(); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("can hash password while changing it")
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE users SET password = ? WHERE id = ?", passwordHash, userId)
+
+	if err != nil {
+		log.Error().Err(err).Msgf("can update password while sql update")
+		return err
+	}
+
+	err = s.emailFacade.PasswordChangedTx(tx, uEmail, email.PasswordChangedData{
+		FirstName: uFirstName,
+		LastName:  uLastName,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -24,4 +24,5 @@ const (
 	AccountEmailChangeRequestWithEmailAlreadyExists
 	AccountEmailChangeRequestNotFound
 	AccountEmailChangeRequestExpired
+	AccountPasswordIsIncorrect
 )

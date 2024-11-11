@@ -44,14 +44,12 @@ type updateSettingsRequest struct {
 	Email     string `json:"email" validate:"omitempty,email"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
-	Password  string `json:"password"`
 }
 
 type updateSettingsResponse struct {
 	Email     bool `json:"email"`
 	FirstName bool `json:"first_name"`
 	LastName  bool `json:"last_name"`
-	Password  bool `json:"password"`
 }
 
 func (a *Account) UpdateSettings(ctx *gin.Context) {
@@ -90,10 +88,6 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		settings.LastName = &req.LastName
 	}
 
-	if req.Password != "" {
-		settings.Password = &req.Password
-	}
-
 	updatedFields, err := a.service.Update(claims.Subject, settings)
 
 	if err != nil {
@@ -105,7 +99,6 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		Email:     updatedFields.Email,
 		FirstName: updatedFields.FirstName,
 		LastName:  updatedFields.LastName,
-		Password:  updatedFields.Password,
 	}).Write()
 	return
 }
@@ -122,6 +115,43 @@ func (a *Account) ConfirmEmailChange(ctx *gin.Context) {
 	}
 
 	err := a.service.ConfirmEmailChange(req.Token)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+}
+
+type updatePasswordRequest struct {
+	CurrentPassword string `json:"current_password" validate:"required"`
+	NewPassword     string `json:"new_password" validate:"required"`
+}
+
+func (a *Account) UpdatePassword(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	var req updatePasswordRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err = validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	err = a.service.UpdatePassword(claims.Subject, req.CurrentPassword, req.NewPassword)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)
