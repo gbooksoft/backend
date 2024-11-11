@@ -5,12 +5,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/wneessen/go-mail"
 	"os"
-	"sync"
 	"time"
 )
 
 type EmailWorker struct {
-	wg         sync.WaitGroup
 	queue      *queue.EmailQueue
 	mailClient *mail.Client
 }
@@ -22,7 +20,7 @@ func NewEmailWorker(queue *queue.EmailQueue, mailClient *mail.Client) *EmailWork
 	}
 }
 
-func (worker *EmailWorker) StartSending() {
+func (worker *EmailWorker) Start() {
 	for {
 		worker.processEmails()
 		time.Sleep(2 * time.Second) // Задержка для снижения нагрузки на базу данных

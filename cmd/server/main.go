@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gbooksoft/backend/internal/database"
+	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/worker"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
-	"github.com/gbooksoft/backend/internal/domain/email/worker"
+	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -75,12 +76,15 @@ func main() {
 		log.Fatal().Err(err).Msg("Ошибка создания SMTP клиента")
 	}
 
+	// воркер рассылки email сообщений
 	go func(db *sql.DB, client *mail.Client) {
-		emailWorker := worker.NewEmailWorker(queue.NewEmailQueue(db), client)
-
-		// Запускаем воркера
-		emailWorker.StartSending()
+		emailSender.NewEmailWorker(queue.NewEmailQueue(db), client).Start()
 	}(db, client)
+
+	// воркер подчистки запросов на смену email адресов
+	go func(db *sql.DB) {
+		changeEmailRequest.NewChangeEmailRequestWorker(db).Start()
+	}(db)
 
 	<-ctx.Done()
 
