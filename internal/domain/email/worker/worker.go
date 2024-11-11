@@ -5,12 +5,10 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/wneessen/go-mail"
 	"os"
-	"sync"
 	"time"
 )
 
 type EmailWorker struct {
-	wg         sync.WaitGroup
 	queue      *queue.EmailQueue
 	mailClient *mail.Client
 }
