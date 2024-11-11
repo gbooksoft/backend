@@ -16,6 +16,7 @@ func NewChangeEmailRequestWorker(db *sql.DB) *ChangeEmailRequestWorker {
 	}
 }
 
+func (worker ChangeEmailRequestWorker) Start() {
 	for {
 		query := `
 DELETE email_change_requests
