@@ -6,7 +6,7 @@ import (
 )
 
 const TemplateRegistrationConfirmation queue.TemplateFile = "templates/notification/email/registration_confirmation.html"
-const SubjectRegistrationConfirmation = "GBook | Подтвердите регистрацию"
+const SubjectRegistrationConfirmation = "Добро пожаловать в наш сервис!"
 
 type RegistrationConfirmationData struct {
 	ConfirmationLink string

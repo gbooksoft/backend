@@ -6,54 +6,83 @@
     <title>{{ .Base.AppName }} | {{ .Base.Title }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            color: #333;
-            line-height: 1.6;
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            background-color: #f4f7fa;
+            margin: 0;
+            padding: 0;
+            color: #2c3e50;
         }
-        .container {
+        .email-container {
             max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e5e5;
         }
         .header {
+            padding: 20px;
             text-align: center;
-            margin-bottom: 20px;
+            color: #ffffff;
+            background-color: #405189;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .logo-container {
+            margin-bottom: 15px;
         }
         .header h1 {
-            color: #333;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
         }
         .content {
-            margin-bottom: 20px;
+            padding: 25px;
+            font-size: 15px;
+            line-height: 1.6;
         }
-        .btn {
+        .content p {
+            margin: 0 0 15px;
+        }
+        .button {
             display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 12px 25px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            background-color: #405189;
             color: #ffffff;
-            background-color: #007bff;
             text-decoration: none;
             border-radius: 5px;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(64, 81, 137, 0.4);
         }
-        .btn:hover {
-            background-color: #0056b3;
+        .button:hover {
+            background-color: #364a7a;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #95a5a6;
+        }
+        .footer a {
+            color: #405189;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
-<div class="container">
+<div class="email-container">
     <div class="header">
         <h1>{{ .Base.Title }}</h1>
     </div>
-    <hr>
+    <div class="content">
     {{block "content" .}}<p>Содержимое по умолчанию</p>{{end}}
-    <hr>
+    </div>
     <div class="footer">
-        <p>С уважением,<br>Команда <a href="{{ .Base.WebAppDomain }}" target="_blank">{{ .Base.AppName }}</a></p>
+        <p>Если у вас возникли вопросы, не стесняйтесь <a href="#">связаться с нами</a> в любое время.</p>
+        <p>&copy; 2024 {{ .Base.AppName }}. Все права защищены.</p>
     </div>
 </div>
 </body>
