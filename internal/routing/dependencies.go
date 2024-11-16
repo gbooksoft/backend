@@ -7,10 +7,13 @@ import (
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
+	project_application "github.com/gbooksoft/backend/internal/domain/project/application"
+	project_infrastructure "github.com/gbooksoft/backend/internal/domain/project/infrastructure"
 )
 
 var actionAuthorize *action.Authorize
 var actionAccount *action.Account
+var actionProject *action.Project
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -21,5 +24,12 @@ func initializeDependencies() {
 	)
 	actionAccount = action.NewAccount(
 		account.NewService(dbPool, emailFacade),
+	)
+
+	actionProject = action.NewProject(
+		project_application.NewService(
+			project_infrastructure.NewMySqlProjectRepository(dbPool),
+			project_infrastructure.NewMySqlMenuRepository(dbPool),
+		),
 	)
 }

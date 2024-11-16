@@ -26,3 +26,8 @@ const (
 	AccountEmailChangeRequestExpired
 	AccountPasswordIsIncorrect
 )
+
+const (
+	_ ErrorCode = 3000 + iota
+	ProjectAlreadyExists
+)
