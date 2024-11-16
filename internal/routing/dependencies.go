@@ -30,6 +30,7 @@ func initializeDependencies() {
 		project_application.NewService(
 			project_infrastructure.NewMySqlProjectRepository(dbPool),
 			project_infrastructure.NewMySqlMenuRepository(dbPool),
+			project_infrastructure.NewMySqlMenuReadModel(dbPool),
 		),
 	)
 }

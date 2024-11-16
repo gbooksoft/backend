@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
 	"github.com/gbooksoft/backend/internal/gerr"
 	"github.com/google/uuid"
 )
@@ -10,12 +11,18 @@ import (
 type Service struct {
 	projectRepository domain.ProjectRepository
 	menuRepository    domain.MenuRepository
+	menuReadModel     readmodel.MenuReadModel
 }
 
-func NewService(projectRepository domain.ProjectRepository, menuRepository domain.MenuRepository) *Service {
+func NewService(
+	projectRepository domain.ProjectRepository,
+	menuRepository domain.MenuRepository,
+	menuReadModel readmodel.MenuReadModel,
+) *Service {
 	return &Service{
 		projectRepository: projectRepository,
 		menuRepository:    menuRepository,
+		menuReadModel:     menuReadModel,
 	}
 }
 
@@ -62,4 +69,18 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 	}
 
 	return projectId.String(), nil
+}
+
+func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Menu, error) {
+	menu, err := s.menuReadModel.GetByUserIdAndProjectId(userId, projectId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if menu == nil || len(menu.Items) == 0 {
+		return nil, gerr.NewBusinessLogicErr("Menu not found", gerr.NotFound, nil)
+	}
+
+	return menu, nil
 }

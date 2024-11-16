@@ -7,6 +7,11 @@ func (c *ErrorCode) ToInt() int64 {
 }
 
 const (
+	_ ErrorCode = 0 + iota
+	NotFound
+)
+
+const (
 	_ ErrorCode = 1000 + iota
 	AuthorizationUserNotFound
 	AuthorizationUserAlreadyExists

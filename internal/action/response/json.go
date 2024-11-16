@@ -60,6 +60,11 @@ func (r *JsonResponse) ErrValidation(err error) *JsonResponse {
 }
 
 func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
+	if err.Code == gerr.NotFound {
+		r.StatusCode(http.StatusNotFound)
+		return r.ErrMsg("Not Found")
+	}
+
 	r.StatusCode(http.StatusUnprocessableEntity)
 	r.code = err.Code.ToInt()
 	return r.ErrMsg(err.Msg)

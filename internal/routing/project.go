@@ -6,9 +6,10 @@ import (
 )
 
 func projectRoutes(e *gin.Engine) {
-	project := e.Group("/project")
+	project := e.Group("/projects")
 
 	project.Use(middleware.AuthRequired())
 
 	project.POST("/", actionProject.Create)
+	project.GET("/:id/menu", actionProject.GetProjectMenu)
 }
