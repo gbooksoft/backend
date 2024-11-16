@@ -58,7 +58,7 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 
 	menu := domain.NewDefaultMenu(projectId)
 
-	err = s.menuRepository.AddMenu(tx, menu)
+	err = s.menuRepository.AddMenu(tx, menu, nil)
 
 	if err != nil {
 		return "", err
@@ -83,4 +83,41 @@ func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Me
 	}
 
 	return menu, nil
+}
+
+func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+	newMenuItemUUid := domain.MenuItemId(uuid.MustParse(newMenuItemId))
+	parentUUid := domain.MenuItemId(uuid.MustParse(parentId))
+
+	tx, err := s.menuRepository.BeginTransaction(context.TODO())
+
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	menu, err := s.menuRepository.FindByProjectId(tx, projectUUid)
+
+	if err != nil {
+		return err
+	}
+
+	err = menu.AddNewItem(newMenuItemUUid, parentUUid)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.menuRepository.Save(tx, projectUUid, menu)
+
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }

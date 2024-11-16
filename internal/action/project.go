@@ -29,7 +29,7 @@ type createProjectResponse struct {
 
 func (a *Project) Create(ctx *gin.Context) {
 	var req createProjectRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
 	}
@@ -96,6 +96,39 @@ func (a *Project) GetProjectMenu(ctx *gin.Context) {
 	}).Write()
 
 	return
+}
+
+type addMenuItemRequest struct {
+	Id       string `json:"id" validate:"required,uuid"`
+	ParentId string `json:"parent_id" validate:"required,uuid"`
+}
+
+func (a *Project) AddMenuItem(ctx *gin.Context) {
+	var req addMenuItemRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+
+	err = a.service.AddMenuItem(req.Id, projectId, req.ParentId)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
 func (a *Project) groupMenuByParentId(menu *readmodel.Menu) []getProjectMenuItemResponse {

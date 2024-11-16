@@ -12,18 +12,19 @@ type BaseRepository interface {
 }
 
 type BaseMysqlRepository struct {
-	db *sql.DB
+	Db *sql.DB
 }
 
 func NewBaseMysqlRepository(db *sql.DB) *BaseMysqlRepository {
 	return &BaseMysqlRepository{
-		db: db,
+		Db: db,
 	}
 }
 
 func (b *BaseMysqlRepository) GetNextId() uuid.UUID {
 	return uuid.New()
 }
+
 func (b *BaseMysqlRepository) BeginTransaction(ctx context.Context) (*sql.Tx, error) {
-	return b.db.BeginTx(ctx, nil)
+	return b.Db.BeginTx(ctx, nil)
 }
