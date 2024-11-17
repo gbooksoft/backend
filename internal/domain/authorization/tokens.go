@@ -60,7 +60,6 @@ func deleteByRefreshToken(db *sql.DB, rt string) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
