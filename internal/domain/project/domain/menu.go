@@ -24,13 +24,14 @@ type Menu struct {
 }
 
 func (m *Menu) findChildrenWithType(itemType MenuItemType) []*MenuItem {
+	var result []*MenuItem
 	for _, menuItem := range m.Items {
-		if menuItem.Type == itemType {
-			return menuItem.Children
+		if menuItem.Type == itemType && menuItem.ParentId != nil {
+			result = append(result, menuItem)
 		}
 	}
 
-	return nil
+	return result
 }
 
 func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) error {
@@ -50,32 +51,21 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) err
 		ProjectId: item.ProjectId,
 		Title:     "Unknown",
 		Type:      item.Type,
-		Children:  nil,
+		ParentId:  &parentItemId,
 	}
 
-	item.Children = append(item.Children, newItem)
+	m.Items = append(m.Items, newItem)
 
 	return nil
 }
 
 func (m *Menu) findItemById(id MenuItemId) (*MenuItem, bool) {
-	return m.findIn(m.Items, id)
-}
-
-func (m *Menu) findIn(items []*MenuItem, id MenuItemId) (*MenuItem, bool) {
-	for _, item := range items {
+	for _, item := range m.Items {
 		if item.Id == id {
 			return item, true
 		}
-
-		if len(item.Children) > 0 {
-			itemInChildren, found := m.findIn(item.Children, id)
-
-			if found {
-				return itemInChildren, true
-			}
-		}
 	}
+
 	return nil, false
 }
 
@@ -84,25 +74,18 @@ type MenuItem struct {
 	ProjectId ProjectId
 	Title     string
 	Type      MenuItemType
-	Children  []*MenuItem
+	ParentId  *MenuItemId
 }
 
 func NewDefaultMenu(projectId ProjectId) *Menu {
+	chapterParentId := MenuItemId(uuid.New())
 	return &Menu{
 		Items: []*MenuItem{
 			{
-				Id:        MenuItemId(uuid.New()),
+				Id:        chapterParentId,
 				ProjectId: projectId,
 				Title:     "Главы",
 				Type:      Chapter,
-				Children: []*MenuItem{
-					{
-						Id:        MenuItemId(uuid.New()),
-						ProjectId: projectId,
-						Title:     "Глава 1",
-						Type:      Chapter,
-					},
-				},
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
@@ -115,6 +98,13 @@ func NewDefaultMenu(projectId ProjectId) *Menu {
 				ProjectId: projectId,
 				Title:     "Локации",
 				Type:      Location,
+			},
+			{
+				Id:        MenuItemId(uuid.New()),
+				ProjectId: projectId,
+				Title:     "Глава 1",
+				Type:      Chapter,
+				ParentId:  &chapterParentId,
 			},
 		},
 	}

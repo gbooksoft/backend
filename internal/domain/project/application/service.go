@@ -61,7 +61,7 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 
 	menu := domain.NewDefaultMenu(projectId)
 
-	err = s.menuRepository.AddMenu(tx, menu, nil)
+	err = s.menuRepository.AddMenu(tx, menu)
 
 	if err != nil {
 		return "", err

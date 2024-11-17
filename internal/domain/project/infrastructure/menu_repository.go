@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
@@ -16,29 +16,9 @@ func NewMySqlMenuRepository(db *sql.DB) *MySqlMenuRepository {
 	return &MySqlMenuRepository{repository.NewBaseMysqlRepository(db)}
 }
 
-func (r *MySqlMenuRepository) AddMenu(tx *sql.Tx, menu *domain.Menu, parentId *string) error {
-	return r.addMenuItems(tx, menu.Items, parentId)
-}
-
-func (r *MySqlMenuRepository) addMenuItems(tx *sql.Tx, menuItems []*domain.MenuItem, parentId *string) error {
-	for _, menuItem := range menuItems {
-		itemId := menuItem.Id.String()
-		_, err := tx.Exec(
-			"INSERT INTO project_menu_items (id, project_id, title, type, parent_id) VALUES (?, ?, ?, ?, ?)",
-			menuItem.Id.String(),
-			menuItem.ProjectId.String(),
-			menuItem.Title,
-			string(menuItem.Type),
-			parentId,
-		)
-
-		if len(menuItem.Children) > 0 {
-			err = r.addMenuItems(tx, menuItem.Children, &itemId)
-
-			if err != nil {
-				return err
-			}
-		}
+func (r *MySqlMenuRepository) AddMenu(tx *sql.Tx, menu *domain.Menu) error {
+	for _, menuItem := range menu.Items {
+		err := r.addMenuItem(tx, menuItem)
 
 		if err != nil {
 			return err
@@ -59,9 +39,9 @@ SELECT id, project_id, title, type, parent_id FROM project_menu_items WHERE proj
 	}
 	defer rows.Close()
 
-	groupedItems := make(map[string][]*domain.MenuItem)
+	var itemsResult []*domain.MenuItem
 	for rows.Next() {
-		var item domain.MenuItem
+		item := &domain.MenuItem{}
 		var itemId string
 		var itemProjectId string
 		var itemTitle string
@@ -85,60 +65,98 @@ SELECT id, project_id, title, type, parent_id FROM project_menu_items WHERE proj
 		item.Title = itemTitle
 		item.Type = domain.MenuItemType(itemType)
 
-		parentId := "ROOT"
 		if itemParentId.Valid {
-			parentId = itemParentId.String
+			pId := domain.MenuItemId(uuid.MustParse(itemParentId.String))
+			item.ParentId = &pId
+		} else {
+			item.ParentId = nil
 		}
-		groupedItems[parentId] = append(groupedItems[parentId], &item)
+
+		itemsResult = append(itemsResult, item)
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
-	for parentId, children := range groupedItems {
-		for childI, _ := range children {
-			curId := groupedItems[parentId][childI].Id
-
-			if itsChildren, ok := groupedItems[curId.String()]; ok {
-				groupedItems[parentId][childI].Children = itsChildren
-			}
-		}
-	}
-
-	if items, ok := groupedItems["ROOT"]; ok {
-		return &domain.Menu{
-			Items: items,
-		}, nil
-	}
-
-	return nil, errors.New("errored structure of menu")
+	return &domain.Menu{
+		Items: itemsResult,
+	}, nil
 }
-func (r *MySqlMenuRepository) Save(tx *sql.Tx, projectId domain.ProjectId, newMenu *domain.Menu) error {
-	// now: 1,2,3,4,5,6
-	// db: 4,5,6
-	// diff now:db = 1,2,3
-	// insert 1,2,3
-	// diff db:now = null
-	// do nothing
-	// intersect db:now = 4,5,6
-	// update, 4,5,6,
 
-	// now:  3,4,5
-	// db: 5,6,7
-	// diff now:db = 3,4
-	// insert 3,4
-	// diff db:now = 6,7
-	// delete 6,7
-	// intersect db:now = 5
-	// update 5
-	// Шаг 1: Получаем текущие данные из базы
-	_, err := tx.Exec("DELETE FROM project_menu_items WHERE project_id = ?", projectId.String())
+func (r *MySqlMenuRepository) Save(tx *sql.Tx, projectId domain.ProjectId, newMenu *domain.Menu) error {
+	currDbMenu, err := r.FindByProjectId(tx, projectId)
+
 	if err != nil {
 		return err
 	}
 
-	err = r.AddMenu(tx, newMenu, nil)
+	existingItems := make(map[string]*domain.MenuItem)
+	for _, item := range currDbMenu.Items {
+		curr := item
+		existingItems[item.Id.String()] = curr
+	}
+
+	newItemsMap := make(map[string]*domain.MenuItem)
+	for _, newItem := range newMenu.Items {
+		newItemsMap[newItem.Id.String()] = newItem
+	}
+
+	for existingId := range existingItems {
+		if _, found := newItemsMap[existingId]; !found {
+			// Элемент есть в базе, но его нет в новых данных — удалить
+			_, err = tx.Exec("DELETE FROM project_menu_items WHERE id = ?", existingId)
+			if err != nil {
+				return fmt.Errorf("error deleting item with id %s: %w", existingId, err)
+			}
+		}
+	}
+
+	for _, newItem := range newMenu.Items {
+		if existingItem, found := existingItems[newItem.Id.String()]; found {
+			if existingItem.Title != newItem.Title {
+				_, err := tx.Exec(
+					"UPDATE project_menu_items SET title = ? WHERE id = ?",
+					newItem.Type, newItem.Id.String(),
+				)
+				if err != nil {
+					return fmt.Errorf("error updating item with id %s: %w", newItem.Id, err)
+				}
+			}
+		} else {
+			err = r.addMenuItem(tx, newItem)
+
+			if err != nil {
+				return fmt.Errorf("error inserting item with id %s: %w", newItem.Id, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r *MySqlMenuRepository) addMenuItem(tx *sql.Tx, menuItem *domain.MenuItem) error {
+	var parentId sql.NullString
+	if menuItem.ParentId != nil {
+		parentId = sql.NullString{
+			String: menuItem.ParentId.String(),
+			Valid:  true,
+		}
+	} else {
+		parentId = sql.NullString{
+			String: "",
+			Valid:  false,
+		}
+	}
+
+	_, err := tx.Exec(
+		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id) VALUES (?, ?, ?, ?, ?)",
+		menuItem.Id.String(),
+		menuItem.ProjectId.String(),
+		menuItem.Title,
+		string(menuItem.Type),
+		parentId,
+	)
 
 	if err != nil {
 		return err
