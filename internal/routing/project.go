@@ -11,6 +11,7 @@ func projectRoutes(e *gin.Engine) {
 	project.Use(middleware.AuthRequired())
 
 	project.POST("/", actionProject.Create)
+	project.GET("/:id/access", actionProject.CanAccess)
 	project.GET("/:id/menu", actionProject.GetProjectMenu)
 	project.POST("/:id/menu", actionProject.AddMenuItem)
 	project.POST("/:id/menu/:item_id/toggle-expand", actionProject.ToggleExpandMenuItem)

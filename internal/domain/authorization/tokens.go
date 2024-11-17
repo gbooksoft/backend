@@ -96,10 +96,11 @@ func createTokens(db *sql.DB, userId, firstName, lastName string) (string, strin
 	}
 
 	_, err = db.Exec(`
-INSERT INTO auth_token (expired_at, access, refresh) VALUES (?, ?, ?)`,
+INSERT INTO auth_token (expired_at, access, refresh, refresh_expired_at) VALUES (?, ?, ?, ?)`,
 		atExp.Unix(),
 		accessTokenStr,
 		refreshTokenStr,
+		rtExp.Unix(),
 	)
 
 	if err != nil {

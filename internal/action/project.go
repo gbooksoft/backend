@@ -203,3 +203,27 @@ func (a *Project) ToggleExpandMenuItem(ctx *gin.Context) {
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 	return
 }
+
+func (a *Project) CanAccess(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+	projectId := ctx.Params.ByName("id")
+
+	has, err := a.service.UserCanAccessToProject(claims.Subject, projectId)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	if !has {
+		response.Json(ctx.Writer).StatusCode(http.StatusForbidden).Write()
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	return
+}

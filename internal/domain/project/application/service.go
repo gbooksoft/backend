@@ -145,3 +145,7 @@ func (s *Service) CollapseItem(userId string, projectId string, menuItemId strin
 
 	return nil
 }
+
+func (s *Service) UserCanAccessToProject(userId string, projectId string) (bool, error) {
+	return s.projectRepository.UserHasAccess(domain.UserId(uuid.MustParse(userId)), domain.ProjectId(uuid.MustParse(projectId)))
+}

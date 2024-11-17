@@ -39,3 +39,18 @@ func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error 
 
 	return nil
 }
+
+func (r *MySqlProjectRepository) UserHasAccess(userId domain.UserId, projectId domain.ProjectId) (bool, error) {
+	var exists sql.NullBool
+	err := r.Db.QueryRow("SELECT 1 FROM projects WHERE user_id = ? AND id = ?", userId.String(), projectId.String()).Scan(&exists)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
+}
