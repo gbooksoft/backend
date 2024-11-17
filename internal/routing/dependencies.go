@@ -31,6 +31,7 @@ func initializeDependencies() {
 			project_infrastructure.NewMySqlProjectRepository(dbPool),
 			project_infrastructure.NewMySqlMenuRepository(dbPool),
 			project_infrastructure.NewMySqlMenuReadModel(dbPool),
+			project_infrastructure.NewMySqlEditorRepository(dbPool),
 		),
 	)
 }

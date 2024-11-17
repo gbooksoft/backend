@@ -12,17 +12,20 @@ type Service struct {
 	projectRepository domain.ProjectRepository
 	menuRepository    domain.MenuRepository
 	menuReadModel     readmodel.MenuReadModel
+	editorRepository  domain.EditorRepository
 }
 
 func NewService(
 	projectRepository domain.ProjectRepository,
 	menuRepository domain.MenuRepository,
 	menuReadModel readmodel.MenuReadModel,
+	editorRepository domain.EditorRepository,
 ) *Service {
 	return &Service{
 		projectRepository: projectRepository,
 		menuRepository:    menuRepository,
 		menuReadModel:     menuReadModel,
+		editorRepository:  editorRepository,
 	}
 }
 
@@ -59,6 +62,14 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 	menu := domain.NewDefaultMenu(projectId)
 
 	err = s.menuRepository.AddMenu(tx, menu, nil)
+
+	if err != nil {
+		return "", err
+	}
+
+	editors := domain.NewEditorsFromMenu(menu)
+
+	err = s.editorRepository.AddMany(tx, editors)
 
 	if err != nil {
 		return "", err
@@ -110,6 +121,14 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 	}
 
 	err = s.menuRepository.Save(tx, projectUUid, menu)
+
+	if err != nil {
+		return err
+	}
+
+	editor := domain.NewEditor(newMenuItemUUid)
+
+	err = s.editorRepository.AddEditor(tx, editor)
 
 	if err != nil {
 		return err

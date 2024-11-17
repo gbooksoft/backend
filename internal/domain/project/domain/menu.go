@@ -23,6 +23,16 @@ type Menu struct {
 	Items []*MenuItem
 }
 
+func (m *Menu) findChildrenWithType(itemType MenuItemType) []*MenuItem {
+	for _, menuItem := range m.Items {
+		if menuItem.Type == itemType {
+			return menuItem.Children
+		}
+	}
+
+	return nil
+}
+
 func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) error {
 	_, ok := m.findItemById(newMenuItemId)
 	if ok {
