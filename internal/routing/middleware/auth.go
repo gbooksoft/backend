@@ -5,10 +5,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		time.Sleep(3 * time.Second)
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error_code": http.StatusUnauthorized, "error_message": "Authorization header missing"})
