@@ -121,3 +121,7 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 
 	return nil
 }
+
+func (s *Service) GetExpandedItems(userId string, projectId string) []string {
+	return s.menuReadModel.GetExpandedItems(userId, projectId)
+}

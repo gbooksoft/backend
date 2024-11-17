@@ -2,8 +2,10 @@ package infrastructure
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
+	"github.com/rs/zerolog/log"
 )
 
 type MySqlMenuReadModel struct {
@@ -50,4 +52,35 @@ ORDER BY FIELD(pmi.type, 'chapter', 'character', 'location'), pmi.created_at
 	return &readmodel.Menu{
 		Items: menuItems,
 	}, nil
+}
+
+func (r *MySqlMenuReadModel) GetExpandedItems(userId string, projectId string) []string {
+	query := `
+SELECT pmi.expanded_items 
+FROM project_menu_items_expanded pmi
+JOIN projects p on p.id = pmi.project_id
+WHERE pmi.project_id = ? AND p.user_id = ?
+LIMIT 1
+`
+	var expandedItems string
+	err := r.db.QueryRow(query, projectId, userId).Scan(&expandedItems)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []string{}
+		}
+
+		log.Error().Err(err).Msg("Failed to get expanded items")
+		return []string{}
+	}
+
+	var result []string
+	err = json.Unmarshal([]byte(expandedItems), &result)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to get expanded items")
+		return []string{}
+	}
+
+	return result
 }

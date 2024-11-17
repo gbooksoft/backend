@@ -63,7 +63,8 @@ func (a *Project) Create(ctx *gin.Context) {
 }
 
 type getProjectMenuResponse struct {
-	Menu []getProjectMenuItemResponse `json:"menu"`
+	Menu          []getProjectMenuItemResponse `json:"menu"`
+	ExpandedItems []string                     `json:"expanded_items"`
 }
 
 type getProjectMenuItemResponse struct {
@@ -92,7 +93,8 @@ func (a *Project) GetProjectMenu(ctx *gin.Context) {
 	responseItems := a.groupMenuByParentId(menu)
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getProjectMenuResponse{
-		Menu: responseItems,
+		Menu:          responseItems,
+		ExpandedItems: a.service.GetExpandedItems(claims.Subject, projectId),
 	}).Write()
 
 	return
