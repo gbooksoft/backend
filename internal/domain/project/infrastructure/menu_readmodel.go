@@ -54,7 +54,7 @@ ORDER BY FIELD(pmi.type, 'chapter', 'character', 'location'), pmi.created_at
 	}, nil
 }
 
-func (r *MySqlMenuReadModel) GetExpandedItems(userId string, projectId string) []string {
+func (r *MySqlMenuReadModel) GetExpandedItems(userId string, projectId string) ([]string, error) {
 	query := `
 SELECT pmi.expanded_items 
 FROM project_menu_items_expanded pmi
@@ -67,11 +67,11 @@ LIMIT 1
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return []string{}
+			return []string{}, nil
 		}
 
 		log.Error().Err(err).Msg("Failed to get expanded items")
-		return []string{}
+		return []string{}, err
 	}
 
 	var result []string
@@ -79,8 +79,80 @@ LIMIT 1
 
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to get expanded items")
-		return []string{}
+		return []string{}, err
 	}
 
-	return result
+	return result, nil
+}
+
+func (r *MySqlMenuReadModel) ExpandItem(userId string, projectId string, menuItemId string) error {
+	items, err := r.GetExpandedItems(userId, projectId)
+
+	if err != nil {
+		return err
+	}
+
+	shouldInsert := len(items) == 0
+
+	items = append(items, menuItemId)
+
+	bytes, err := json.Marshal(items)
+
+	if err != nil {
+		return err
+	}
+
+	var dbErr error
+	if shouldInsert {
+		_, dbErr = r.db.Exec("INSERT INTO project_menu_items_expanded (project_id, expanded_items) VALUES (?, ?)", projectId, string(bytes))
+	} else {
+		_, dbErr = r.db.Exec("UPDATE project_menu_items_expanded SET expanded_items = ? WHERE project_id = ?", string(bytes), projectId)
+	}
+
+	if dbErr != nil {
+		return dbErr
+	}
+
+	return nil
+}
+
+func (r *MySqlMenuReadModel) CollapseItem(userId string, projectId string, menuItemId string) error {
+	items, err := r.GetExpandedItems(userId, projectId)
+
+	if err != nil {
+		return err
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	var newSlice []string
+	for _, v := range items {
+		if v != menuItemId {
+			newSlice = append(newSlice, v)
+		}
+	}
+
+	if len(newSlice) == 0 {
+		_, err = r.db.Exec("DELETE FROM project_menu_items_expanded WHERE project_id = ?", projectId)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	bytes, err := json.Marshal(newSlice)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec("UPDATE project_menu_items_expanded SET expanded_items = ? WHERE project_id = ?", string(bytes), projectId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

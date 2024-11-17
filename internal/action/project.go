@@ -91,10 +91,11 @@ func (a *Project) GetProjectMenu(ctx *gin.Context) {
 	}
 
 	responseItems := a.groupMenuByParentId(menu)
+	expandedItems, _ := a.service.GetExpandedItems(claims.Subject, projectId)
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getProjectMenuResponse{
 		Menu:          responseItems,
-		ExpandedItems: a.service.GetExpandedItems(claims.Subject, projectId),
+		ExpandedItems: expandedItems,
 	}).Write()
 
 	return
@@ -167,4 +168,38 @@ func (a *Project) groupMenuByParentId(menu *readmodel.Menu) []getProjectMenuItem
 	}
 
 	return []getProjectMenuItemResponse{}
+}
+
+type toggleExpandRequest struct {
+	Expand bool `json:"expand" validate:"required"`
+}
+
+func (a *Project) ToggleExpandMenuItem(ctx *gin.Context) {
+	var req toggleExpandRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+	projectId := ctx.Params.ByName("id")
+	menuItemId := ctx.Params.ByName("item_id")
+
+	if req.Expand {
+		err = a.service.ExpandItem(claims.Subject, projectId, menuItemId)
+	} else {
+		err = a.service.CollapseItem(claims.Subject, projectId, menuItemId)
+	}
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	return
 }

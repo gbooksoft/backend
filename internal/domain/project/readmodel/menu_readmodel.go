@@ -13,5 +13,7 @@ type MenuItem struct {
 
 type MenuReadModel interface {
 	GetByUserIdAndProjectId(userId, projectId string) (*Menu, error)
-	GetExpandedItems(userId string, projectId string) []string
+	GetExpandedItems(userId string, projectId string) ([]string, error)
+	ExpandItem(userId string, projectId string, menuItemId string) error
+	CollapseItem(userId string, projectId string, menuItemId string) error
 }

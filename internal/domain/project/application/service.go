@@ -122,6 +122,26 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 	return nil
 }
 
-func (s *Service) GetExpandedItems(userId string, projectId string) []string {
+func (s *Service) GetExpandedItems(userId string, projectId string) ([]string, error) {
 	return s.menuReadModel.GetExpandedItems(userId, projectId)
+}
+
+func (s *Service) ExpandItem(userId string, projectId string, menuItemId string) error {
+	err := s.menuReadModel.ExpandItem(userId, projectId, menuItemId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) CollapseItem(userId string, projectId string, menuItemId string) error {
+	err := s.menuReadModel.CollapseItem(userId, projectId, menuItemId)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
