@@ -272,3 +272,42 @@ func (a *Project) UpdateMenuItem(ctx *gin.Context) {
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
+
+type saveEditorStateRequest struct {
+	EditorState string `json:"editor_state" validate:"required"`
+}
+
+func (a *Project) SaveEditorState(ctx *gin.Context) {
+	var req saveEditorStateRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+	menuItemId := ctx.Params.ByName("item_id")
+
+	err = a.service.SaveEditorState(claims.Subject, projectId, menuItemId, req.EditorState)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+}

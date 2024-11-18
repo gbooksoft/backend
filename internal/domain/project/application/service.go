@@ -206,3 +206,36 @@ func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId str
 
 	return nil
 }
+
+func (s *Service) SaveEditorState(userId, projectId, menuItemId, editorState string) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
+
+	tx, err := s.editorRepository.BeginTransaction(context.TODO())
+
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	editor, err := s.editorRepository.FindEditor(tx, userUUid, projectUUid, menuItemUuid)
+
+	if err != nil {
+		return err
+	}
+
+	editor.EditorState = &editorState
+
+	err = s.editorRepository.Save(tx, editor)
+
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
