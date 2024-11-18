@@ -15,4 +15,5 @@ func projectRoutes(e *gin.Engine) {
 	project.GET("/:id/menu", actionProject.GetProjectMenu)
 	project.POST("/:id/menu", actionProject.AddMenuItem)
 	project.POST("/:id/menu/:item_id/toggle-expand", actionProject.ToggleExpandMenuItem)
+	project.POST("/:id/menu/:item_id", actionProject.UpdateMenuItem)
 }

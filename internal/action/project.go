@@ -122,9 +122,15 @@ func (a *Project) AddMenuItem(ctx *gin.Context) {
 		return
 	}
 
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
 	projectId := ctx.Params.ByName("id")
 
-	err = a.service.AddMenuItem(req.Id, projectId, req.ParentId)
+	err = a.service.AddMenuItem(req.Id, claims.Subject, projectId, req.ParentId)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)
@@ -226,4 +232,43 @@ func (a *Project) CanAccess(ctx *gin.Context) {
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 	return
+}
+
+type updateMenuItemRequest struct {
+	Title string `json:"title" validate:"required,max=255"`
+}
+
+func (a *Project) UpdateMenuItem(ctx *gin.Context) {
+	var req updateMenuItemRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+	menuItemId := ctx.Params.ByName("item_id")
+
+	err = a.service.UpdateMenuItem(claims.Subject, projectId, menuItemId, req.Title)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }

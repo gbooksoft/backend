@@ -28,11 +28,14 @@ func (r *MySqlMenuRepository) AddMenu(tx *sql.Tx, menu *domain.Menu) error {
 	return nil
 }
 
-func (r *MySqlMenuRepository) FindByProjectId(tx *sql.Tx, projectId domain.ProjectId) (*domain.Menu, error) {
+func (r *MySqlMenuRepository) FindByProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Menu, error) {
 	query := `
-SELECT id, project_id, title, type, parent_id FROM project_menu_items WHERE project_id = ?
+SELECT pmi.id, pmi.project_id, pmi.title, pmi.type, pmi.parent_id
+FROM project_menu_items pmi 
+JOIN projects p ON pmi.project_id = p.id
+WHERE pmi.project_id = ? AND p.user_id = ?
 `
-	rows, err := tx.Query(query, projectId.String())
+	rows, err := tx.Query(query, projectId.String(), userId.String())
 
 	if err != nil {
 		return nil, err
@@ -84,8 +87,8 @@ SELECT id, project_id, title, type, parent_id FROM project_menu_items WHERE proj
 	}, nil
 }
 
-func (r *MySqlMenuRepository) Save(tx *sql.Tx, projectId domain.ProjectId, newMenu *domain.Menu) error {
-	currDbMenu, err := r.FindByProjectId(tx, projectId)
+func (r *MySqlMenuRepository) Save(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId, newMenu *domain.Menu) error {
+	currDbMenu, err := r.FindByProjectId(tx, userId, projectId)
 
 	if err != nil {
 		return err
@@ -117,7 +120,7 @@ func (r *MySqlMenuRepository) Save(tx *sql.Tx, projectId domain.ProjectId, newMe
 			if existingItem.Title != newItem.Title {
 				_, err := tx.Exec(
 					"UPDATE project_menu_items SET title = ? WHERE id = ?",
-					newItem.Type, newItem.Id.String(),
+					newItem.Title, newItem.Id.String(),
 				)
 				if err != nil {
 					return fmt.Errorf("error updating item with id %s: %w", newItem.Id, err)

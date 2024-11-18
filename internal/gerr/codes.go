@@ -37,4 +37,5 @@ const (
 	ProjectAlreadyExists
 	ProjectMenuItemAlreadyExists
 	ProjectMenuParentItemNotFound
+	ProjectMenuItemNotFound
 )

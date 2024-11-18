@@ -96,10 +96,11 @@ func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Me
 	return menu, nil
 }
 
-func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
+func (s *Service) AddMenuItem(newMenuItemId, userId, projectId, parentId string) error {
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
 	newMenuItemUUid := domain.MenuItemId(uuid.MustParse(newMenuItemId))
 	parentUUid := domain.MenuItemId(uuid.MustParse(parentId))
+	userUUid := domain.UserId(uuid.MustParse(userId))
 
 	tx, err := s.menuRepository.BeginTransaction(context.TODO())
 
@@ -108,30 +109,32 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 	}
 	defer tx.Rollback()
 
-	menu, err := s.menuRepository.FindByProjectId(tx, projectUUid)
+	menu, err := s.menuRepository.FindByProjectId(tx, userUUid, projectUUid)
 
 	if err != nil {
 		return err
 	}
 
-	err = menu.AddNewItem(newMenuItemUUid, parentUUid)
+	newMenuItem, err := menu.AddNewItem(newMenuItemUUid, parentUUid)
 
 	if err != nil {
 		return err
 	}
 
-	err = s.menuRepository.Save(tx, projectUUid, menu)
+	err = s.menuRepository.Save(tx, userUUid, projectUUid, menu)
 
 	if err != nil {
 		return err
 	}
 
-	editor := domain.NewEditor(newMenuItemUUid)
+	if newMenuItem.Type == domain.Chapter {
+		editor := domain.NewEditor(newMenuItemUUid)
 
-	err = s.editorRepository.AddEditor(tx, editor)
+		err = s.editorRepository.AddEditor(tx, editor)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -167,4 +170,39 @@ func (s *Service) CollapseItem(userId string, projectId string, menuItemId strin
 
 func (s *Service) UserCanAccessToProject(userId string, projectId string) (bool, error) {
 	return s.projectRepository.UserHasAccess(domain.UserId(uuid.MustParse(userId)), domain.ProjectId(uuid.MustParse(projectId)))
+}
+
+func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId string, title string) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
+
+	tx, err := s.menuRepository.BeginTransaction(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	menu, err := s.menuRepository.FindByProjectId(tx, userUUid, projectUUid)
+	if err != nil {
+		return err
+	}
+
+	err = menu.UpdateItemTitle(menuItemUuid, title)
+
+	if err != nil {
+		return err
+	}
+
+	err = s.menuRepository.Save(tx, userUUid, projectUUid, menu)
+
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
