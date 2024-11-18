@@ -34,16 +34,16 @@ func (m *Menu) findChildrenWithType(itemType MenuItemType) []*MenuItem {
 	return result
 }
 
-func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) error {
+func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*MenuItem, error) {
 	_, ok := m.findItemById(newMenuItemId)
 	if ok {
-		return gerr.NewBusinessLogicErr("Menu item already exists", gerr.ProjectMenuItemAlreadyExists, nil)
+		return nil, gerr.NewBusinessLogicErr("Menu item already exists", gerr.ProjectMenuItemAlreadyExists, nil)
 	}
 
 	item, ok := m.findItemById(parentItemId)
 
 	if !ok {
-		return gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound, nil)
+		return nil, gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound, nil)
 	}
 
 	newItem := &MenuItem{
@@ -56,7 +56,7 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) err
 
 	m.Items = append(m.Items, newItem)
 
-	return nil
+	return newItem, nil
 }
 
 func (m *Menu) findItemById(id MenuItemId) (*MenuItem, bool) {

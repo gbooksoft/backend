@@ -114,7 +114,7 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 		return err
 	}
 
-	err = menu.AddNewItem(newMenuItemUUid, parentUUid)
+	newMenuItem, err := menu.AddNewItem(newMenuItemUUid, parentUUid)
 
 	if err != nil {
 		return err
@@ -126,12 +126,14 @@ func (s *Service) AddMenuItem(newMenuItemId, projectId, parentId string) error {
 		return err
 	}
 
-	editor := domain.NewEditor(newMenuItemUUid)
+	if newMenuItem.Type == domain.Chapter {
+		editor := domain.NewEditor(newMenuItemUUid)
 
-	err = s.editorRepository.AddEditor(tx, editor)
+		err = s.editorRepository.AddEditor(tx, editor)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
