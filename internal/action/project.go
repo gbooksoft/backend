@@ -49,8 +49,14 @@ func (a *Project) Create(ctx *gin.Context) {
 		return
 	}
 
-	projectId, err := a.service.CreateProject(claims.Subject, req.Title)
+	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, req.Title)
 
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	err = a.service.ExpandItem(claims.Subject, projectId, itemIdToExpand)
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)
 		return
@@ -240,7 +246,8 @@ func (a *Project) CanAccess(ctx *gin.Context) {
 }
 
 type updateMenuItemRequest struct {
-	Title string `json:"title" validate:"required,max=255"`
+	Title    string `json:"title" validate:"max=255"`
+	Selected bool   `json:"selected" validate:"boolean"`
 }
 
 func (a *Project) UpdateMenuItem(ctx *gin.Context) {
@@ -268,7 +275,7 @@ func (a *Project) UpdateMenuItem(ctx *gin.Context) {
 	projectId := ctx.Params.ByName("id")
 	menuItemId := ctx.Params.ByName("item_id")
 
-	err = a.service.UpdateMenuItem(claims.Subject, projectId, menuItemId, req.Title)
+	err = a.service.UpdateMenuItem(claims.Subject, projectId, menuItemId, req.Title, req.Selected)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)

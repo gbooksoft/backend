@@ -81,15 +81,26 @@ func (m *Menu) UpdateItemTitle(itemUuid MenuItemId, title string) error {
 	return nil
 }
 
+func (m *Menu) SelectItem(itemUuid MenuItemId) {
+	for _, item := range m.Items {
+		if item.Id == itemUuid {
+			item.Selected = true
+		} else {
+			item.Selected = false
+		}
+	}
+}
+
 type MenuItem struct {
 	Id        MenuItemId
 	ProjectId ProjectId
 	Title     string
 	Type      MenuItemType
 	ParentId  *MenuItemId
+	Selected  bool
 }
 
-func NewDefaultMenu(projectId ProjectId) *Menu {
+func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 	chapterParentId := MenuItemId(uuid.New())
 	return &Menu{
 		Items: []*MenuItem{
@@ -117,7 +128,8 @@ func NewDefaultMenu(projectId ProjectId) *Menu {
 				Title:     "Глава 1",
 				Type:      Chapter,
 				ParentId:  &chapterParentId,
+				Selected:  true,
 			},
 		},
-	}
+	}, chapterParentId
 }

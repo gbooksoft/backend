@@ -30,7 +30,7 @@ func (r *MySqlMenuRepository) AddMenu(tx *sql.Tx, menu *domain.Menu) error {
 
 func (r *MySqlMenuRepository) FindByProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Menu, error) {
 	query := `
-SELECT pmi.id, pmi.project_id, pmi.title, pmi.type, pmi.parent_id
+SELECT pmi.id, pmi.project_id, pmi.title, pmi.type, pmi.parent_id, pmi.is_selected
 FROM project_menu_items pmi 
 JOIN projects p ON pmi.project_id = p.id
 WHERE pmi.project_id = ? AND p.user_id = ?
@@ -50,6 +50,7 @@ WHERE pmi.project_id = ? AND p.user_id = ?
 		var itemTitle string
 		var itemType string
 		var itemParentId sql.NullString
+		var itemIsSelected uint8
 
 		err := rows.Scan(
 			&itemId,
@@ -57,6 +58,7 @@ WHERE pmi.project_id = ? AND p.user_id = ?
 			&itemTitle,
 			&itemType,
 			&itemParentId,
+			&itemIsSelected,
 		)
 
 		if err != nil {
@@ -73,6 +75,10 @@ WHERE pmi.project_id = ? AND p.user_id = ?
 			item.ParentId = &pId
 		} else {
 			item.ParentId = nil
+		}
+
+		if itemIsSelected == 1 {
+			item.Selected = true
 		}
 
 		itemsResult = append(itemsResult, item)
@@ -117,10 +123,14 @@ func (r *MySqlMenuRepository) Save(tx *sql.Tx, userId domain.UserId, projectId d
 
 	for _, newItem := range newMenu.Items {
 		if existingItem, found := existingItems[newItem.Id.String()]; found {
-			if existingItem.Title != newItem.Title {
+			if existingItem.Title != newItem.Title || existingItem.Selected != newItem.Selected {
+				var isSelected uint8
+				if newItem.Selected {
+					isSelected = 1
+				}
 				_, err := tx.Exec(
-					"UPDATE project_menu_items SET title = ? WHERE id = ?",
-					newItem.Title, newItem.Id.String(),
+					"UPDATE project_menu_items SET title = ?, is_selected = ? WHERE id = ?",
+					newItem.Title, isSelected, newItem.Id.String(),
 				)
 				if err != nil {
 					return fmt.Errorf("error updating item with id %s: %w", newItem.Id, err)
@@ -152,13 +162,19 @@ func (r *MySqlMenuRepository) addMenuItem(tx *sql.Tx, menuItem *domain.MenuItem)
 		}
 	}
 
+	var isSelected uint8
+	if menuItem.Selected {
+		isSelected = 1
+	}
+
 	_, err := tx.Exec(
-		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id) VALUES (?, ?, ?, ?, ?)",
+		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id, is_selected) VALUES (?, ?, ?, ?, ?, ?)",
 		menuItem.Id.String(),
 		menuItem.ProjectId.String(),
 		menuItem.Title,
 		string(menuItem.Type),
 		parentId,
+		isSelected,
 	)
 
 	if err != nil {

@@ -32,11 +32,11 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateProject(userId string, title string) (string, error) {
+func (s *Service) CreateProject(userId string, title string) (string, string, error) {
 	tx, err := s.projectRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer tx.Rollback()
 
@@ -45,11 +45,11 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 	exists, err := s.projectRepository.ExistsByUserIdAndTitle(tx, userUuid, title)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if exists {
-		return "", gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists, nil)
+		return "", "", gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists, nil)
 	}
 
 	projectId := domain.ProjectId(s.projectRepository.GetNextId())
@@ -59,15 +59,15 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 	err = s.projectRepository.Add(tx, project)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	menu := domain.NewDefaultMenu(projectId)
+	menu, expandedItem := domain.NewDefaultMenu(projectId)
 
 	err = s.menuRepository.AddMenu(tx, menu)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	editors := domain.NewEditorsFromMenu(menu)
@@ -75,14 +75,14 @@ func (s *Service) CreateProject(userId string, title string) (string, error) {
 	err = s.editorRepository.AddMany(tx, editors)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	if err = tx.Commit(); err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return projectId.String(), nil
+	return projectId.String(), expandedItem.String(), nil
 }
 
 func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Menu, error) {
@@ -175,7 +175,7 @@ func (s *Service) UserCanAccessToProject(userId string, projectId string) (bool,
 	return s.projectRepository.UserHasAccess(domain.UserId(uuid.MustParse(userId)), domain.ProjectId(uuid.MustParse(projectId)))
 }
 
-func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId string, title string) error {
+func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId string, title string, setSelected bool) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
 	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
@@ -191,10 +191,16 @@ func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId str
 		return err
 	}
 
-	err = menu.UpdateItemTitle(menuItemUuid, title)
+	if len(title) > 0 {
+		err = menu.UpdateItemTitle(menuItemUuid, title)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
+	}
+
+	if setSelected {
+		menu.SelectItem(menuItemUuid)
 	}
 
 	err = s.menuRepository.Save(tx, userUUid, projectUUid, menu)

@@ -36,9 +36,14 @@ WHERE p.user_id = ? AND p.id = ?
 	result := make([]*readmodel.Editor, 0)
 
 	for rows.Next() {
+		var editorState sql.NullString
 		editor := &readmodel.Editor{}
-		if err := rows.Scan(&editor.EditorState, &editor.MenuItemId); err != nil {
+		if err := rows.Scan(&editorState, &editor.MenuItemId); err != nil {
 			return nil, err
+		}
+
+		if editorState.Valid {
+			editor.EditorState = editorState.String
 		}
 
 		result = append(result, editor)
