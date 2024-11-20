@@ -68,11 +68,12 @@ type getProjectMenuResponse struct {
 }
 
 type getProjectMenuItemResponse struct {
-	Id       string                       `json:"id"`
-	Title    string                       `json:"title"`
-	Type     string                       `json:"type"`
-	ParentId *string                      `json:"parent_id"`
-	Children []getProjectMenuItemResponse `json:"children"`
+	Id         string                       `json:"id"`
+	Title      string                       `json:"title"`
+	Type       string                       `json:"type"`
+	ParentId   *string                      `json:"parent_id"`
+	Children   []getProjectMenuItemResponse `json:"children"`
+	IsSelected bool                         `json:"is_selected"`
 }
 
 func (a *Project) GetProjectMenu(ctx *gin.Context) {
@@ -151,12 +152,16 @@ func (a *Project) groupMenuByParentId(menu *readmodel.Menu) []getProjectMenuItem
 			parentId = *item.ParentId
 		}
 
-		grouped[parentId] = append(grouped[parentId], getProjectMenuItemResponse{
-			Id:       item.Id,
-			Title:    item.Title,
-			Type:     item.ItemType,
-			ParentId: item.ParentId,
-			Children: nil})
+		menuItem := getProjectMenuItemResponse{
+			Id:         item.Id,
+			Title:      item.Title,
+			Type:       item.ItemType,
+			ParentId:   item.ParentId,
+			Children:   nil,
+			IsSelected: item.IsSelected,
+		}
+
+		grouped[parentId] = append(grouped[parentId], menuItem)
 	}
 
 	for parentId, children := range grouped {

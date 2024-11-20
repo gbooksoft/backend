@@ -5,10 +5,11 @@ type Menu struct {
 }
 
 type MenuItem struct {
-	Id       string
-	Title    string
-	ItemType string
-	ParentId *string
+	Id         string
+	Title      string
+	ItemType   string
+	ParentId   *string
+	IsSelected bool
 }
 
 type MenuReadModel interface {
