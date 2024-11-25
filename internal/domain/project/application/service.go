@@ -263,3 +263,17 @@ func (s *Service) GetAllProjects(userId string) ([]readmodel.Project, error) {
 func (s *Service) GetRecentProjects(userId string) ([]readmodel.Project, error) {
 	return s.projectReadModel.GetRecent(userId, 3)
 }
+
+func (s *Service) DeleteMenuItem(userId string, projectId string, menuItemId string) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
+
+	err := s.menuRepository.DeleteMenuItem(userUUid, projectUUid, menuItemUuid)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

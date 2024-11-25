@@ -285,6 +285,26 @@ func (a *Project) UpdateMenuItem(ctx *gin.Context) {
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
+func (a *Project) DeleteMenuItem(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+	menuItemId := ctx.Params.ByName("item_id")
+
+	err = a.service.DeleteMenuItem(claims.Subject, projectId, menuItemId)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+}
+
 type saveEditorStateRequest struct {
 	EditorState string `json:"editor_state" validate:"required"`
 }

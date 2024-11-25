@@ -148,6 +148,22 @@ func (r *MySqlMenuRepository) Save(tx *sql.Tx, userId domain.UserId, projectId d
 	return nil
 }
 
+func (r *MySqlMenuRepository) DeleteMenuItem(userId domain.UserId, projectId domain.ProjectId, menuItemId domain.MenuItemId) error {
+	query := `
+DELETE pmi
+FROM project_menu_items pmi
+JOIN projects p ON p.id = pmi.project_id
+WHERE p.id = ? AND p.user_id = ? AND pmi.id = ?
+`
+	_, err := r.Db.Exec(query, projectId.String(), userId.String(), menuItemId.String())
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *MySqlMenuRepository) addMenuItem(tx *sql.Tx, menuItem *domain.MenuItem) error {
 	var parentId sql.NullString
 	if menuItem.ParentId != nil {

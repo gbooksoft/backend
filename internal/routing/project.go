@@ -19,5 +19,6 @@ func projectRoutes(e *gin.Engine) {
 	project.GET("/:id/editors", actionProject.GetEditors)
 	project.POST("/:id/menu/:item_id/toggle-expand", actionProject.ToggleExpandMenuItem)
 	project.POST("/:id/menu/:item_id", actionProject.UpdateMenuItem)
+	project.DELETE("/:id/menu/:item_id", actionProject.DeleteMenuItem)
 	project.POST("/:id/editors/:item_id", actionProject.SaveEditorState)
 }

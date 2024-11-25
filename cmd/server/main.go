@@ -38,7 +38,7 @@ func main() {
 
 	e.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{os.Getenv("WEB_FRONT_FULL_DOMAIN")},
-		AllowMethods:     []string{"GET", "POST"},
+		AllowMethods:     []string{"GET", "POST", "DELETE"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
