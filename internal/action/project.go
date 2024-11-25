@@ -361,3 +361,70 @@ func (a *Project) GetEditors(ctx *gin.Context) {
 	}).Write()
 	return
 }
+
+type getAllResponse struct {
+	Items []getAllItemResponse `json:"projects"`
+}
+type getAllItemResponse struct {
+	Id          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+}
+
+func (a *Project) GetAll(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projects, err := a.service.GetAllProjects(claims.Subject)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	var result []getAllItemResponse
+	for _, item := range projects {
+		result = append(result, getAllItemResponse{
+			Id:          item.Id,
+			Title:       item.Title,
+			Description: item.Description,
+		})
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getAllResponse{
+		Items: result,
+	}).Write()
+	return
+}
+
+func (a *Project) GetRecent(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projects, err := a.service.GetRecentProjects(claims.Subject)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	var result []getAllItemResponse
+	for _, item := range projects {
+		result = append(result, getAllItemResponse{
+			Id:          item.Id,
+			Title:       item.Title,
+			Description: item.Description,
+		})
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getAllResponse{
+		Items: result,
+	}).Write()
+	return
+}

@@ -14,6 +14,7 @@ type Service struct {
 	menuReadModel     readmodel.MenuReadModel
 	editorRepository  domain.EditorRepository
 	editorReadModel   readmodel.EditorReadModel
+	projectReadModel  readmodel.ProjectReadModel
 }
 
 func NewService(
@@ -22,6 +23,7 @@ func NewService(
 	menuReadModel readmodel.MenuReadModel,
 	editorRepository domain.EditorRepository,
 	editorReadModel readmodel.EditorReadModel,
+	projectReadModel readmodel.ProjectReadModel,
 ) *Service {
 	return &Service{
 		projectRepository: projectRepository,
@@ -29,6 +31,7 @@ func NewService(
 		menuReadModel:     menuReadModel,
 		editorRepository:  editorRepository,
 		editorReadModel:   editorReadModel,
+		projectReadModel:  projectReadModel,
 	}
 }
 
@@ -249,6 +252,14 @@ func (s *Service) SaveEditorState(userId, projectId, menuItemId, editorState str
 	return nil
 }
 
-func (s *Service) FetchEditors(userId string, projectId string) ([]*readmodel.Editor, error) {
+func (s *Service) FetchEditors(userId string, projectId string) ([]readmodel.Editor, error) {
 	return s.editorReadModel.GetEditors(userId, projectId)
+}
+
+func (s *Service) GetAllProjects(userId string) ([]readmodel.Project, error) {
+	return s.projectReadModel.GetAll(userId)
+}
+
+func (s *Service) GetRecentProjects(userId string) ([]readmodel.Project, error) {
+	return s.projectReadModel.GetRecent(userId, 3)
 }

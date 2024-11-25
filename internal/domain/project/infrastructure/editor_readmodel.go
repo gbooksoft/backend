@@ -14,7 +14,7 @@ func NewMySqlEditorReadModel(db *sql.DB) *MySqlEditorReadModel {
 	return &MySqlEditorReadModel{db: db}
 }
 
-func (r *MySqlEditorReadModel) GetEditors(userId, projectId string) ([]*readmodel.Editor, error) {
+func (r *MySqlEditorReadModel) GetEditors(userId, projectId string) ([]readmodel.Editor, error) {
 	query := `
 SELECT pe.editor_state, pe.project_menu_id 
 FROM project_editors pe
@@ -33,11 +33,11 @@ WHERE p.user_id = ? AND p.id = ?
 	}
 	defer rows.Close()
 
-	result := make([]*readmodel.Editor, 0)
+	result := make([]readmodel.Editor, 0)
 
 	for rows.Next() {
 		var editorState sql.NullString
-		editor := &readmodel.Editor{}
+		editor := readmodel.Editor{}
 		if err := rows.Scan(&editorState, &editor.MenuItemId); err != nil {
 			return nil, err
 		}

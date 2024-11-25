@@ -11,6 +11,8 @@ func projectRoutes(e *gin.Engine) {
 	project.Use(middleware.AuthRequired())
 
 	project.POST("", actionProject.Create)
+	project.GET("", actionProject.GetAll)
+	project.GET("/recent", actionProject.GetRecent)
 	project.GET("/:id/access", actionProject.CanAccess)
 	project.GET("/:id/menu", actionProject.GetProjectMenu)
 	project.POST("/:id/menu", actionProject.AddMenuItem)

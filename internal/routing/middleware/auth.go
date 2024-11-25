@@ -3,12 +3,18 @@ package middleware
 import (
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gin-gonic/gin"
+	"math/rand/v2"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// todo: remove
+		a := int64(rand.IntN(1200-250) + 250)
+		time.Sleep(time.Duration(a) * time.Millisecond)
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error_code": http.StatusUnauthorized, "error_message": "Authorization header missing"})

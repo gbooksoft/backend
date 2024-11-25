@@ -6,5 +6,5 @@ type Editor struct {
 }
 
 type EditorReadModel interface {
-	GetEditors(userId, projectId string) ([]*Editor, error)
+	GetEditors(userId, projectId string) ([]Editor, error)
 }
