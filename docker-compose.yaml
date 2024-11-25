@@ -14,6 +14,7 @@ services:
       TZ: "UTC"  # Устанавливаем временную зону на UTC
     volumes:
       - ./dbdata:/var/lib/mysql/
+      - ./.docker/mysql/my1.cnf:/etc/mysql/my.cnf
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
     restart: always
