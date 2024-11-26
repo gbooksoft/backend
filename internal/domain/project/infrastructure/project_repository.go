@@ -31,7 +31,8 @@ func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(tx *sql.Tx, userId domai
 }
 
 func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error {
-	_, err := tx.Exec("INSERT INTO projects (id, user_id, title) VALUES (?, ?, ?)", project.Id.String(), project.UserId.String(), project.Title)
+	query := "INSERT INTO projects (id, user_id, title, description) VALUES (?, ?, ?, ?)"
+	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, project.Description)
 
 	if err != nil {
 		return err

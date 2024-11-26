@@ -20,11 +20,12 @@ func NewProject(service *application.Service) *Project {
 }
 
 type createProjectRequest struct {
-	Title string `json:"title" binding:"required" validate:"required,max=255"`
+	Title       string `json:"title" binding:"required" validate:"required,max=255"`
+	Description string `json:"description" binding:"required" validate:"required,max=255"`
 }
 
 type createProjectResponse struct {
-	Id string `json:"id"`
+	Id string `json:"project_id"`
 }
 
 func (a *Project) Create(ctx *gin.Context) {
@@ -49,7 +50,7 @@ func (a *Project) Create(ctx *gin.Context) {
 		return
 	}
 
-	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, req.Title)
+	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, req.Title, req.Description)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)

@@ -15,15 +15,17 @@ func (id ProjectId) String() string {
 }
 
 type Project struct {
-	Id     ProjectId
-	UserId UserId
-	Title  string
+	Id          ProjectId
+	UserId      UserId
+	Title       string
+	Description string
 }
 
-func NewProject(id ProjectId, userId UserId, title string) *Project {
+func NewProject(id ProjectId, userId UserId, title, description string) *Project {
 	return &Project{
-		Id:     id,
-		UserId: userId,
-		Title:  title,
+		Id:          id,
+		UserId:      userId,
+		Title:       title,
+		Description: description,
 	}
 }

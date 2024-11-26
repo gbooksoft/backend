@@ -35,7 +35,7 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateProject(userId string, title string) (string, string, error) {
+func (s *Service) CreateProject(userId string, title, description string) (string, string, error) {
 	tx, err := s.projectRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
@@ -57,7 +57,7 @@ func (s *Service) CreateProject(userId string, title string) (string, string, er
 
 	projectId := domain.ProjectId(s.projectRepository.GetNextId())
 
-	project := domain.NewProject(projectId, userUuid, title)
+	project := domain.NewProject(projectId, userUuid, title, description)
 
 	err = s.projectRepository.Add(tx, project)
 
