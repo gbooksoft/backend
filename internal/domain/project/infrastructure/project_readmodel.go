@@ -50,15 +50,16 @@ ORDER BY p.created_at DESC
 
 func (r *MySqlProjectReadModel) GetRecent(userId string, limit int) ([]readmodel.Project, error) {
 	query := `
-SELECT p.id, p.title, p.description
+SELECT p.id, p.title, p.description, MAX(pe.updated_at) AS last_updated
 FROM projects p
 JOIN project_menu_items pmi ON pmi.project_id = p.id
 JOIN project_editors pe ON pe.project_menu_id = pmi.id
 WHERE p.user_id = ?
-GROUP BY p.id
-ORDER BY pe.updated_at DESC LIMIT 3;
+GROUP BY p.id, p.title, p.description
+ORDER BY last_updated DESC
+LIMIT ?
 `
-	rows, err := r.db.Query(query, userId)
+	rows, err := r.db.Query(query, userId, limit)
 
 	if err != nil {
 		return nil, err
@@ -72,7 +73,8 @@ ORDER BY pe.updated_at DESC LIMIT 3;
 		var project readmodel.Project
 
 		var pDesc sql.NullString
-		if err := rows.Scan(&project.Id, &project.Title, &pDesc); err != nil {
+		var pUpdateAt sql.NullString
+		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &pUpdateAt); err != nil {
 			return nil, err
 		}
 
