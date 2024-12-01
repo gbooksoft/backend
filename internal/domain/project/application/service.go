@@ -9,12 +9,14 @@ import (
 )
 
 type Service struct {
-	projectRepository domain.ProjectRepository
-	menuRepository    domain.MenuRepository
-	menuReadModel     readmodel.MenuReadModel
-	editorRepository  domain.EditorRepository
-	editorReadModel   readmodel.EditorReadModel
-	projectReadModel  readmodel.ProjectReadModel
+	projectRepository   domain.ProjectRepository
+	menuRepository      domain.MenuRepository
+	menuReadModel       readmodel.MenuReadModel
+	editorRepository    domain.EditorRepository
+	editorReadModel     readmodel.EditorReadModel
+	projectReadModel    readmodel.ProjectReadModel
+	characterRepository domain.CharacterRepository
+	characterReadModel  readmodel.CharacterReadModel
 }
 
 func NewService(
@@ -24,14 +26,18 @@ func NewService(
 	editorRepository domain.EditorRepository,
 	editorReadModel readmodel.EditorReadModel,
 	projectReadModel readmodel.ProjectReadModel,
+	characterRepository domain.CharacterRepository,
+	characterReadModel readmodel.CharacterReadModel,
 ) *Service {
 	return &Service{
-		projectRepository: projectRepository,
-		menuRepository:    menuRepository,
-		menuReadModel:     menuReadModel,
-		editorRepository:  editorRepository,
-		editorReadModel:   editorReadModel,
-		projectReadModel:  projectReadModel,
+		projectRepository:   projectRepository,
+		menuRepository:      menuRepository,
+		menuReadModel:       menuReadModel,
+		editorRepository:    editorRepository,
+		editorReadModel:     editorReadModel,
+		projectReadModel:    projectReadModel,
+		characterRepository: characterRepository,
+		characterReadModel:  characterReadModel,
 	}
 }
 
@@ -133,10 +139,20 @@ func (s *Service) AddMenuItem(newMenuItemId, userId, projectId, parentId string)
 		return err
 	}
 
-	if newMenuItem.Type == domain.Chapter {
+	if newMenuItem.Type == domain.TypeChapter {
 		editor := domain.NewEditor(newMenuItemUUid)
 
 		err = s.editorRepository.AddEditor(tx, editor)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if newMenuItem.Type == domain.TypeCharacter {
+		character := domain.NewCharacter(newMenuItemUUid)
+
+		err = s.characterRepository.AddCharacter(tx, character)
 
 		if err != nil {
 			return err
@@ -254,6 +270,10 @@ func (s *Service) SaveEditorState(userId, projectId, menuItemId, editorState str
 
 func (s *Service) FetchEditors(userId string, projectId string) ([]readmodel.Editor, error) {
 	return s.editorReadModel.GetEditors(userId, projectId)
+}
+
+func (s *Service) FetchCharacters(userId string, projectId string) ([]readmodel.Character, error) {
+	return s.characterReadModel.GetCharacters(userId, projectId)
 }
 
 func (s *Service) GetAllProjects(userId string) ([]readmodel.Project, error) {

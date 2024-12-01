@@ -8,9 +8,9 @@ import (
 type MenuItemType string
 
 const (
-	Chapter   MenuItemType = "chapter"
-	Character MenuItemType = "character"
-	Location  MenuItemType = "location"
+	TypeChapter   MenuItemType = "chapter"
+	TypeCharacter MenuItemType = "character"
+	TypeLocation  MenuItemType = "location"
 )
 
 type MenuItemId uuid.UUID
@@ -46,10 +46,20 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*M
 		return nil, gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound, nil)
 	}
 
+	title := "Unknown"
+
+	if item.Type == TypeCharacter {
+		title = "Character"
+	}
+
+	if item.Type == TypeLocation {
+		title = "Location"
+	}
+
 	newItem := &MenuItem{
 		Id:        newMenuItemId,
 		ProjectId: item.ProjectId,
-		Title:     "Unknown",
+		Title:     title,
 		Type:      item.Type,
 		ParentId:  &parentItemId,
 	}
@@ -108,25 +118,25 @@ func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 				Id:        chapterParentId,
 				ProjectId: projectId,
 				Title:     "Главы",
-				Type:      Chapter,
+				Type:      TypeChapter,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				Title:     "Персонажи",
-				Type:      Character,
+				Type:      TypeCharacter,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				Title:     "Локации",
-				Type:      Location,
+				Type:      TypeLocation,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				Title:     "Глава 1",
-				Type:      Chapter,
+				Type:      TypeChapter,
 				ParentId:  &chapterParentId,
 				Selected:  true,
 			},
