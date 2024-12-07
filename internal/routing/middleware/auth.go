@@ -12,7 +12,9 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// todo: remove
-		a := int64(rand.IntN(1200-250) + 250)
+		max := 800
+		min := 450
+		a := int64(rand.IntN(max-min) + min)
 		time.Sleep(time.Duration(a) * time.Millisecond)
 
 		authHeader := c.GetHeader("Authorization")

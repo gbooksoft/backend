@@ -37,16 +37,17 @@ WHERE p.user_id = ? AND p.id = ?
 	result := make([]readmodel.Character, 0)
 
 	for rows.Next() {
-		var attrs string
+		var attrs sql.NullString
 		character := readmodel.Character{}
 		if err := rows.Scan(&character.MenuItemId, &character.Name, &character.Description, &attrs); err != nil {
 			return nil, err
 		}
 
-		err := json.Unmarshal([]byte(attrs), &character.Attributes)
-
-		if err != nil {
-			return nil, err
+		if attrs.Valid {
+			err := json.Unmarshal([]byte(attrs.String), &character.Attributes)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		result = append(result, character)
