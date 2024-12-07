@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
@@ -502,5 +503,60 @@ func (a *Project) GetRecent(ctx *gin.Context) {
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getAllResponse{
 		Items: result,
 	}).Write()
+	return
+}
+
+type updateCharacterAttributeRequest struct {
+	Field string `json:"field"`
+	Value string `json:"value"`
+}
+
+type updateCharacterRequest struct {
+	Name        string                            `json:"name" validate:"required,max=255,min=1"`
+	Description string                            `json:"description" validate:"required,min=1,max=5000"`
+	Attributes  []updateCharacterAttributeRequest `json:"attributes"`
+}
+
+func (a *Project) UpdateCharacter(ctx *gin.Context) {
+	var req updateCharacterRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+	menuItemId := ctx.Params.ByName("item_id")
+
+	var charAttrs []application.CharacterAttribute
+	for _, attr := range req.Attributes {
+		charAttrs = append(charAttrs, application.CharacterAttribute{
+			Field: attr.Field,
+			Value: attr.Value,
+		})
+	}
+	err = a.service.UpdateCharacter(claims.Subject, projectId, menuItemId, req.Name, req.Description, charAttrs)
+
+	if err != nil {
+		fmt.Println(err)
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 	return
 }

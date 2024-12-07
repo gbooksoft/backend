@@ -297,3 +297,57 @@ func (s *Service) DeleteMenuItem(userId string, projectId string, menuItemId str
 
 	return nil
 }
+
+type CharacterAttribute struct {
+	Field string
+	Value string
+}
+
+func (s *Service) UpdateCharacter(
+	userId string,
+	projectId string,
+	menuItemId string,
+	name string,
+	description string,
+	attributes []CharacterAttribute,
+) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
+
+	tx, err := s.editorRepository.BeginTransaction(context.TODO())
+
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	character, err := s.characterRepository.FindCharacter(tx, userUUid, projectUUid, menuItemUuid)
+	if err != nil {
+		return err
+	}
+
+	character.Name = name
+	character.Description = description
+
+	var charAttrs []domain.Attribute
+	for _, attribute := range attributes {
+		charAttrs = append(charAttrs, domain.Attribute{
+			Field: attribute.Field,
+			Value: attribute.Value,
+		})
+	}
+	character.Attributes = charAttrs
+
+	err = s.characterRepository.Save(tx, character)
+
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
