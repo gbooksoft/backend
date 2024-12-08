@@ -440,15 +440,15 @@ func (a *Project) GetCharacters(ctx *gin.Context) {
 }
 
 type getAllResponse struct {
-	Items []getAllItemResponse `json:"projects"`
+	Items []projectItemResponse `json:"projects"`
 }
-type getAllItemResponse struct {
+type projectItemResponse struct {
 	Id          string `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
 }
 
-func (a *Project) GetAll(ctx *gin.Context) {
+func (a *Project) GetAllProjects(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
 		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
@@ -462,9 +462,9 @@ func (a *Project) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	var result []getAllItemResponse
+	var result []projectItemResponse
 	for _, item := range projects {
-		result = append(result, getAllItemResponse{
+		result = append(result, projectItemResponse{
 			Id:          item.Id,
 			Title:       item.Title,
 			Description: item.Description,
@@ -491,9 +491,9 @@ func (a *Project) GetRecent(ctx *gin.Context) {
 		return
 	}
 
-	var result []getAllItemResponse
+	var result []projectItemResponse
 	for _, item := range projects {
-		result = append(result, getAllItemResponse{
+		result = append(result, projectItemResponse{
 			Id:          item.Id,
 			Title:       item.Title,
 			Description: item.Description,
@@ -559,4 +559,27 @@ func (a *Project) UpdateCharacter(ctx *gin.Context) {
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 	return
+}
+
+func (a *Project) GetProject(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+
+	project, err := a.service.GetProject(claims.Subject, projectId)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(&projectItemResponse{
+		Id:          project.Id,
+		Title:       project.Title,
+		Description: project.Description,
+	}).Write()
 }

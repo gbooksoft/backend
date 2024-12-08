@@ -11,7 +11,7 @@ func projectRoutes(e *gin.Engine) {
 	project.Use(middleware.AuthRequired())
 
 	project.POST("", actionProject.Create)
-	project.GET("", actionProject.GetAll)
+	project.GET("", actionProject.GetAllProjects)
 
 	project.GET("/recent", actionProject.GetRecent)
 
@@ -28,4 +28,6 @@ func projectRoutes(e *gin.Engine) {
 
 	project.GET("/:id/characters", actionProject.GetCharacters)
 	project.POST("/:id/characters/:item_id", actionProject.UpdateCharacter)
+
+	project.GET("/:id", actionProject.GetProject)
 }

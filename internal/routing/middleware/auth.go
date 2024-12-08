@@ -12,8 +12,8 @@ import (
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// todo: remove
-		max := 800
-		min := 450
+		max := 450
+		min := 200
 		a := int64(rand.IntN(max-min) + min)
 		time.Sleep(time.Duration(a) * time.Millisecond)
 

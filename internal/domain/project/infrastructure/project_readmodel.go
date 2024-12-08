@@ -87,3 +87,19 @@ LIMIT ?
 
 	return projects, nil
 }
+
+func (r *MySqlProjectReadModel) GetById(userId string, projectId string) (readmodel.Project, error) {
+	query := `
+SELECT p.id, p.title, p.description
+FROM projects p
+WHERE p.user_id = ? AND p.id = ?
+`
+	row := r.db.QueryRow(query, userId, projectId)
+
+	var project readmodel.Project
+	if err := row.Scan(&project.Id, &project.Title, &project.Description); err != nil {
+		return readmodel.Project{}, err
+	}
+
+	return project, nil
+}

@@ -351,3 +351,7 @@ func (s *Service) UpdateCharacter(
 
 	return nil
 }
+
+func (s *Service) GetProject(userId string, projectId string) (readmodel.Project, error) {
+	return s.projectReadModel.GetById(userId, projectId)
+}
