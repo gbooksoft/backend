@@ -8,20 +8,13 @@ type Attribute struct {
 type Character struct {
 	MenuItemId  MenuItemId
 	Name        string
-	Description string
+	Description *string
 	Attributes  []Attribute
 }
 
 func NewCharacter(menuItemId MenuItemId) *Character {
 	return &Character{
-		MenuItemId:  menuItemId,
-		Name:        "Character",
-		Description: "Description...",
-		Attributes: []Attribute{
-			{
-				Field: "Возраст",
-				Value: "15",
-			},
-		},
+		MenuItemId: menuItemId,
+		Name:       "Имя персонажа",
 	}
 }

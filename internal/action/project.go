@@ -513,7 +513,7 @@ type updateCharacterAttributeRequest struct {
 
 type updateCharacterRequest struct {
 	Name        string                            `json:"name" validate:"required,max=255,min=1"`
-	Description string                            `json:"description" validate:"required,min=1,max=5000"`
+	Description *string                           `json:"description" validate:"max=5000,omitempty"`
 	Attributes  []updateCharacterAttributeRequest `json:"attributes"`
 }
 

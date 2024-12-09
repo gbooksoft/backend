@@ -27,7 +27,16 @@ INSERT INTO project_characters (project_menu_id, name, description, attributes) 
 		return err
 	}
 
-	_, err = tx.Exec(query, character.MenuItemId.String(), character.Name, character.Description, string(bytes))
+	desc := sql.NullString{
+		String: "",
+		Valid:  false,
+	}
+	if character.Description != nil {
+		desc.Valid = true
+		desc.String = *character.Description
+	}
+
+	_, err = tx.Exec(query, character.MenuItemId.String(), character.Name, desc, string(bytes))
 
 	if err != nil {
 		return err
@@ -47,7 +56,8 @@ WHERE p.user_id = ? AND p.id = ? AND pc.project_menu_id = ?
 	var char domain.Character
 	var projectMenuItemId string
 	var attrs sql.NullString
-	err := tx.QueryRow(query, userId.String(), projectId.String(), menuItemId.String()).Scan(&projectMenuItemId, &char.Name, &char.Description, &attrs)
+	var desc sql.NullString
+	err := tx.QueryRow(query, userId.String(), projectId.String(), menuItemId.String()).Scan(&projectMenuItemId, &char.Name, &desc, &attrs)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -65,6 +75,10 @@ WHERE p.user_id = ? AND p.id = ? AND pc.project_menu_id = ?
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if desc.Valid {
+		char.Description = &desc.String
 	}
 
 	return &char, nil
@@ -90,7 +104,16 @@ WHERE project_menu_id = ?
 		attrs.String = string(data)
 	}
 
-	_, err := tx.Exec(query, character.Name, character.Description, attrs, character.MenuItemId.String())
+	desc := sql.NullString{
+		String: "",
+		Valid:  false,
+	}
+	if character.Description != nil {
+		desc.Valid = true
+		desc.String = *character.Description
+	}
+
+	_, err := tx.Exec(query, character.Name, desc, attrs, character.MenuItemId.String())
 
 	if err != nil {
 		return err

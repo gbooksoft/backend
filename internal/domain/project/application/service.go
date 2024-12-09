@@ -308,7 +308,7 @@ func (s *Service) UpdateCharacter(
 	projectId string,
 	menuItemId string,
 	name string,
-	description string,
+	description *string,
 	attributes []CharacterAttribute,
 ) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
@@ -328,7 +328,9 @@ func (s *Service) UpdateCharacter(
 	}
 
 	character.Name = name
-	character.Description = description
+	if description != nil {
+		character.Description = description
+	}
 
 	var charAttrs []domain.Attribute
 	for _, attribute := range attributes {
