@@ -5,6 +5,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func init() {
+	middleware.RegisterLimit("GET", "/account/profile", 10)
+	middleware.RegisterLimit("POST", "/account/settings", 10)
+	middleware.RegisterLimit("POST", "/account/settings/password", 10)
+	middleware.RegisterLimit("POST", "/account/confirm-email-change", 10)
+}
+
 func accountRoutes(e *gin.Engine) {
 	account := e.Group("/account")
 	accountWithoutAuth := e.Group("/account")

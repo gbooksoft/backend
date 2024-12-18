@@ -38,9 +38,14 @@ WHERE p.user_id = ? AND p.id = ?
 
 	for rows.Next() {
 		var attrs sql.NullString
+		var desc sql.NullString
 		character := readmodel.Character{}
-		if err := rows.Scan(&character.MenuItemId, &character.Name, &character.Description, &attrs); err != nil {
+		if err := rows.Scan(&character.MenuItemId, &character.Name, &desc, &attrs); err != nil {
 			return nil, err
+		}
+
+		if desc.Valid {
+			character.Description = desc.String
 		}
 
 		if attrs.Valid {

@@ -28,3 +28,11 @@ services:
     ports:
       - "1025:1025"  # SMTP порт для отправки писем
       - "8025:8025"  # Веб-интерфейс для просмотра сообщений
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./.docker/redis_data:/data
+    command: [ "redis-server", "--appendonly", "yes" ]

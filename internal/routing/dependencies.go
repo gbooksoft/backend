@@ -36,6 +36,8 @@ func initializeDependencies() {
 			project_infrastructure.NewMySqlProjectReadModel(dbPool),
 			project_infrastructure.NewMySqlCharacterRepository(dbPool),
 			project_infrastructure.NewMySqlCharacterReadModel(dbPool),
+			project_infrastructure.NewMySqlLocationRepository(dbPool),
+			project_infrastructure.NewMySqlLocationReadModel(dbPool),
 		),
 	)
 }

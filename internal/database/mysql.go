@@ -11,7 +11,7 @@ import (
 
 var databasePool *sql.DB
 
-func SetUpConnection(ctx context.Context) (*sql.DB, error) {
+func SetUpMysqlConnection(ctx context.Context) (*sql.DB, error) {
 	db, err := sql.Open("mysql", os.Getenv("DB_DSN"))
 	if err != nil {
 		return nil, err

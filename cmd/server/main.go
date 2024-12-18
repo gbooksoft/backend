@@ -28,6 +28,8 @@ func main() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error loading .env file")
+	} else {
+		log.Info().Msg(".env file loaded")
 	}
 
 	if os.Getenv("GIN_MODE") == "release" {
@@ -45,10 +47,20 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	db, err := database.SetUpConnection(ctx)
+	db, err := database.SetUpMysqlConnection(ctx)
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("can not connect to database")
+	} else {
+		log.Info().Msg("connected to database")
+	}
+
+	_, err = database.SetUpRedisConnection(ctx)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("can not connect to redis")
+	} else {
+		log.Info().Msg("connected to redis")
 	}
 
 	routing.Add(e)
