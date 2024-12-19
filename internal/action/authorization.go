@@ -184,7 +184,6 @@ func (a *Authorize) setRefreshTokenCookie(ctx *gin.Context, refreshToken string)
 }
 
 func (a *Authorize) deleteRefreshTokenCookie(ctx *gin.Context) {
-
 	ctx.SetCookie(refreshTokenCookieName, "refreshToken", -1, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
 }
 
@@ -196,4 +195,25 @@ func (a *Authorize) getRefreshTokenFromCookie(ctx *gin.Context) (string, error) 
 	}
 
 	return rt, nil
+}
+
+type forgotPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+func (a *Authorize) ForgotPassword(ctx *gin.Context) {
+	var req forgotPasswordRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	err := a.service.SendForgotPasswordNotification(req.Email)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
