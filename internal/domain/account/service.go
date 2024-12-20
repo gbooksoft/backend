@@ -31,20 +31,21 @@ func NewService(db *sql.DB, emailFacade *email.Facade) *Service {
 	}
 }
 
-func (s *Service) GetUser(userId string) (string, string, string, error) {
+func (s *Service) GetUser(userId string) (string, string, string, string, error) {
 	var uEmail sql.NullString
 	var uFirstName sql.NullString
 	var uLastName sql.NullString
-	err := s.db.QueryRow("SELECT email, first_name, last_name FROM users WHERE id = ?", userId).Scan(&uEmail, &uFirstName, &uLastName)
+	var uAvatarPath sql.NullString
+	err := s.db.QueryRow("SELECT email, first_name, last_name, avatar_path FROM users WHERE id = ?", userId).Scan(&uEmail, &uFirstName, &uLastName, &uAvatarPath)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", "", "", gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound, err)
+			return "", "", "", "", gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound, err)
 		}
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 
-	return uEmail.String, uFirstName.String, uLastName.String, nil
+	return uEmail.String, uFirstName.String, uLastName.String, uAvatarPath.String, nil
 }
 
 type UpdateFields struct {

@@ -6,6 +6,7 @@ import (
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account"
 	"github.com/gbooksoft/backend/internal/domain/password"
+	"github.com/gbooksoft/backend/pkg/filesystem"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -22,6 +23,14 @@ func NewAccount(service *account.Service) *Account {
 	}
 }
 
+type getProfileResponse struct {
+	UserId    string `json:"user_id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	AvatarUrl string `json:"avatar_url"`
+}
+
 func (a *Account) GetProfile(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
@@ -29,19 +38,28 @@ func (a *Account) GetProfile(ctx *gin.Context) {
 		return
 	}
 
-	email, firstName, lastName, err := a.service.GetUser(claims.Subject)
+	email, firstName, lastName, avatarPath, err := a.service.GetUser(claims.Subject)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
 
-	ctx.JSON(200, gin.H{
-		"user_id":    claims.Subject,
-		"email":      email,
-		"first_name": firstName,
-		"last_name":  lastName,
-	})
+	url, err := filesystem.GetPresignedURL(avatarPath)
+
+	if err != nil {
+		// todo: default avatar?
+		url = ""
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(&getProfileResponse{
+		UserId:    claims.Subject,
+		Email:     email,
+		FirstName: firstName,
+		LastName:  lastName,
+		AvatarUrl: url,
+	}).Write()
+	return
 }
 
 type updateSettingsRequest struct {
