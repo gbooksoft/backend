@@ -1,15 +1,18 @@
 package account
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/filesystem"
 	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
+	"mime/multipart"
 	"net/url"
 	"os"
 	"strings"
@@ -45,15 +48,17 @@ func (s *Service) GetUser(userId string) (string, string, string, error) {
 }
 
 type UpdateFields struct {
-	Email     *string
-	FirstName *string
-	LastName  *string
+	Email      *string
+	FirstName  *string
+	LastName   *string
+	AvatarPath *string
 }
 
 type UpdatedFields struct {
-	Email     bool
-	FirstName bool
-	LastName  bool
+	Email      bool
+	FirstName  bool
+	LastName   bool
+	AvatarPath bool
 }
 
 func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error) {
@@ -73,6 +78,12 @@ func (s *Service) Update(userId string, data UpdateFields) (UpdatedFields, error
 		args = append(args, *data.LastName)
 		argIndex++
 		result.LastName = true
+	}
+	if data.AvatarPath != nil {
+		setClauses = append(setClauses, fmt.Sprintf("avatar_path = ?"))
+		args = append(args, *data.AvatarPath)
+		argIndex++
+		result.AvatarPath = true
 	}
 
 	tx, err := s.db.Begin()
@@ -338,6 +349,20 @@ func (s *Service) UpdatePassword(userId string, currentPassword string, newPassw
 	}
 
 	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) UploadAvatarToS3(file multipart.File, fileName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 1111*time.Second)
+	defer cancel()
+
+	err := filesystem.UploadMultipartFile(ctx, fileName, file)
+
+	if err != nil {
+		log.Error().Err(err).Msg("can not upload file")
 		return err
 	}
 

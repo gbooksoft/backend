@@ -2,3 +2,5 @@
 dbdata
 .env
 .docker/redis_data
+.docker/minio-data
+.docker/minio-config

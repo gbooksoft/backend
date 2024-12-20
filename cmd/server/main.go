@@ -63,6 +63,14 @@ func main() {
 		log.Info().Msg("connected to redis")
 	}
 
+	_, err = database.SetUpS3Connection(ctx)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("can not connect to s3")
+	} else {
+		log.Info().Msg("connected to s3")
+	}
+
 	routing.Add(e)
 
 	srv := &http.Server{

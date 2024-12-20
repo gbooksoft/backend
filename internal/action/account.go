@@ -2,12 +2,14 @@ package action
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
+	"path/filepath"
 )
 
 type Account struct {
@@ -44,14 +46,15 @@ func (a *Account) GetProfile(ctx *gin.Context) {
 
 type updateSettingsRequest struct {
 	Email     string `json:"email" validate:"omitempty,email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"first_name" validate:"omitempty"`
+	LastName  string `json:"last_name" validate:"omitempty"`
 }
 
 type updateSettingsResponse struct {
 	Email     bool `json:"email"`
 	FirstName bool `json:"first_name"`
 	LastName  bool `json:"last_name"`
+	AvatarUrl bool `json:"avatar_url"`
 }
 
 func (a *Account) UpdateSettings(ctx *gin.Context) {
@@ -62,7 +65,7 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 	}
 
 	var req updateSettingsRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
+	if err := ctx.ShouldBind(&req); err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
 		return
 	}
@@ -73,6 +76,16 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 
 	if err != nil {
 		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	header, err := ctx.FormFile("avatar")
+	if err != nil && !errors.Is(err, http.ErrMissingFile) {
+		response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(struct {
+			Error string `json:"error"`
+		}{
+			Error: "Failed to get avatar",
+		}).Write()
 		return
 	}
 
@@ -90,6 +103,46 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		settings.LastName = &req.LastName
 	}
 
+	if header != nil {
+		const maxFileSize = 2 << 20 // 2 MB
+		if header.Size > maxFileSize {
+			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(struct {
+				Error string `json:"error"`
+			}{
+				Error: fmt.Sprintf("Avatar file is too large, max %vMB", maxFileSize>>20),
+			}).Write()
+			return
+		}
+
+		file, err := header.Open()
+		if err != nil {
+			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(struct {
+				Error string `json:"error"`
+			}{
+				Error: "Failed to handle avatar",
+			}).Write()
+			return
+		}
+		defer file.Close()
+
+		fileExt := filepath.Ext(header.Filename)
+		s3FilePath := fmt.Sprintf("users/%s/avatar%s", claims.Subject, fileExt)
+
+		// Загрузка файла на S3
+		err = a.service.UploadAvatarToS3(file, s3FilePath)
+
+		if err != nil {
+			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(struct {
+				Error string `json:"error"`
+			}{
+				Error: "Failed to upload avatar",
+			}).Write()
+			return
+		}
+
+		settings.AvatarPath = &s3FilePath
+	}
+
 	updatedFields, err := a.service.Update(claims.Subject, settings)
 
 	if err != nil {
@@ -101,6 +154,7 @@ func (a *Account) UpdateSettings(ctx *gin.Context) {
 		Email:     updatedFields.Email,
 		FirstName: updatedFields.FirstName,
 		LastName:  updatedFields.LastName,
+		AvatarUrl: updatedFields.AvatarPath,
 	}).Write()
 	return
 }
