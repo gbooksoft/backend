@@ -15,7 +15,6 @@ const (
 	TypeAdditionalElements MenuItemType = "additional_elements"
 	TypeForeword           MenuItemType = "foreword"
 	TypeAfterword          MenuItemType = "afterword"
-	TypeAnnotation         MenuItemType = "annotation"
 	TypeMetadata           MenuItemType = "metadata"
 )
 
@@ -168,7 +167,7 @@ func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 			{
 				Id:        additionalElementsParentId,
 				ProjectId: projectId,
-				Title:     "Дополнительные элементы книги",
+				Title:     "Элементы книги",
 				Type:      TypeAdditionalElements,
 				Order:     4,
 			},
@@ -192,17 +191,9 @@ func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				ParentId:  &additionalElementsParentId,
-				Title:     "Аннотации",
-				Type:      TypeAnnotation,
-				Order:     3,
-			},
-			{
-				Id:        MenuItemId(uuid.New()),
-				ProjectId: projectId,
-				ParentId:  &additionalElementsParentId,
 				Title:     "Метаданные",
 				Type:      TypeMetadata,
-				Order:     4,
+				Order:     3,
 			},
 		},
 	}, chapterParentId
