@@ -12,7 +12,7 @@ func NewEditor(menuItemId MenuItemId) *Editor {
 }
 
 func NewEditorsFromMenu(menu *Menu) []*Editor {
-	items := menu.findChildrenWithType(TypeChapter)
+	items := menu.findItemsWithType(TypeChapter, TypeForeword, TypeAfterword)
 
 	editors := make([]*Editor, len(items))
 	for index, i := range items {

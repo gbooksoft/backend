@@ -3,6 +3,7 @@ package domain
 import (
 	"github.com/gbooksoft/backend/internal/gerr"
 	"github.com/google/uuid"
+	"slices"
 )
 
 type MenuItemType string
@@ -28,10 +29,10 @@ type Menu struct {
 	Items []*MenuItem
 }
 
-func (m *Menu) findChildrenWithType(itemType MenuItemType) []*MenuItem {
+func (m *Menu) findItemsWithType(itemTypes ...MenuItemType) []*MenuItem {
 	var result []*MenuItem
 	for _, menuItem := range m.Items {
-		if menuItem.Type == itemType && menuItem.ParentId != nil {
+		if slices.Contains(itemTypes, menuItem.Type) && menuItem.ParentId != nil {
 			result = append(result, menuItem)
 		}
 	}
