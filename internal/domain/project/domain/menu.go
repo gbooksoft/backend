@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/gbooksoft/backend/internal/gerr"
 	"github.com/google/uuid"
 	"slices"
@@ -51,14 +52,16 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*M
 		return nil, gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound, nil)
 	}
 
-	title := "Unknown"
+	var title string
 
-	if item.Type == TypeCharacter {
-		title = "Character"
-	}
-
-	if item.Type == TypeLocation {
-		title = "Location"
+	if item.Type == TypeChapter {
+		title = "Глава"
+	} else if item.Type == TypeCharacter {
+		title = "Персонаж"
+	} else if item.Type == TypeLocation {
+		title = "Локация"
+	} else {
+		return nil, gerr.NewBusinessLogicErr(fmt.Sprintf("can not add menu item to %s type", item.Type), gerr.ProjectCanNotAddMenuItemToType, nil)
 	}
 
 	newItem := &MenuItem{
