@@ -10,6 +10,7 @@ type MenuItem struct {
 	ItemType   string
 	ParentId   *string
 	IsSelected bool
+	Order      int
 }
 
 type MenuReadModel interface {

@@ -8,9 +8,14 @@ import (
 type MenuItemType string
 
 const (
-	TypeChapter   MenuItemType = "chapter"
-	TypeCharacter MenuItemType = "character"
-	TypeLocation  MenuItemType = "location"
+	TypeChapter            MenuItemType = "chapter"
+	TypeCharacter          MenuItemType = "character"
+	TypeLocation           MenuItemType = "location"
+	TypeAdditionalElements MenuItemType = "additional_elements"
+	TypeForeword           MenuItemType = "foreword"
+	TypeAfterword          MenuItemType = "afterword"
+	TypeAnnotation         MenuItemType = "annotation"
+	TypeMetadata           MenuItemType = "metadata"
 )
 
 type MenuItemId uuid.UUID
@@ -62,11 +67,23 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*M
 		Title:     title,
 		Type:      item.Type,
 		ParentId:  &parentItemId,
+		Order:     m.findLastOrderByParentId(parentItemId) + 1,
 	}
 
 	m.Items = append(m.Items, newItem)
 
 	return newItem, nil
+}
+
+func (m *Menu) findLastOrderByParentId(id MenuItemId) int {
+	maxOrder := 0
+	for _, item := range m.Items {
+		if item.ParentId != nil && *item.ParentId == id {
+			maxOrder = max(maxOrder, item.Order)
+		}
+	}
+
+	return maxOrder
 }
 
 func (m *Menu) findItemById(id MenuItemId) (*MenuItem, bool) {
@@ -108,10 +125,13 @@ type MenuItem struct {
 	Type      MenuItemType
 	ParentId  *MenuItemId
 	Selected  bool
+	Order     int
 }
 
 func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 	chapterParentId := MenuItemId(uuid.New())
+	additionalElementsParentId := MenuItemId(uuid.New())
+
 	return &Menu{
 		Items: []*MenuItem{
 			{
@@ -119,18 +139,21 @@ func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 				ProjectId: projectId,
 				Title:     "Главы",
 				Type:      TypeChapter,
+				Order:     1,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				Title:     "Персонажи",
 				Type:      TypeCharacter,
+				Order:     2,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
 				ProjectId: projectId,
 				Title:     "Локации",
 				Type:      TypeLocation,
+				Order:     3,
 			},
 			{
 				Id:        MenuItemId(uuid.New()),
@@ -139,6 +162,46 @@ func NewDefaultMenu(projectId ProjectId) (*Menu, MenuItemId) {
 				Type:      TypeChapter,
 				ParentId:  &chapterParentId,
 				Selected:  true,
+				Order:     1,
+			},
+			{
+				Id:        additionalElementsParentId,
+				ProjectId: projectId,
+				Title:     "Дополнительные элементы книги",
+				Type:      TypeAdditionalElements,
+				Order:     4,
+			},
+			{
+				Id:        MenuItemId(uuid.New()),
+				ProjectId: projectId,
+				ParentId:  &additionalElementsParentId,
+				Title:     "Предисловие",
+				Type:      TypeForeword,
+				Order:     1,
+			},
+			{
+				Id:        MenuItemId(uuid.New()),
+				ProjectId: projectId,
+				ParentId:  &additionalElementsParentId,
+				Title:     "Послесловие",
+				Type:      TypeAfterword,
+				Order:     2,
+			},
+			{
+				Id:        MenuItemId(uuid.New()),
+				ProjectId: projectId,
+				ParentId:  &additionalElementsParentId,
+				Title:     "Аннотации",
+				Type:      TypeAnnotation,
+				Order:     3,
+			},
+			{
+				Id:        MenuItemId(uuid.New()),
+				ProjectId: projectId,
+				ParentId:  &additionalElementsParentId,
+				Title:     "Метаданные",
+				Type:      TypeMetadata,
+				Order:     4,
 			},
 		},
 	}, chapterParentId

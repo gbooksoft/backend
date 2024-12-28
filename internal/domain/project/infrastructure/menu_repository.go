@@ -30,7 +30,7 @@ func (r *MySqlMenuRepository) AddMenu(tx *sql.Tx, menu *domain.Menu) error {
 
 func (r *MySqlMenuRepository) FindByProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Menu, error) {
 	query := `
-SELECT pmi.id, pmi.project_id, pmi.title, pmi.type, pmi.parent_id, pmi.is_selected
+SELECT pmi.id, pmi.project_id, pmi.title, pmi.type, pmi.parent_id, pmi.is_selected, pmi.order
 FROM project_menu_items pmi 
 JOIN projects p ON pmi.project_id = p.id
 WHERE pmi.project_id = ? AND p.user_id = ?
@@ -59,6 +59,7 @@ WHERE pmi.project_id = ? AND p.user_id = ?
 			&itemType,
 			&itemParentId,
 			&itemIsSelected,
+			&item.Order,
 		)
 
 		if err != nil {
@@ -184,13 +185,14 @@ func (r *MySqlMenuRepository) addMenuItem(tx *sql.Tx, menuItem *domain.MenuItem)
 	}
 
 	_, err := tx.Exec(
-		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id, is_selected) VALUES (?, ?, ?, ?, ?, ?)",
+		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id, is_selected, `order`	) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		menuItem.Id.String(),
 		menuItem.ProjectId.String(),
 		menuItem.Title,
 		string(menuItem.Type),
 		parentId,
 		isSelected,
+		menuItem.Order,
 	)
 
 	if err != nil {

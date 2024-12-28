@@ -18,7 +18,7 @@ func NewMySqlMenuReadModel(db *sql.DB) *MySqlMenuReadModel {
 
 func (r *MySqlMenuReadModel) GetByUserIdAndProjectId(userId, projectId string) (*readmodel.Menu, error) {
 	query := `
-SELECT pmi.id, pmi.title, pmi.type, pmi.parent_id, pmi.is_selected
+SELECT pmi.id, pmi.title, pmi.type, pmi.parent_id, pmi.is_selected, pmi.order
 FROM project_menu_items pmi
 JOIN projects p on p.id = pmi.project_id
 WHERE p.user_id = ? AND pmi.project_id = ? 
@@ -40,7 +40,7 @@ ORDER BY FIELD(pmi.type, 'chapter', 'character', 'location'), pmi.created_at
 	for rows.Next() {
 		var isSelected int8
 		var menuItem readmodel.MenuItem
-		if err := rows.Scan(&menuItem.Id, &menuItem.Title, &menuItem.ItemType, &menuItem.ParentId, &isSelected); err != nil {
+		if err := rows.Scan(&menuItem.Id, &menuItem.Title, &menuItem.ItemType, &menuItem.ParentId, &isSelected, &menuItem.Order); err != nil {
 			return nil, err
 		}
 		if isSelected == 1 {
