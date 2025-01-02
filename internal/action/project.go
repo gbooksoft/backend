@@ -175,7 +175,7 @@ func (a *Project) groupMenuByParentId(menu *readmodel.Menu) []getProjectMenuItem
 	}
 
 	for parentId, children := range grouped {
-		for childI, _ := range children {
+		for childI := range children {
 			curId := grouped[parentId][childI].Id
 
 			if itsChildren, ok := grouped[curId]; ok {
@@ -247,6 +247,87 @@ func (a *Project) CanAccess(ctx *gin.Context) {
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 	return
+}
+
+type metadataResponse struct {
+	Author   string `json:"author"`
+	Genre    string `json:"genre"`
+	Keywords string `json:"keywords"`
+	Language string `json:"language"`
+	Isbn     string `json:"isbn"`
+}
+
+func (a *Project) GetMetadata(ctx *gin.Context) {
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+
+	metadata, err := a.service.GetProjectMetadata(claims.Subject, projectId)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(&metadataResponse{
+		Author:   metadata.Author,
+		Genre:    metadata.Genre,
+		Keywords: metadata.Keywords,
+		Language: metadata.Language,
+		Isbn:     metadata.Isbn,
+	}).Write()
+}
+
+type metadataRequest struct {
+	Author   string `json:"author,omitempty"`
+	Genre    string `json:"genre,omitempty"`
+	Keywords string `json:"keywords,omitempty"`
+	Language string `json:"language,omitempty"`
+	Isbn     string `json:"isbn,omitempty"`
+}
+
+func (a *Project) CreateOrUpdateMetadata(ctx *gin.Context) {
+	var req metadataRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+
+	err = a.service.CreateOrUpdateMetadata(claims.Subject, projectId, application.MetadataFields{
+		Author:   req.Author,
+		Genre:    req.Genre,
+		Keywords: req.Keywords,
+		Language: req.Language,
+		Isbn:     req.Isbn,
+	})
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
 type updateMenuItemRequest struct {

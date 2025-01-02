@@ -29,3 +29,31 @@ func NewProject(id ProjectId, userId UserId, title, description string) *Project
 		Description: description,
 	}
 }
+
+type MetadataId uuid.UUID
+
+func (id MetadataId) String() string {
+	return uuid.UUID(id).String()
+}
+
+type Metadata struct {
+	Id        MetadataId
+	ProjectId ProjectId
+	Author    string
+	Genre     string
+	Keywords  string
+	Language  string
+	Isbn      string
+}
+
+func NewMetadata(id MetadataId, projectId ProjectId, author string, genre string, keywords string, language string, isbn string) *Metadata {
+	return &Metadata{
+		Id:        id,
+		ProjectId: projectId,
+		Author:    author,
+		Genre:     genre,
+		Keywords:  keywords,
+		Language:  language,
+		Isbn:      isbn,
+	}
+}

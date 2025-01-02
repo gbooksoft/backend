@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
 )
 
@@ -102,4 +103,47 @@ WHERE p.user_id = ? AND p.id = ?
 	}
 
 	return project, nil
+}
+
+func (r *MySqlProjectReadModel) GetMetadata(userId string, projectId string) (*readmodel.Metadata, error) {
+	query := `
+SELECT pm.author, pm.genre, pm.keywords, pm.language, pm.isbn
+FROM project_metadata  pm
+JOIN projects p ON p.id = pm.project_id
+WHERE p.user_id = ? AND p.id = ?
+`
+	row := r.db.QueryRow(query, userId, projectId)
+
+	metadata := &readmodel.Metadata{}
+	var author sql.NullString
+	var genre sql.NullString
+	var keywords sql.NullString
+	var language sql.NullString
+	var isbn sql.NullString
+
+	if err := row.Scan(&author, &genre, &keywords, &language, &isbn); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	if author.Valid {
+		metadata.Author = author.String
+	}
+	if genre.Valid {
+		metadata.Genre = genre.String
+	}
+	if keywords.Valid {
+		metadata.Keywords = keywords.String
+	}
+	if language.Valid {
+		metadata.Language = language.String
+	}
+	if isbn.Valid {
+		metadata.Isbn = isbn.String
+	}
+
+	return metadata, nil
 }

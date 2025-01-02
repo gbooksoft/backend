@@ -12,6 +12,7 @@ func init() {
 	middleware.RegisterLimit("GET", "/projects/recent", 10)
 
 	middleware.RegisterLimit("GET", "/projects/:id/access", 10)
+	middleware.RegisterLimit("GET", "/projects/:id/metadata", 10)
 
 	middleware.RegisterLimit("GET", "/projects/:id/menu", 10)
 	middleware.RegisterLimit("POST", "/projects/:id/menu", 10)
@@ -42,6 +43,8 @@ func projectRoutes(e *gin.Engine) {
 	project.GET("/recent", actionProject.GetRecent)
 
 	project.GET("/:id/access", actionProject.CanAccess)
+	project.GET("/:id/metadata", actionProject.GetMetadata)
+	project.POST("/:id/metadata", actionProject.CreateOrUpdateMetadata)
 
 	project.GET("/:id/menu", actionProject.GetProjectMenu)
 	project.POST("/:id/menu", actionProject.AddMenuItem)

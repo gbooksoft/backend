@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"database/sql"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
 	"github.com/gbooksoft/backend/internal/gerr"
@@ -417,4 +418,89 @@ func (s *Service) UpdateLocation(
 
 func (s *Service) GetProject(userId string, projectId string) (readmodel.Project, error) {
 	return s.projectReadModel.GetById(userId, projectId)
+}
+
+func (s *Service) GetProjectMetadata(userId string, projectId string) (*readmodel.Metadata, error) {
+	metadata, err := s.projectReadModel.GetMetadata(userId, projectId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if metadata == nil {
+		return nil, gerr.NewBusinessLogicErr("metadata not found", gerr.NotFound, nil)
+	}
+
+	return metadata, nil
+}
+
+type MetadataFields struct {
+	Author   string
+	Genre    string
+	Keywords string
+	Language string
+	Isbn     string
+}
+
+func (s *Service) CreateOrUpdateMetadata(userId string, projectId string, metadataFields MetadataFields) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+
+	tx, err := s.projectRepository.BeginTransaction(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	metadata, err := s.projectRepository.FindMetadataByUserIdAndProjectId(tx, userUUid, projectUUid)
+
+	if err != nil {
+		return err
+	}
+
+	var operationErr error
+	if metadata == nil {
+		operationErr = s.createMetadata(tx, projectUUid, metadataFields)
+	} else {
+		operationErr = s.updateMetadata(tx, metadata, metadataFields)
+	}
+
+	if operationErr != nil {
+		return operationErr
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) createMetadata(tx *sql.Tx, projectId domain.ProjectId, metadataFields MetadataFields) error {
+	metadataId := domain.MetadataId(s.projectRepository.GetNextId())
+
+	metadata := domain.NewMetadata(metadataId, projectId, metadataFields.Author, metadataFields.Genre, metadataFields.Keywords, metadataFields.Language, metadataFields.Isbn)
+
+	err := s.projectRepository.AddMetadata(tx, metadata)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) updateMetadata(tx *sql.Tx, metadata *domain.Metadata, metadataFields MetadataFields) error {
+	metadata.Author = metadataFields.Author
+	metadata.Genre = metadataFields.Genre
+	metadata.Keywords = metadataFields.Keywords
+	metadata.Language = metadataFields.Language
+	metadata.Isbn = metadataFields.Isbn
+
+	err := s.projectRepository.SaveMetadata(tx, metadata)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
