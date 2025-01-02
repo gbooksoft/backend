@@ -31,6 +31,21 @@ func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(tx *sql.Tx, userId domai
 	return false, err
 }
 
+func (r *MySqlProjectRepository) ExistsByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (bool, error) {
+	var exists sql.NullBool
+	err := tx.QueryRow("SELECT 1 FROM projects WHERE user_id = ? AND id = ?", userId.String(), projectId.String()).Scan(&exists)
+
+	if err == nil {
+		return true, nil
+	}
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	return false, err
+}
+
 func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error {
 	query := "INSERT INTO projects (id, user_id, title, description) VALUES (?, ?, ?, ?)"
 	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, project.Description)

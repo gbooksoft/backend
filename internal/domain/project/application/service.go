@@ -462,7 +462,7 @@ func (s *Service) CreateOrUpdateMetadata(userId string, projectId string, metada
 	if metadata == nil {
 		operationErr = s.createMetadata(tx, projectUUid, metadataFields)
 	} else {
-		operationErr = s.updateMetadata(tx, metadata, metadataFields)
+		operationErr = s.updateMetadata(tx, userUUid, metadata, metadataFields)
 	}
 
 	if operationErr != nil {
@@ -489,7 +489,11 @@ func (s *Service) createMetadata(tx *sql.Tx, projectId domain.ProjectId, metadat
 	return nil
 }
 
-func (s *Service) updateMetadata(tx *sql.Tx, metadata *domain.Metadata, metadataFields MetadataFields) error {
+func (s *Service) updateMetadata(tx *sql.Tx, userId domain.UserId, metadata *domain.Metadata, metadataFields MetadataFields) error {
+	if exists, err := s.projectRepository.ExistsByUserIdAndProjectId(tx, userId, metadata.ProjectId); err != nil || !exists {
+		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound, nil)
+	}
+
 	metadata.Author = metadataFields.Author
 	metadata.Genre = metadataFields.Genre
 	metadata.Keywords = metadataFields.Keywords

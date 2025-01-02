@@ -8,6 +8,7 @@ import (
 type ProjectRepository interface {
 	repository.BaseRepository
 	ExistsByUserIdAndTitle(tx *sql.Tx, userId UserId, title string) (bool, error)
+	ExistsByUserIdAndProjectId(tx *sql.Tx, userId UserId, projectId ProjectId) (bool, error)
 	Add(tx *sql.Tx, project *Project) error
 	UserHasAccess(userId UserId, projectId ProjectId) (bool, error)
 	FindMetadataByUserIdAndProjectId(tx *sql.Tx, userId UserId, projectId ProjectId) (*Metadata, error)
