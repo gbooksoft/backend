@@ -283,11 +283,11 @@ func (a *Project) GetMetadata(ctx *gin.Context) {
 }
 
 type metadataRequest struct {
-	Author   string `json:"author,omitempty"`
-	Genre    string `json:"genre,omitempty"`
-	Keywords string `json:"keywords,omitempty"`
-	Language string `json:"language,omitempty"`
-	Isbn     string `json:"isbn,omitempty"`
+	Author   string `json:"author,omitempty" validate:"omitempty,max=255"`
+	Genre    string `json:"genre,omitempty" validate:"omitempty,max=255"`
+	Keywords string `json:"keywords,omitempty" validate:"omitempty,max=255"`
+	Language string `json:"language,omitempty" validate:"omitempty,max=255"`
+	Isbn     string `json:"isbn,omitempty" validate:"omitempty,max=255"`
 }
 
 func (a *Project) CreateOrUpdateMetadata(ctx *gin.Context) {
