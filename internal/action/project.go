@@ -1,7 +1,6 @@
 package action
 
 import (
-	"fmt"
 	"github.com/gbooksoft/backend/internal/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
@@ -22,7 +21,7 @@ func NewProject(service *application.Service) *Project {
 
 type createProjectRequest struct {
 	Title       string `json:"title" binding:"required" validate:"required,max=255"`
-	Description string `json:"description" binding:"required" validate:"required,max=255"`
+	Description string `json:"description" validate:"max=255"`
 }
 
 type createProjectResponse struct {
@@ -676,7 +675,6 @@ func (a *Project) UpdateCharacter(ctx *gin.Context) {
 	err = a.service.UpdateCharacter(claims.Subject, projectId, menuItemId, req.Name, req.Description, charAttrs)
 
 	if err != nil {
-		fmt.Println(err)
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
@@ -718,7 +716,6 @@ func (a *Project) UpdateLocation(ctx *gin.Context) {
 	err = a.service.UpdateLocation(claims.Subject, projectId, menuItemId, req.Name, req.Description)
 
 	if err != nil {
-		fmt.Println(err)
 		response.HandleErr(err, ctx.Writer)
 		return
 	}
@@ -748,4 +745,44 @@ func (a *Project) GetProject(ctx *gin.Context) {
 		Title:       project.Title,
 		Description: project.Description,
 	}).Write()
+}
+
+type updateProjectRequest struct {
+	Title       string  `json:"title" validate:"required,max=255,min=1"`
+	Description *string `json:"description" validate:"max=255,omitempty"`
+}
+
+func (a *Project) UpdateProject(ctx *gin.Context) {
+	var req updateProjectRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		response.Json(ctx.Writer).ErrValidation(err).Write()
+		return
+	}
+
+	claims, err := getJwtClaims(ctx)
+	if err != nil {
+		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		return
+	}
+
+	projectId := ctx.Params.ByName("id")
+
+	err = a.service.UpdateProject(claims.Subject, projectId, req.Title, req.Description)
+
+	if err != nil {
+		response.HandleErr(err, ctx.Writer)
+		return
+	}
+
+	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	return
 }

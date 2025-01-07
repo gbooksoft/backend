@@ -58,7 +58,7 @@ func (s *Service) CreateProject(userId string, title, description string) (strin
 
 	userUuid := domain.UserId(uuid.MustParse(userId))
 
-	exists, err := s.projectRepository.ExistsByUserIdAndTitle(tx, userUuid, title)
+	exists, err := s.projectRepository.ExistsByUserIdAndTitle(tx, userUuid, title, nil)
 
 	if err != nil {
 		return "", "", err
@@ -506,5 +506,54 @@ func (s *Service) updateMetadata(tx *sql.Tx, userId domain.UserId, metadata *dom
 		return err
 	}
 
+	return nil
+}
+
+func (s *Service) UpdateProject(userId string, projectId string, title string, description *string) error {
+	userUUid := domain.UserId(uuid.MustParse(userId))
+	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
+
+	tx, err := s.projectRepository.BeginTransaction(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	exists, err := s.projectRepository.ExistsByUserIdAndTitle(tx, userUUid, title, &projectUUid)
+
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists, nil)
+	}
+
+	project, err := s.projectRepository.FindByUserIdAndProjectId(tx, userUUid, projectUUid)
+
+	if err != nil {
+		return err
+	}
+
+	if project == nil {
+		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound, nil)
+	}
+
+	project.Title = title
+	if description != nil {
+		project.Description = *description
+	} else {
+		project.Description = ""
+	}
+
+	err = s.projectRepository.Save(tx, project)
+
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 	return nil
 }

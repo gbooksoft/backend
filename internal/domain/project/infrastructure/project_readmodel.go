@@ -98,8 +98,13 @@ WHERE p.user_id = ? AND p.id = ?
 	row := r.db.QueryRow(query, userId, projectId)
 
 	var project readmodel.Project
-	if err := row.Scan(&project.Id, &project.Title, &project.Description); err != nil {
+	var desc sql.NullString
+	if err := row.Scan(&project.Id, &project.Title, &desc); err != nil {
 		return readmodel.Project{}, err
+	}
+
+	if desc.Valid {
+		project.Description = desc.String
 	}
 
 	return project, nil

@@ -16,9 +16,24 @@ func NewMySqlProjectRepository(db *sql.DB) *MySqlProjectRepository {
 	return &MySqlProjectRepository{repository.NewBaseMysqlRepository(db)}
 }
 
-func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(tx *sql.Tx, userId domain.UserId, title string) (bool, error) {
+func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(tx *sql.Tx, userId domain.UserId, title string, ExceptProjectId *domain.ProjectId) (bool, error) {
+	query := `
+SELECT 1 
+FROM projects 
+WHERE user_id = ? AND title = ?
+`
+	if ExceptProjectId != nil {
+		query = query + " AND id != ?"
+	}
+
 	var exists sql.NullBool
-	err := tx.QueryRow("SELECT 1 FROM projects WHERE user_id = ? AND title = ?", userId.String(), title).Scan(&exists)
+
+	var err error
+	if ExceptProjectId != nil {
+		err = tx.QueryRow(query, userId.String(), title, ExceptProjectId.String()).Scan(&exists)
+	} else {
+		err = tx.QueryRow(query, userId.String(), title).Scan(&exists)
+	}
 
 	if err == nil {
 		return true, nil
@@ -48,7 +63,11 @@ func (r *MySqlProjectRepository) ExistsByUserIdAndProjectId(tx *sql.Tx, userId d
 
 func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error {
 	query := "INSERT INTO projects (id, user_id, title, description) VALUES (?, ?, ?, ?)"
-	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, project.Description)
+	desc := sql.NullString{
+		String: project.Description,
+		Valid:  len(project.Description) > 0,
+	}
+	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, desc)
 
 	if err != nil {
 		return err
@@ -157,6 +176,58 @@ WHERE id = ?
 	}
 
 	_, err := tx.Exec(query, author, genre, keywords, language, isbn, metadata.Id.String())
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *MySqlProjectRepository) FindByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Project, error) {
+	query := `
+SELECT p.title, p.description
+FROM projects p 
+WHERE p.user_id = ? AND p.id = ?
+`
+	var title string
+	var desc sql.NullString
+	err := r.Db.QueryRow(query, userId.String(), projectId.String()).Scan(&title, &desc)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	project := &domain.Project{
+		Id:     projectId,
+		UserId: userId,
+		Title:  title,
+	}
+
+	if desc.Valid {
+		project.Description = desc.String
+	}
+
+	return project, err
+}
+
+func (r *MySqlProjectRepository) Save(tx *sql.Tx, project *domain.Project) error {
+	query := `
+UPDATE projects
+SET title = ?, description = ?
+WHERE id = ?
+`
+
+	desc := sql.NullString{
+		String: project.Description,
+		Valid:  len(project.Description) > 0,
+	}
+
+	_, err := tx.Exec(query, project.Title, desc, project.Id.String())
 
 	if err != nil {
 		return err
