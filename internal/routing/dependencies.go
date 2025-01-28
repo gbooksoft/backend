@@ -1,7 +1,7 @@
 package routing
 
 import (
-	"github.com/gbooksoft/backend/internal/action"
+	"github.com/gbooksoft/backend/internal/api/action"
 	"github.com/gbooksoft/backend/internal/domain/account"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/email"
@@ -14,6 +14,8 @@ import (
 var actionAuthorize *action.Authorize
 var actionAccount *action.Account
 var actionProject *action.Project
+
+var accountGetProfileAction *action.AccountGetProfile
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -40,4 +42,6 @@ func initializeDependencies() {
 			project_infrastructure.NewMySqlLocationReadModel(dbPool),
 		),
 	)
+
+	accountGetProfileAction = action.NewAccountGetProfile()
 }

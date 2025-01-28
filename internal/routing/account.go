@@ -18,7 +18,7 @@ func accountRoutes(e *gin.Engine) {
 
 	account.Use(middleware.AuthRequired())
 
-	account.GET("/profile", actionAccount.GetProfile)
+	account.GET("/profile", accountGetProfileAction.Invoke)
 	account.POST("/settings", actionAccount.UpdateSettings)
 	account.POST("/settings/password", actionAccount.UpdatePassword)
 	accountWithoutAuth.POST("/confirm-email-change", actionAccount.ConfirmEmailChange)

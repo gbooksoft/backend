@@ -2,7 +2,7 @@ package action
 
 import (
 	"errors"
-	"github.com/gbooksoft/backend/internal/action/response"
+	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"

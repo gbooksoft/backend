@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	accountConfig "github.com/gbooksoft/backend/internal/domain/account/infrastructure/config"
 	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/worker"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
@@ -71,6 +72,8 @@ func main() {
 		log.Info().Msg("connected to s3")
 	}
 
+	configureModules()
+
 	routing.Add(e)
 
 	srv := &http.Server{
@@ -121,4 +124,8 @@ func main() {
 	}
 
 	log.Info().Msg("Server exiting")
+}
+
+func configureModules() {
+	accountConfig.RegisterMediatr()
 }

@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/action/response"
+	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
 	"github.com/gin-gonic/gin"
