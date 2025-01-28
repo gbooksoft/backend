@@ -50,7 +50,9 @@ func (a *Project) Create(ctx *gin.Context) {
 		return
 	}
 
-	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, req.Title, req.Description)
+	userFullName := claims.FirstName + " " + claims.LastName
+
+	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, userFullName, req.Title, req.Description)
 
 	if err != nil {
 		response.HandleErr(err, ctx.Writer)

@@ -48,7 +48,7 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateProject(userId string, title, description string) (string, string, error) {
+func (s *Service) CreateProject(userId, userFullName, title, description string) (string, string, error) {
 	tx, err := s.projectRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
@@ -73,6 +73,14 @@ func (s *Service) CreateProject(userId string, title, description string) (strin
 	project := domain.NewProject(projectId, userUuid, title, description)
 
 	err = s.projectRepository.Add(tx, project)
+
+	if err != nil {
+		return "", "", err
+	}
+
+	metadataId := domain.MetadataId(s.projectRepository.GetNextId())
+	metadata := domain.NewMetadata(metadataId, projectId, userFullName, "", "", "", "")
+	err = s.projectRepository.AddMetadata(tx, metadata)
 
 	if err != nil {
 		return "", "", err
