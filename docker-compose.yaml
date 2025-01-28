@@ -1,5 +1,5 @@
-version: '3.1'
-
+version: '3.9'
+name: gbook-backend
 services:
   mysql_db:
     image: mysql:8
@@ -30,7 +30,6 @@ services:
       - "8025:8025"  # Веб-интерфейс для просмотра сообщений
   redis:
     image: redis:7.2
-    container_name: redis
     ports:
       - "6379:6379"
     volumes:

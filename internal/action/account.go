@@ -63,9 +63,9 @@ func (a *Account) GetProfile(ctx *gin.Context) {
 }
 
 type updateSettingsRequest struct {
-	Email     string `json:"email" validate:"omitempty,email"`
-	FirstName string `json:"first_name" validate:"omitempty"`
-	LastName  string `json:"last_name" validate:"omitempty"`
+	Email     string `json:"email" validate:"omitempty,email" form:"email"`
+	FirstName string `json:"first_name" validate:"omitempty" form:"first_name"`
+	LastName  string `json:"last_name" validate:"omitempty" form:"last_name"`
 }
 
 type updateSettingsResponse struct {

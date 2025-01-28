@@ -58,7 +58,7 @@ func (s *Service) SignInUser(userEmail string, password string) (Token, error) {
 		return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound, err)
 	}
 
-	at, rt, err := createTokens(s.db, uUserId, uFirstName, uLastName)
+	at, rt, err := createTokens(s.db, uUserId, userEmail, uFirstName, uLastName)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not create token when signing in %s", userEmail)
@@ -182,7 +182,7 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 		return Token{}, err
 	}
 
-	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.FirstName, atClaims.LastName)
+	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.Email, atClaims.FirstName, atClaims.LastName)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not create access token when refreshing in %s", atClaims.Subject)
