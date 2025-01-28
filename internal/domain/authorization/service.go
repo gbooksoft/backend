@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/password"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"

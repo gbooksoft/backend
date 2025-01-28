@@ -2,13 +2,13 @@ package routing
 
 import (
 	"github.com/gbooksoft/backend/internal/action"
-	"github.com/gbooksoft/backend/internal/database"
 	"github.com/gbooksoft/backend/internal/domain/account"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	project_application "github.com/gbooksoft/backend/internal/domain/project/application"
 	project_infrastructure "github.com/gbooksoft/backend/internal/domain/project/infrastructure"
+	"github.com/gbooksoft/backend/pkg/database"
 )
 
 var actionAuthorize *action.Authorize

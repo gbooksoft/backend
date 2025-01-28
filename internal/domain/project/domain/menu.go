@@ -2,7 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/google/uuid"
 	"slices"
 )

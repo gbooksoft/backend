@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/google/uuid"
 )
 

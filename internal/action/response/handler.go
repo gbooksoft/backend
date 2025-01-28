@@ -2,7 +2,7 @@ package response
 
 import (
 	"errors"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )

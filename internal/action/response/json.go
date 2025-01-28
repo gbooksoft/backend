@@ -2,7 +2,7 @@ package response
 
 import (
 	"encoding/json"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
