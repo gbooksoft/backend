@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account"
-	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -156,54 +155,4 @@ func (a *Account) ConfirmEmailChange(ctx *gin.Context) {
 	}
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
-type updatePasswordRequest struct {
-	CurrentPassword string `json:"current_password" validate:"required"`
-	NewPassword     string `json:"new_password" validate:"required"`
-}
-
-type updatePasswordPasswordValidationErrorResponse struct {
-	PasswordErrors []string `json:"password_errors"`
-}
-
-func (a *Account) UpdatePassword(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	var req updatePasswordRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err = validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	err = a.service.UpdatePassword(claims.Subject, req.CurrentPassword, req.NewPassword)
-
-	if err != nil {
-		var passErr *password.PasswordValidationResult
-		if errors.As(err, &passErr) {
-			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(updatePasswordPasswordValidationErrorResponse{
-				PasswordErrors: passErr.Errors,
-			}).Write()
-			return
-		}
-
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-	return
 }

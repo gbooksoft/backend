@@ -6,12 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
-	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/pkg/filesystem"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 	"mime/multipart"
 	"net/url"
 	"os"
@@ -262,81 +260,6 @@ func (s *Service) generateChangeEmailConfirmationLink(hash string) (string, erro
 	u.RawQuery = params.Encode()
 
 	return u.String(), nil
-}
-
-func (s *Service) UpdatePassword(userId string, currentPassword string, newPassword string) error {
-	validationResult := password.ValidatePassword(newPassword)
-	if len(validationResult.Errors) > 0 {
-		return validationResult
-	}
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	var uPassword string
-	var uEmail string
-	var uFirstName string
-	var uLastName string
-	err = tx.QueryRow("SELECT email, first_name, last_name, password FROM users WHERE id = ?", userId).Scan(&uEmail, &uFirstName, &uLastName, &uPassword)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound)
-		}
-		return err
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(uPassword), []byte(currentPassword))
-
-	if err != nil {
-		return gerr.NewBusinessLogicErr("current password is incorrect", gerr.AccountPasswordIsIncorrect)
-	}
-
-	if currentPassword == newPassword {
-		err = s.emailFacade.PasswordChangedTx(tx, uEmail, email.PasswordChangedData{
-			FirstName: uFirstName,
-			LastName:  uLastName,
-		})
-		if err != nil {
-			return err
-		}
-
-		if err = tx.Commit(); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can hash password while changing it")
-		return err
-	}
-
-	_, err = tx.Exec("UPDATE users SET password = ? WHERE id = ?", passwordHash, userId)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can update password while sql update")
-		return err
-	}
-
-	err = s.emailFacade.PasswordChangedTx(tx, uEmail, email.PasswordChangedData{
-		FirstName: uFirstName,
-		LastName:  uLastName,
-	})
-	if err != nil {
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (s *Service) UploadAvatarToS3(file multipart.File, fileName string) error {

@@ -1,5 +1,10 @@
 package gerr
 
+import (
+	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog/log"
+)
+
 type AppError interface {
 	Error() string
 	StatusCode() int
@@ -43,14 +48,27 @@ func NewBusinessLogicErr(msg string, code ErrorCode) AppError {
 	return newAppError(msg, msg, 422, code)
 }
 
-func NewValidationError(message string, invalidFields map[string]string) AppError {
+func NewValidationError(err error) AppError {
+	messages := make(map[string]string)
+
+	errors, ok := err.(validator.ValidationErrors)
+
+	if ok {
+		for _, err := range errors {
+			messages[err.Field()] = err.Error()
+		}
+	} else {
+		log.Error().Err(err).Msg("Error parsing validation error")
+		messages["unknown"] = err.Error()
+	}
+
 	return &ValidationError{
 		appError: appError{
-			message:    message,
-			userMsg:    message,
+			message:    "invalid input",
+			userMsg:    "invalid input",
 			statusCode: 400,
 		},
-		invalidFields: invalidFields,
+		invalidFields: messages,
 	}
 }
 

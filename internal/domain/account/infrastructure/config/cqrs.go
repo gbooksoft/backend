@@ -2,14 +2,21 @@ package config
 
 import (
 	"github.com/gbooksoft/backend/internal/domain/account/application"
+	"github.com/gbooksoft/backend/internal/domain/email"
+	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/mehdihadeli/go-mediatr"
 )
 
 func RegisterMediatr() {
-	getProfileHandler := application.NewGetProfileHandler(database.GetDBPool())
+	dbPool := database.GetDBPool()
+	emailFacade := email.NewFacade(queue.NewEmailQueue(dbPool), queue.NewTemplateGenerator())
+
+	getProfileHandler := application.NewGetProfileHandler(dbPool)
+	updatePasswordHandler := application.NewUpdatePasswordHandler(dbPool, emailFacade)
 
 	hE(mediatr.RegisterRequestHandler[*application.GetProfileQuery, *application.GetProfileHandlerResponse](getProfileHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdatePasswordCommand, *application.UpdatePasswordHandlerResponse](updatePasswordHandler))
 }
 
 func hE(err error) {

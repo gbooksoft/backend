@@ -16,6 +16,7 @@ var actionAccount *action.Account
 var actionProject *action.Project
 
 var accountGetProfileAction *action.AccountGetProfile
+var accountUpdatePasswordAction *action.AccountUpdatePassword
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -44,4 +45,5 @@ func initializeDependencies() {
 	)
 
 	accountGetProfileAction = action.NewAccountGetProfile()
+	accountUpdatePasswordAction = action.NewAccountUpdatePassword()
 }
