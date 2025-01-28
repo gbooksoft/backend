@@ -124,7 +124,7 @@ func (s *Service) ConfirmEmailChange(token string) error {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("token not found", gerr.AccountEmailChangeRequestNotFound, err)
+			return gerr.NewBusinessLogicErr("token not found", gerr.AccountEmailChangeRequestNotFound)
 		}
 
 		log.Error().Err(err).Msgf("failed to find email change with token %s", token)
@@ -138,7 +138,7 @@ func (s *Service) ConfirmEmailChange(token string) error {
 	}
 
 	if time.Since(createdAt) >= 15*time.Minute {
-		return gerr.NewBusinessLogicErr("token expired", gerr.AccountEmailChangeRequestExpired, nil)
+		return gerr.NewBusinessLogicErr("token expired", gerr.AccountEmailChangeRequestExpired)
 	}
 
 	_, err = tx.Exec("UPDATE users SET email = ? WHERE id = ?", newEmail, userId)
@@ -175,7 +175,7 @@ func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) err
 	var exists sql.NullBool
 	err := tx.QueryRow("SELECT 1 FROM users WHERE email = ?", newEmail).Scan(&exists)
 	if err == nil {
-		return gerr.NewBusinessLogicErr("user with this email already exists", gerr.AccountUserWithEmailAlreadyExists, nil)
+		return gerr.NewBusinessLogicErr("user with this email already exists", gerr.AccountUserWithEmailAlreadyExists)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -185,7 +185,7 @@ func (s *Service) addChangeEmailRequest(tx *sql.Tx, userId, newEmail string) err
 	err = tx.QueryRow("SELECT 1 FROM email_change_requests WHERE new_email = ?", newEmail).Scan(&exists)
 
 	if err == nil {
-		return gerr.NewBusinessLogicErr("request on this email already exists", gerr.AccountEmailChangeRequestWithEmailAlreadyExists, nil)
+		return gerr.NewBusinessLogicErr("request on this email already exists", gerr.AccountEmailChangeRequestWithEmailAlreadyExists)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -283,7 +283,7 @@ func (s *Service) UpdatePassword(userId string, currentPassword string, newPassw
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound, nil)
+			return gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound)
 		}
 		return err
 	}
@@ -291,7 +291,7 @@ func (s *Service) UpdatePassword(userId string, currentPassword string, newPassw
 	err = bcrypt.CompareHashAndPassword([]byte(uPassword), []byte(currentPassword))
 
 	if err != nil {
-		return gerr.NewBusinessLogicErr("current password is incorrect", gerr.AccountPasswordIsIncorrect, nil)
+		return gerr.NewBusinessLogicErr("current password is incorrect", gerr.AccountPasswordIsIncorrect)
 	}
 
 	if currentPassword == newPassword {

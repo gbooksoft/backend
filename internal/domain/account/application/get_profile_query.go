@@ -37,7 +37,7 @@ func (h *GetProfileHandler) Handle(ctx context.Context, query *GetProfileQuery) 
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound, err)
+			return nil, gerr.NewBusinessLogicErr("user not found", gerr.AccountUserNotFound)
 		}
 		return nil, err
 	}

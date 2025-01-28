@@ -65,7 +65,7 @@ func (s *Service) CreateProject(userId, userFullName, title, description string)
 	}
 
 	if exists {
-		return "", "", gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists, nil)
+		return "", "", gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists)
 	}
 
 	projectId := domain.ProjectId(s.projectRepository.GetNextId())
@@ -117,7 +117,7 @@ func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Me
 	}
 
 	if menu == nil || len(menu.Items) == 0 {
-		return nil, gerr.NewBusinessLogicErr("Menu not found", gerr.NotFound, nil)
+		return nil, gerr.NewBusinessLogicErr("Menu not found", gerr.NotFound)
 	}
 
 	return menu, nil
@@ -436,7 +436,7 @@ func (s *Service) GetProjectMetadata(userId string, projectId string) (*readmode
 	}
 
 	if metadata == nil {
-		return nil, gerr.NewBusinessLogicErr("metadata not found", gerr.NotFound, nil)
+		return nil, gerr.NewBusinessLogicErr("metadata not found", gerr.NotFound)
 	}
 
 	return metadata, nil
@@ -499,7 +499,7 @@ func (s *Service) createMetadata(tx *sql.Tx, projectId domain.ProjectId, metadat
 
 func (s *Service) updateMetadata(tx *sql.Tx, userId domain.UserId, metadata *domain.Metadata, metadataFields MetadataFields) error {
 	if exists, err := s.projectRepository.ExistsByUserIdAndProjectId(tx, userId, metadata.ProjectId); err != nil || !exists {
-		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound, nil)
+		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound)
 	}
 
 	metadata.Author = metadataFields.Author
@@ -534,7 +534,7 @@ func (s *Service) UpdateProject(userId string, projectId string, title string, d
 	}
 
 	if exists {
-		return gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists, nil)
+		return gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists)
 	}
 
 	project, err := s.projectRepository.FindByUserIdAndProjectId(tx, userUUid, projectUUid)
@@ -544,7 +544,7 @@ func (s *Service) UpdateProject(userId string, projectId string, title string, d
 	}
 
 	if project == nil {
-		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound, nil)
+		return gerr.NewBusinessLogicErr("project not found", gerr.NotFound)
 	}
 
 	project.Title = title

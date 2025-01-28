@@ -1,32 +1,64 @@
 package gerr
 
-type BusinessLogicErr struct {
-	Msg  string
-	Code ErrorCode
-	err  error
+type AppError interface {
+	Error() string
+	StatusCode() int
+	UserMessage() string
+	PublicCode() ErrorCode
 }
 
-func NewBusinessLogicErr(msg string, code ErrorCode, err error) BusinessLogicErr {
-	return BusinessLogicErr{Msg: msg, Code: code, err: err}
+type appError struct {
+	message    string
+	userMsg    string
+	statusCode int
+	publicCode ErrorCode
 }
 
-func (err BusinessLogicErr) Error() string {
-	msg := err.Msg
-	if err.err != nil {
-		msg = err.err.Error()
+func newAppError(message, userMsg string, statusCode int, publicCode ErrorCode) AppError {
+	return &appError{
+		message:    message,
+		userMsg:    userMsg,
+		statusCode: statusCode,
+		publicCode: publicCode,
 	}
+}
 
-	return "business logic error: " + msg
+func (e *appError) Error() string {
+	return e.message
+}
+
+func (e *appError) StatusCode() int {
+	return e.statusCode
+}
+
+func (e *appError) UserMessage() string {
+	return e.userMsg
+}
+
+func (e *appError) PublicCode() ErrorCode {
+	return e.publicCode
+}
+
+func NewBusinessLogicErr(msg string, code ErrorCode) AppError {
+	return newAppError(msg, msg, 422, code)
+}
+
+func NewValidationError(message string, invalidFields map[string]string) AppError {
+	return &ValidationError{
+		appError: appError{
+			message:    message,
+			userMsg:    message,
+			statusCode: 400,
+		},
+		invalidFields: invalidFields,
+	}
 }
 
 type ValidationError struct {
-	err error
+	appError
+	invalidFields map[string]string
 }
 
-func NewValidationError(err error) *ValidationError {
-	return &ValidationError{err: err}
-}
-
-func (err ValidationError) Error() string {
-	return "validation error: " + err.err.Error()
+func (e *ValidationError) InvalidFields() map[string]string {
+	return e.invalidFields
 }

@@ -45,7 +45,7 @@ func (s *Service) SignInUser(userEmail string, password string) (Token, error) {
 	err := s.db.QueryRow("SELECT id, first_name, last_name, password FROM users WHERE email = ? AND confirmed = 1", userEmail).Scan(&uUserId, &uFirstName, &uLastName, &uPass)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound, err)
+			return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound)
 		}
 
 		log.Error().Err(err).Msgf("can not fetch user while auth %s", userEmail)
@@ -55,7 +55,7 @@ func (s *Service) SignInUser(userEmail string, password string) (Token, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(uPass), []byte(password))
 
 	if err != nil {
-		return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound, err)
+		return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound)
 	}
 
 	at, rt, err := createTokens(s.db, uUserId, userEmail, uFirstName, uLastName)
@@ -76,7 +76,7 @@ func (s *Service) Register(userEmail, uPassword, firstName, lastName string) (st
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", userEmail).Scan(&exists)
 
 	if err == nil {
-		return "", gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUserAlreadyExists, err)
+		return "", gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUserAlreadyExists)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -154,7 +154,7 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 	}
 
 	if IsTokenExpired(rtClaims) {
-		return Token{}, gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired, err)
+		return Token{}, gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired)
 	}
 
 	var at string
@@ -162,7 +162,7 @@ func (s *Service) RefreshToken(rt string) (Token, error) {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return Token{}, gerr.NewBusinessLogicErr("refresh not found", gerr.AuthorizationRefreshTokenNotFound, err)
+			return Token{}, gerr.NewBusinessLogicErr("refresh not found", gerr.AuthorizationRefreshTokenNotFound)
 		}
 
 		log.Error().Err(err).Msgf("can not refresh token")
@@ -204,7 +204,7 @@ func (s *Service) Logout(rt string) error {
 	}
 
 	if IsTokenExpired(rtClaims) {
-		return gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired, err)
+		return gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired)
 	}
 
 	err = deleteByRefreshToken(s.db, rt)
@@ -252,7 +252,7 @@ func (s *Service) ConfirmRegistration(userId string, hash string) error {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("confirmation not found", gerr.AuthorizationConfirmationNoFound, err)
+			return gerr.NewBusinessLogicErr("confirmation not found", gerr.AuthorizationConfirmationNoFound)
 		}
 
 		log.Error().Err(err).Msgf("confirmation not found for user %s and hash %s", userId, hash)
@@ -287,7 +287,7 @@ func (s *Service) SendForgotPasswordNotification(userEmail string) error {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("user not found", gerr.AuthorizationUserNotFound, err)
+			return gerr.NewBusinessLogicErr("user not found", gerr.AuthorizationUserNotFound)
 		}
 
 		log.Error().Err(err).Msgf("user %s not found", userEmail)
@@ -365,14 +365,14 @@ SELECT id, email, first_name, last_name, reset_password_hash_created_at FROM use
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound, err)
+			return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound)
 		}
 
 		return err
 	}
 
 	if !hashCreatedAt.Valid {
-		return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound, err)
+		return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound)
 	}
 
 	parsedTime, err := time.Parse("2006-01-02 15:04:05", hashCreatedAt.String)
@@ -382,7 +382,7 @@ SELECT id, email, first_name, last_name, reset_password_hash_created_at FROM use
 	}
 
 	if time.Since(parsedTime) > 24*time.Hour {
-		return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound, err)
+		return gerr.NewBusinessLogicErr("reset password not found", gerr.AuthorizationResetPasswordRequestNotFound)
 	}
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)

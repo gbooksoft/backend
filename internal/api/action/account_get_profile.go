@@ -19,7 +19,7 @@ func NewAccountGetProfile() *AccountGetProfile {
 func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
-		ctx.Error(gerr.NewBusinessLogicErr("Unauthorized", gerr.AuthorizationUserNotFound, nil))
+		ctx.Error(gerr.NewBusinessLogicErr("Unauthorized", gerr.AuthorizationUserNotFound))
 		return
 	}
 

@@ -2,7 +2,6 @@ package response
 
 import (
 	"encoding/json"
-	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -57,17 +56,6 @@ func (r *JsonResponse) ErrValidation(err error) *JsonResponse {
 	r.isErrResponse = true
 	r.validationMessages = messages
 	return r
-}
-
-func (r *JsonResponse) BusinessErr(err gerr.BusinessLogicErr) *JsonResponse {
-	if err.Code == gerr.NotFound {
-		r.StatusCode(http.StatusNotFound)
-		return r.ErrMsg("Not Found")
-	}
-
-	r.StatusCode(http.StatusUnprocessableEntity)
-	r.code = err.Code.ToInt()
-	return r.ErrMsg(err.Msg)
 }
 
 func (r *JsonResponse) Write() {

@@ -10,6 +10,7 @@ import (
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gbooksoft/backend/pkg/database"
+	"github.com/gbooksoft/backend/pkg/http/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -47,6 +48,8 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	e.Use(middleware.ErrorHandler(log.Logger))
 
 	db, err := database.SetUpMysqlConnection(ctx)
 
