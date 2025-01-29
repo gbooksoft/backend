@@ -18,6 +18,8 @@ var accountUpdatePasswordAction *action.AccountUpdatePassword
 var accountUpdateSettingsAction *action.AccountUpdateSettings
 var accountConfirmEmailChangeAction *action.AccountConfirmEmailChange
 
+var authSignInAction *action.AuthSignIn
+
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
 	emailFacade := email.NewFacade(queue.NewEmailQueue(dbPool), queue.NewTemplateGenerator())
@@ -41,8 +43,12 @@ func initializeDependencies() {
 		),
 	)
 
+	// account
 	accountGetProfileAction = action.NewAccountGetProfile()
 	accountUpdatePasswordAction = action.NewAccountUpdatePassword()
 	accountUpdateSettingsAction = action.NewAccountUpdateSettings()
 	accountConfirmEmailChangeAction = action.NewAccountConfirmEmailChange()
+
+	// auth
+	authSignInAction = action.NewAuthSignIn()
 }

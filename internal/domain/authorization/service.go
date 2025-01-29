@@ -37,40 +37,6 @@ type Token struct {
 	RefreshTokenExp int64
 }
 
-func (s *Service) SignInUser(userEmail string, password string) (Token, error) {
-	var uPass string
-	var uUserId string
-	var uFirstName string
-	var uLastName string
-	err := s.db.QueryRow("SELECT id, first_name, last_name, password FROM users WHERE email = ? AND confirmed = 1", userEmail).Scan(&uUserId, &uFirstName, &uLastName, &uPass)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound)
-		}
-
-		log.Error().Err(err).Msgf("can not fetch user while auth %s", userEmail)
-		return Token{}, err
-	}
-
-	err = bcrypt.CompareHashAndPassword([]byte(uPass), []byte(password))
-
-	if err != nil {
-		return Token{}, gerr.NewBusinessLogicErr("userEmail or password invalid", gerr.AuthorizationUserNotFound)
-	}
-
-	at, rt, err := createTokens(s.db, uUserId, userEmail, uFirstName, uLastName)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not create token when signing in %s", userEmail)
-		return Token{}, fmt.Errorf("can not create token when signing in %w", err)
-	}
-
-	return Token{
-		AccessToken:  at,
-		RefreshToken: rt,
-	}, nil
-}
-
 func (s *Service) Register(userEmail, uPassword, firstName, lastName string) (string, error) {
 	var exists sql.NullBool
 	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", userEmail).Scan(&exists)

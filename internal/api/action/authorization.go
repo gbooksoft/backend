@@ -11,8 +11,6 @@ import (
 	"os"
 )
 
-const refreshTokenCookieName = "refreshToken"
-
 type atResponse struct {
 	AccessToken string `json:"access_token"`
 }
@@ -25,44 +23,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	return &Authorize{
 		service: service,
 	}
-}
-
-type signInRequest struct {
-	Email    string `json:"email" binding:"required" validate:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
-func (a *Authorize) SignIn(ctx *gin.Context) {
-	var req signInRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	token, err := a.service.SignInUser(req.Email, req.Password)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	rsp := atResponse{
-		AccessToken: token.AccessToken,
-	}
-
-	a.setRefreshTokenCookie(ctx, token.RefreshToken)
-
-	response.Json(ctx.Writer).StatusCode(200).Struct(rsp).Write()
-	return
 }
 
 type signUpRequest struct {
