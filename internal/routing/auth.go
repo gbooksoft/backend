@@ -22,7 +22,7 @@ func authRoutes(e *gin.Engine) {
 	oauth.POST("/register", authSignUpAction.Invoke)
 	oauth.POST("/refresh", authRefreshAction.Invoke)
 	oauth.POST("/logout", authLogoutAction.Invoke)
-	oauth.POST("/confirm-registration", actionAuthorize.ConfirmRegistration)
+	oauth.POST("/confirm-registration", authConfirmRegistrationAction.Invoke)
 	oauth.POST("/forgot-password", actionAuthorize.SendForgotPasswordNotification)
 	oauth.POST("/reset-password", actionAuthorize.ResetPassword)
 }

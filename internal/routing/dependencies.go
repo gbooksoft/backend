@@ -22,6 +22,7 @@ var authSignInAction *action.AuthSignIn
 var authSignUpAction *action.AuthSignUp
 var authRefreshAction *action.AuthRefresh
 var authLogoutAction *action.AuthLogout
+var authConfirmRegistrationAction *action.AuthConfirmRegistration
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -57,4 +58,5 @@ func initializeDependencies() {
 	authSignUpAction = action.NewAuthSignUp()
 	authRefreshAction = action.NewAuthRefresh()
 	authLogoutAction = action.NewAuthLogout()
+	authConfirmRegistrationAction = action.NewAuthConfirmRegistration()
 }

@@ -20,28 +20,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	}
 }
 
-type confirmationRegistrationRequest struct {
-	UserId string `json:"user_id"`
-	Hash   string `json:"token"`
-}
-
-func (a *Authorize) ConfirmRegistration(ctx *gin.Context) {
-	var req confirmationRegistrationRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	err := a.service.ConfirmRegistration(req.UserId, req.Hash)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
 func (a *Authorize) setRefreshTokenCookie(ctx *gin.Context, refreshToken string) {
 	ctx.SetCookie(refreshTokenCookieName, refreshToken, 3600*24*7, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
 }

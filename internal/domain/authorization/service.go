@@ -33,41 +33,6 @@ type Token struct {
 	RefreshTokenExp int64
 }
 
-func (s *Service) ConfirmRegistration(userId string, hash string) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		log.Error().Err(err).Msgf("can not start transaction while confirm registration")
-		return err
-	}
-	defer tx.Rollback()
-
-	var exists sql.NullBool
-	err = tx.QueryRow("SELECT 1 FROM users WHERE id = ? AND confirmation_hash = ? AND confirmed = 0", userId, hash).Scan(&exists)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("confirmation not found", gerr.AuthorizationConfirmationNoFound)
-		}
-
-		log.Error().Err(err).Msgf("confirmation not found for user %s and hash %s", userId, hash)
-		return err
-	}
-
-	_, err = tx.Exec("UPDATE users SET confirmation_hash = NULL, confirmed = 1 WHERE id = ?", userId)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not confirm registration")
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
-		log.Error().Err(err).Msgf("can not commit transaction while confirming register %s", userId)
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) SendForgotPasswordNotification(userEmail string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
