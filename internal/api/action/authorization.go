@@ -7,7 +7,6 @@ import (
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"os"
 )
 
 type Authorize struct {
@@ -18,45 +17,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	return &Authorize{
 		service: service,
 	}
-}
-
-func (a *Authorize) setRefreshTokenCookie(ctx *gin.Context, refreshToken string) {
-	ctx.SetCookie(refreshTokenCookieName, refreshToken, 3600*24*7, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
-}
-
-func (a *Authorize) deleteRefreshTokenCookie(ctx *gin.Context) {
-	ctx.SetCookie(refreshTokenCookieName, "refreshToken", -1, "/", os.Getenv("WEB_FRONT_DOMAIN"), false, true)
-}
-
-func (a *Authorize) getRefreshTokenFromCookie(ctx *gin.Context) (string, error) {
-	rt, err := ctx.Cookie(refreshTokenCookieName)
-
-	if err != nil {
-		return "", err
-	}
-
-	return rt, nil
-}
-
-type forgotPasswordRequest struct {
-	Email string `json:"email"`
-}
-
-func (a *Authorize) SendForgotPasswordNotification(ctx *gin.Context) {
-	var req forgotPasswordRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	err := a.service.SendForgotPasswordNotification(req.Email)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
 type resetPasswordRequest struct {

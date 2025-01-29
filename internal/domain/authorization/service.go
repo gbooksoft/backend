@@ -6,11 +6,8 @@ import (
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/pkg/gerr"
-	"github.com/gbooksoft/backend/pkg/token"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/bcrypt"
-	"net/url"
-	"os"
 	"time"
 )
 
@@ -24,79 +21,6 @@ func NewService(db *sql.DB, emailFacade *email.Facade) *Service {
 		db:          db,
 		emailFacade: emailFacade,
 	}
-}
-
-type Token struct {
-	AccessToken     string
-	AccessTokenExp  int64
-	RefreshToken    string
-	RefreshTokenExp int64
-}
-
-func (s *Service) SendForgotPasswordNotification(userEmail string) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		log.Error().Err(err).Msgf("can not start transaction while sending forgot password notification")
-		return err
-	}
-	defer tx.Rollback()
-
-	var exists sql.NullBool
-	err = tx.QueryRow("SELECT 1 FROM users WHERE email = ?", userEmail).Scan(&exists)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("user not found", gerr.AuthorizationUserNotFound)
-		}
-
-		log.Error().Err(err).Msgf("user %s not found", userEmail)
-		return err
-	}
-
-	resetPasswordHash, err := token.GenerateRandHash(64)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not generate reset password hash for user %s", userEmail)
-		return err
-	}
-
-	_, err = tx.Exec("UPDATE users SET reset_password_hash = ?, reset_password_hash_created_at = NOW() WHERE email = ?", resetPasswordHash, userEmail)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not save reset password hash for user %s", userEmail)
-		return err
-	}
-
-	link, err := s.generateResetPasswordLink(resetPasswordHash)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not generate reset link")
-	}
-
-	err = s.emailFacade.ForgotPasswordTx(tx, userEmail, email.ForgotPasswordData{
-		ResetPasswordLink: link,
-	})
-
-	if err = tx.Commit(); err != nil {
-		log.Error().Err(err).Msgf("can not commit transaction while sending forgot password notification %s", userEmail)
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) generateResetPasswordLink(hash string) (string, error) {
-	u, err := url.Parse(os.Getenv("WEB_FRONT_RESET_PASSWORD_URL"))
-	if err != nil {
-		return "", err
-	}
-
-	params := url.Values{}
-	params.Add("token", hash)
-
-	u.RawQuery = params.Encode()
-
-	return u.String(), nil
 }
 
 func (s *Service) ResetPassword(hash string, newPassword string) error {

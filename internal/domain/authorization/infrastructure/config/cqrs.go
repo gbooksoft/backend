@@ -17,12 +17,14 @@ func RegisterMediatr() {
 	refreshHandler := application.NewRefreshHandler(dbPool)
 	logoutHandler := application.NewLogoutHandler(dbPool)
 	confirmRegistrationHandler := application.NewConfirmRegistrationHandler(dbPool)
+	sendForgotPasswordNotificationHandler := application.NewSendForgotPasswordNotificationHandler(dbPool, emailFacade)
 
 	hE(mediatr.RegisterRequestHandler[*application.SignInCommand, *application.SignInHandlerResponse](signInHandler))
 	hE(mediatr.RegisterRequestHandler[*application.SignUpCommand, *application.SignUpHandlerResponse](signUpHandler))
 	hE(mediatr.RegisterRequestHandler[*application.RefreshCommand, *application.RefreshHandlerResponse](refreshHandler))
 	hE(mediatr.RegisterRequestHandler[*application.LogoutCommand, *application.LogoutHandlerResponse](logoutHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ConfirmRegistrationCommand, *application.ConfirmRegistrationHandlerResponse](confirmRegistrationHandler))
+	hE(mediatr.RegisterRequestHandler[*application.SendForgotPasswordNotificationCommand, *application.SendForgotPasswordNotificationHandlerResponse](sendForgotPasswordNotificationHandler))
 }
 
 func hE(err error) {
