@@ -33,27 +33,6 @@ type Token struct {
 	RefreshTokenExp int64
 }
 
-func (s *Service) Logout(rt string) error {
-	_, rtClaims, err := ParseToken(rt, false)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not parse refresh token")
-		return err
-	}
-
-	if IsTokenExpired(rtClaims) {
-		return gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired)
-	}
-
-	err = deleteByRefreshToken(s.db, rt)
-	if err != nil {
-		log.Error().Err(err).Msgf("can not delete refresh token")
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) ConfirmRegistration(userId string, hash string) error {
 	tx, err := s.db.Begin()
 	if err != nil {

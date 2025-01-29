@@ -20,25 +20,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	}
 }
 
-func (a *Authorize) Logout(ctx *gin.Context) {
-	rt, err := a.getRefreshTokenFromCookie(ctx)
-
-	if err != nil {
-		response.Json(ctx.Writer).StatusCode(http.StatusForbidden).ErrMsg("refresh token not found in cookie").Write()
-		return
-	}
-
-	err = a.service.Logout(rt)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	a.deleteRefreshTokenCookie(ctx)
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
 type confirmationRegistrationRequest struct {
 	UserId string `json:"user_id"`
 	Hash   string `json:"token"`
