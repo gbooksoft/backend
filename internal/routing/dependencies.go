@@ -2,7 +2,6 @@ package routing
 
 import (
 	"github.com/gbooksoft/backend/internal/api/action"
-	"github.com/gbooksoft/backend/internal/domain/account"
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
@@ -12,12 +11,12 @@ import (
 )
 
 var actionAuthorize *action.Authorize
-var actionAccount *action.Account
 var actionProject *action.Project
 
 var accountGetProfileAction *action.AccountGetProfile
 var accountUpdatePasswordAction *action.AccountUpdatePassword
 var accountUpdateSettingsAction *action.AccountUpdateSettings
+var accountConfirmEmailChangeAction *action.AccountConfirmEmailChange
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -25,9 +24,6 @@ func initializeDependencies() {
 
 	actionAuthorize = action.NewAuthorize(
 		authorization.NewService(dbPool, emailFacade),
-	)
-	actionAccount = action.NewAccount(
-		account.NewService(dbPool, emailFacade),
 	)
 
 	actionProject = action.NewProject(
@@ -48,4 +44,5 @@ func initializeDependencies() {
 	accountGetProfileAction = action.NewAccountGetProfile()
 	accountUpdatePasswordAction = action.NewAccountUpdatePassword()
 	accountUpdateSettingsAction = action.NewAccountUpdateSettings()
+	accountConfirmEmailChangeAction = action.NewAccountConfirmEmailChange()
 }

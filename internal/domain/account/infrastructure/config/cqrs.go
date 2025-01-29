@@ -16,11 +16,13 @@ func RegisterMediatr() {
 	updatePasswordHandler := application.NewUpdatePasswordHandler(dbPool, emailFacade)
 	updateSettingsHandler := application.NewUpdateSettingsHandler(dbPool, emailFacade)
 	uploadAvatarHandler := application.NewUploadAvatarHandler(dbPool)
+	confirmEmailChangeHandler := application.NewConfirmEmailChangeCommandHandler(dbPool)
 
 	hE(mediatr.RegisterRequestHandler[*application.GetProfileQuery, *application.GetProfileHandlerResponse](getProfileHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdatePasswordCommand, *application.UpdatePasswordHandlerResponse](updatePasswordHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateSettingsCommand, *application.UpdateSettingsHandlerResponse](updateSettingsHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UploadAvatarCommand, *application.UploadAvatarHandlerResponse](uploadAvatarHandler))
+	hE(mediatr.RegisterRequestHandler[*application.ConfirmEmailChangeCommand, *application.ConfirmEmailChangeCommandHandlerResponse](confirmEmailChangeHandler))
 }
 
 func hE(err error) {

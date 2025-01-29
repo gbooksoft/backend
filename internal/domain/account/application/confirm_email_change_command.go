@@ -1,34 +1,41 @@
-package account
+package application
 
 import (
+	"context"
 	"database/sql"
 	"errors"
-	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/rs/zerolog/log"
 	"time"
 )
 
-type Service struct {
-	db          *sql.DB
-	emailFacade *email.Facade
+type ConfirmEmailChangeCommand struct {
+	Token string
 }
 
-func NewService(db *sql.DB, emailFacade *email.Facade) *Service {
-	return &Service{
-		db:          db,
-		emailFacade: emailFacade,
+type ConfirmEmailChangeCommandHandlerResponse struct {
+}
+
+type ConfirmEmailChangeCommandHandler struct {
+	db *sql.DB
+}
+
+func NewConfirmEmailChangeCommandHandler(db *sql.DB) *ConfirmEmailChangeCommandHandler {
+	return &ConfirmEmailChangeCommandHandler{
+		db: db,
 	}
 }
 
-func (s *Service) ConfirmEmailChange(token string) error {
+func (h *ConfirmEmailChangeCommandHandler) Handle(ctx context.Context, cmd *ConfirmEmailChangeCommand) (*ConfirmEmailChangeCommandHandlerResponse, error) {
 	var createdAtStr string
 	var newEmail string
 	var userId string
 
-	tx, err := s.db.Begin()
+	token := cmd.Token
+
+	tx, err := h.db.Begin()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer tx.Rollback()
 
@@ -36,49 +43,39 @@ func (s *Service) ConfirmEmailChange(token string) error {
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return gerr.NewBusinessLogicErr("token not found", gerr.AccountEmailChangeRequestNotFound)
+			return nil, gerr.NewBusinessLogicErr("token not found", gerr.AccountEmailChangeRequestNotFound)
 		}
 
 		log.Error().Err(err).Msgf("failed to find email change with token %s", token)
-		return err
+		return nil, err
 	}
 
 	layout := "2006-01-02 15:04:05"
 	createdAt, err := time.Parse(layout, createdAtStr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if time.Since(createdAt) >= 15*time.Minute {
-		return gerr.NewBusinessLogicErr("token expired", gerr.AccountEmailChangeRequestExpired)
+		return nil, gerr.NewBusinessLogicErr("token expired", gerr.AccountEmailChangeRequestExpired)
 	}
 
 	_, err = tx.Exec("UPDATE users SET email = ? WHERE id = ?", newEmail, userId)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to confirm user email")
-		return err
+		return nil, err
 	}
 
 	_, err = tx.Exec("DELETE FROM email_change_requests WHERE token = ?", token)
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete email change request")
-		return err
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) existsUserWithEmail(email string) bool {
-	var exists sql.NullBool
-	err := s.db.QueryRow("SELECT 1 FROM users WHERE email = ?", email).Scan(&exists)
-
-	if err == nil {
-		return true
+		return nil, err
 	}
 
-	return false
+	return nil, nil
 }
