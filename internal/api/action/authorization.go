@@ -6,7 +6,6 @@ import (
 	"github.com/gbooksoft/backend/internal/domain/authorization"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"net/http"
 	"os"
 )
@@ -23,54 +22,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	return &Authorize{
 		service: service,
 	}
-}
-
-type signUpRequest struct {
-	Email     string `json:"email" binding:"required" validate:"email"`
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-}
-type signUpResponse struct {
-	UserId string `json:"user_id"`
-}
-type signUpPasswordErrorResponse struct {
-	PasswordErrors []string `json:"password_errors"`
-}
-
-func (a *Authorize) SignUp(ctx *gin.Context) {
-	var req signUpRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	userId, err := a.service.Register(req.Email, req.Password, req.FirstName, req.LastName)
-
-	if err != nil {
-		var passErr *password.PasswordValidationResult
-		if errors.As(err, &passErr) {
-			response.Json(ctx.Writer).StatusCode(http.StatusBadRequest).Struct(signUpPasswordErrorResponse{
-				PasswordErrors: passErr.Errors,
-			}).Write()
-			return
-		}
-
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusCreated).Struct(signUpResponse{UserId: userId}).Write()
-	return
 }
 
 func (a *Authorize) Refresh(ctx *gin.Context) {

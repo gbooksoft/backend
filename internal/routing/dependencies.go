@@ -19,6 +19,7 @@ var accountUpdateSettingsAction *action.AccountUpdateSettings
 var accountConfirmEmailChangeAction *action.AccountConfirmEmailChange
 
 var authSignInAction *action.AuthSignIn
+var authSignUpAction *action.AuthSignUp
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -51,4 +52,5 @@ func initializeDependencies() {
 
 	// auth
 	authSignInAction = action.NewAuthSignIn()
+	authSignUpAction = action.NewAuthSignUp()
 }
