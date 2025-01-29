@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	accountConfig "github.com/gbooksoft/backend/internal/domain/account/infrastructure/config"
-	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/worker"
+	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/infrastructure/worker"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
 	"github.com/gbooksoft/backend/internal/routing"
