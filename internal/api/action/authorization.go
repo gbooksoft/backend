@@ -10,10 +10,6 @@ import (
 	"os"
 )
 
-type atResponse struct {
-	AccessToken string `json:"access_token"`
-}
-
 type Authorize struct {
 	service *authorization.Service
 }
@@ -22,31 +18,6 @@ func NewAuthorize(service *authorization.Service) *Authorize {
 	return &Authorize{
 		service: service,
 	}
-}
-
-func (a *Authorize) Refresh(ctx *gin.Context) {
-	rt, err := a.getRefreshTokenFromCookie(ctx)
-
-	if err != nil {
-		response.Json(ctx.Writer).StatusCode(http.StatusForbidden).ErrMsg("refresh token not found in cookie").Write()
-		return
-	}
-
-	token, err := a.service.RefreshToken(rt)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	rsp := atResponse{
-		AccessToken: token.AccessToken,
-	}
-
-	a.setRefreshTokenCookie(ctx, token.RefreshToken)
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(rsp).Write()
-	return
 }
 
 func (a *Authorize) Logout(ctx *gin.Context) {

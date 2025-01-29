@@ -14,9 +14,11 @@ func RegisterMediatr() {
 
 	signInHandler := application.NewSignInHandler(dbPool)
 	signUpHandler := application.NewSignUpHandler(dbPool, emailFacade)
+	refreshHandler := application.NewRefreshHandler(dbPool)
 
 	hE(mediatr.RegisterRequestHandler[*application.SignInCommand, *application.SignInHandlerResponse](signInHandler))
 	hE(mediatr.RegisterRequestHandler[*application.SignUpCommand, *application.SignUpHandlerResponse](signUpHandler))
+	hE(mediatr.RegisterRequestHandler[*application.RefreshCommand, *application.RefreshHandlerResponse](refreshHandler))
 }
 
 func hE(err error) {

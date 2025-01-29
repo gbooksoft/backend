@@ -3,7 +3,6 @@ package authorization
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"github.com/gbooksoft/backend/internal/domain/email"
 	"github.com/gbooksoft/backend/internal/domain/password"
 	"github.com/gbooksoft/backend/pkg/gerr"
@@ -32,56 +31,6 @@ type Token struct {
 	AccessTokenExp  int64
 	RefreshToken    string
 	RefreshTokenExp int64
-}
-
-func (s *Service) RefreshToken(rt string) (Token, error) {
-	_, rtClaims, err := ParseToken(rt, true)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not parse refresh token")
-		return Token{}, err
-	}
-
-	if IsTokenExpired(rtClaims) {
-		return Token{}, gerr.NewBusinessLogicErr("token expired", gerr.AuthorizationRefreshTokenExpired)
-	}
-
-	var at string
-	err = s.db.QueryRow("SELECT access FROM auth_token WHERE refresh = ?", rt).Scan(&at)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return Token{}, gerr.NewBusinessLogicErr("refresh not found", gerr.AuthorizationRefreshTokenNotFound)
-		}
-
-		log.Error().Err(err).Msgf("can not refresh token")
-		return Token{}, err
-	}
-
-	_, atClaims, err := ParseToken(at, true)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not parse refresh token")
-		return Token{}, err
-	}
-
-	err = deleteByRefreshToken(s.db, rt)
-	if err != nil {
-		log.Error().Err(err).Msgf("can not delete refresh token")
-		return Token{}, err
-	}
-
-	at, rt, err = createTokens(s.db, atClaims.Subject, atClaims.Email, atClaims.FirstName, atClaims.LastName)
-
-	if err != nil {
-		log.Error().Err(err).Msgf("can not create access token when refreshing in %s", atClaims.Subject)
-		return Token{}, fmt.Errorf("can not create access token when refreshing in %w", err)
-	}
-
-	return Token{
-		AccessToken:  at,
-		RefreshToken: rt,
-	}, nil
 }
 
 func (s *Service) Logout(rt string) error {
