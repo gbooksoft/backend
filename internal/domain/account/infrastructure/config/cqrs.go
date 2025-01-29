@@ -14,9 +14,13 @@ func RegisterMediatr() {
 
 	getProfileHandler := application.NewGetProfileHandler(dbPool)
 	updatePasswordHandler := application.NewUpdatePasswordHandler(dbPool, emailFacade)
+	updateSettingsHandler := application.NewUpdateSettingsHandler(dbPool, emailFacade)
+	uploadAvatarHandler := application.NewUploadAvatarHandler(dbPool)
 
 	hE(mediatr.RegisterRequestHandler[*application.GetProfileQuery, *application.GetProfileHandlerResponse](getProfileHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdatePasswordCommand, *application.UpdatePasswordHandlerResponse](updatePasswordHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateSettingsCommand, *application.UpdateSettingsHandlerResponse](updateSettingsHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UploadAvatarCommand, *application.UploadAvatarHandlerResponse](uploadAvatarHandler))
 }
 
 func hE(err error) {
