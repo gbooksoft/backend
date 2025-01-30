@@ -18,6 +18,7 @@ func RegisterMediatr() {
 	logoutHandler := application.NewLogoutHandler(dbPool)
 	confirmRegistrationHandler := application.NewConfirmRegistrationHandler(dbPool)
 	sendForgotPasswordNotificationHandler := application.NewSendForgotPasswordNotificationHandler(dbPool, emailFacade)
+	resetPasswordHandler := application.NewResetPasswordHandler(dbPool, emailFacade)
 
 	hE(mediatr.RegisterRequestHandler[*application.SignInCommand, *application.SignInHandlerResponse](signInHandler))
 	hE(mediatr.RegisterRequestHandler[*application.SignUpCommand, *application.SignUpHandlerResponse](signUpHandler))
@@ -25,6 +26,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.LogoutCommand, *application.LogoutHandlerResponse](logoutHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ConfirmRegistrationCommand, *application.ConfirmRegistrationHandlerResponse](confirmRegistrationHandler))
 	hE(mediatr.RegisterRequestHandler[*application.SendForgotPasswordNotificationCommand, *application.SendForgotPasswordNotificationHandlerResponse](sendForgotPasswordNotificationHandler))
+	hE(mediatr.RegisterRequestHandler[*application.ResetPasswordCommand, *application.ResetPasswordHandlerResponse](resetPasswordHandler))
 }
 
 func hE(err error) {

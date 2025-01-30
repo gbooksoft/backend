@@ -2,15 +2,11 @@ package routing
 
 import (
 	"github.com/gbooksoft/backend/internal/api/action"
-	"github.com/gbooksoft/backend/internal/domain/authorization"
-	"github.com/gbooksoft/backend/internal/domain/email"
-	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	project_application "github.com/gbooksoft/backend/internal/domain/project/application"
 	project_infrastructure "github.com/gbooksoft/backend/internal/domain/project/infrastructure"
 	"github.com/gbooksoft/backend/pkg/database"
 )
 
-var actionAuthorize *action.Authorize
 var actionProject *action.Project
 
 var accountGetProfileAction *action.AccountGetProfile
@@ -24,14 +20,10 @@ var authRefreshAction *action.AuthRefresh
 var authLogoutAction *action.AuthLogout
 var authConfirmRegistrationAction *action.AuthConfirmRegistration
 var authForgotPasswordAction *action.AuthForgotPassword
+var authResetPasswordAction *action.AuthResetPassword
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
-	emailFacade := email.NewFacade(queue.NewEmailQueue(dbPool), queue.NewTemplateGenerator())
-
-	actionAuthorize = action.NewAuthorize(
-		authorization.NewService(dbPool, emailFacade),
-	)
 
 	actionProject = action.NewProject(
 		project_application.NewService(
@@ -61,4 +53,5 @@ func initializeDependencies() {
 	authLogoutAction = action.NewAuthLogout()
 	authConfirmRegistrationAction = action.NewAuthConfirmRegistration()
 	authForgotPasswordAction = action.NewAuthForgotPassword()
+	authResetPasswordAction = action.NewAuthResetPassword()
 }

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/gbooksoft/backend/internal/domain/authorization"
+	"github.com/gbooksoft/backend/internal/domain/authorization/application"
 	"github.com/gin-gonic/gin"
 	"math/rand/v2"
 	"net/http"
@@ -34,7 +34,7 @@ func AuthRequired() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		token, claims, err := authorization.ParseToken(tokenString, false)
+		token, claims, err := application.ParseToken(tokenString, false)
 
 		if err != nil || !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error_code": http.StatusUnauthorized, "error_message": "Invalid or expired token"})
