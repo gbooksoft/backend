@@ -9,6 +9,7 @@ import (
 	authConfig "github.com/gbooksoft/backend/internal/domain/authorization/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
+	projectConfig "github.com/gbooksoft/backend/internal/domain/project/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/gbooksoft/backend/pkg/http/middleware"
@@ -131,6 +132,7 @@ func main() {
 }
 
 func configureModules() {
+	projectConfig.RegisterMediatr()
 	authConfig.RegisterMediatr()
 	accountConfig.RegisterMediatr()
 }

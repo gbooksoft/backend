@@ -48,67 +48,6 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateProject(userId, userFullName, title, description string) (string, string, error) {
-	tx, err := s.projectRepository.BeginTransaction(context.TODO())
-
-	if err != nil {
-		return "", "", err
-	}
-	defer tx.Rollback()
-
-	userUuid := domain.UserId(uuid.MustParse(userId))
-
-	exists, err := s.projectRepository.ExistsByUserIdAndTitle(tx, userUuid, title, nil)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	if exists {
-		return "", "", gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists)
-	}
-
-	projectId := domain.ProjectId(s.projectRepository.GetNextId())
-
-	project := domain.NewProject(projectId, userUuid, title, description)
-
-	err = s.projectRepository.Add(tx, project)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	metadataId := domain.MetadataId(s.projectRepository.GetNextId())
-	metadata := domain.NewMetadata(metadataId, projectId, userFullName, "", "", "", "")
-	err = s.projectRepository.AddMetadata(tx, metadata)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	menu, expandedItem := domain.NewDefaultMenu(projectId)
-
-	err = s.menuRepository.AddMenu(tx, menu)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	editors := domain.NewEditorsFromMenu(menu)
-
-	err = s.editorRepository.AddMany(tx, editors)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	if err = tx.Commit(); err != nil {
-		return "", "", err
-	}
-
-	return projectId.String(), expandedItem.String(), nil
-}
-
 func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Menu, error) {
 	menu, err := s.menuReadModel.GetByUserIdAndProjectId(userId, projectId)
 

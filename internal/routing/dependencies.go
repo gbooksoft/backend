@@ -22,6 +22,8 @@ var authConfirmRegistrationAction *action.AuthConfirmRegistration
 var authForgotPasswordAction *action.AuthForgotPassword
 var authResetPasswordAction *action.AuthResetPassword
 
+var projectCreateAction *action.ProjectCreate
+
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
 
@@ -54,4 +56,7 @@ func initializeDependencies() {
 	authConfirmRegistrationAction = action.NewAuthConfirmRegistration()
 	authForgotPasswordAction = action.NewAuthForgotPassword()
 	authResetPasswordAction = action.NewAuthResetPassword()
+
+	// project
+	projectCreateAction = action.NewProjectCreate()
 }

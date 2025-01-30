@@ -38,7 +38,7 @@ func projectRoutes(e *gin.Engine) {
 
 	project.Use(middleware.AuthRequired())
 
-	project.POST("", actionProject.Create)
+	project.POST("", projectCreateAction.Invoke)
 	project.GET("", actionProject.GetAllProjects)
 
 	project.GET("/recent", actionProject.GetRecent)

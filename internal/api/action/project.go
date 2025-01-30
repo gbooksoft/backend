@@ -19,58 +19,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type createProjectRequest struct {
-	Title       string `json:"title" binding:"required" validate:"required,max=255"`
-	Description string `json:"description" validate:"max=255"`
-}
-
-type createProjectResponse struct {
-	Id string `json:"project_id"`
-}
-
-func (a *Project) Create(ctx *gin.Context) {
-	var req createProjectRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	userFullName := claims.FirstName + " " + claims.LastName
-
-	projectId, itemIdToExpand, err := a.service.CreateProject(claims.Subject, userFullName, req.Title, req.Description)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	err = a.service.ExpandItem(claims.Subject, projectId, itemIdToExpand)
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(createProjectResponse{
-		Id: projectId,
-	}).Write()
-	return
-}
-
 type getProjectMenuResponse struct {
 	Menu          []getProjectMenuItemResponse `json:"menu"`
 	ExpandedItems []string                     `json:"expanded_items"`
