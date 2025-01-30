@@ -244,10 +244,6 @@ func (s *Service) FetchLocations(userId string, projectId string) ([]readmodel.L
 	return s.locationReadModel.GetLocations(userId, projectId)
 }
 
-func (s *Service) GetAllProjects(userId string) ([]readmodel.Project, error) {
-	return s.projectReadModel.GetAll(userId)
-}
-
 func (s *Service) GetRecentProjects(userId string) ([]readmodel.Project, error) {
 	return s.projectReadModel.GetRecent(userId, 3)
 }
