@@ -43,7 +43,7 @@ func projectRoutes(e *gin.Engine) {
 
 	project.GET("/recent", projectGetRecentAction.Invoke)
 
-	project.GET("/:id/access", actionProject.CanAccess)
+	project.GET("/:id/access", projectCanAccessAction.Invoke)
 	project.GET("/:id/metadata", actionProject.GetMetadata)
 	project.POST("/:id/metadata", actionProject.CreateOrUpdateMetadata)
 
