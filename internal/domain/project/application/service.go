@@ -47,26 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) ExpandItem(userId string, projectId string, menuItemId string) error {
-	err := s.menuReadModel.ExpandItem(userId, projectId, menuItemId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Service) CollapseItem(userId string, projectId string, menuItemId string) error {
-	err := s.menuReadModel.CollapseItem(userId, projectId, menuItemId)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId string, title string, setSelected bool) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))

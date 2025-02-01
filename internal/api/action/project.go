@@ -18,40 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type toggleExpandRequest struct {
-	Expand bool `json:"expand" validate:"required"`
-}
-
-func (a *Project) ToggleExpandMenuItem(ctx *gin.Context) {
-	var req toggleExpandRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-	projectId := ctx.Params.ByName("id")
-	menuItemId := ctx.Params.ByName("item_id")
-
-	if req.Expand {
-		err = a.service.ExpandItem(claims.Subject, projectId, menuItemId)
-	} else {
-		err = a.service.CollapseItem(claims.Subject, projectId, menuItemId)
-	}
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-	return
-}
-
 type updateMenuItemRequest struct {
 	Title    string `json:"title" validate:"max=255"`
 	Selected bool   `json:"selected" validate:"boolean"`
