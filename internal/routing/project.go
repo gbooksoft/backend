@@ -54,7 +54,7 @@ func projectRoutes(e *gin.Engine) {
 	project.DELETE("/:id/menu/:item_id", projectDeleteMenuItemAction.Invoke)
 
 	project.GET("/:id/editors", projectGetEditorsAction.Invoke)
-	project.POST("/:id/editors/:item_id", actionProject.SaveEditorState)
+	project.POST("/:id/editors/:item_id", projectSaveEditorStateAction.Invoke)
 
 	project.GET("/:id/characters", actionProject.GetCharacters)
 	project.POST("/:id/characters/:item_id", actionProject.UpdateCharacter)

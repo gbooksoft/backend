@@ -34,6 +34,7 @@ var projectToggleExpandMenuItemAction *action.ProjectToggleExpandMenuItem
 var projectUpdateMenuItemAction *action.ProjectUpdateMenuItem
 var projectDeleteMenuItemAction *action.ProjectDeleteMenuItem
 var projectGetEditorsAction *action.ProjectGetEditors
+var projectSaveEditorStateAction *action.ProjectSaveEditorState
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -81,4 +82,5 @@ func initializeDependencies() {
 	projectUpdateMenuItemAction = action.NewProjectUpdateMenuItem()
 	projectDeleteMenuItemAction = action.NewProjectDeleteMenuItem()
 	projectGetEditorsAction = action.NewProjectGetEditors()
+	projectSaveEditorStateAction = action.NewProjectSaveEditorState()
 }

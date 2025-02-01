@@ -33,6 +33,7 @@ func RegisterMediatr() {
 	updateMenuItemHandler := application.NewUpdateMenuItemHandler(menuRepository)
 	deleteMenuItemHandler := application.NewDeleteMenuItemHandler(menuRepository)
 	getEditorsHandler := application.NewGetEditorsHandler(editorReadModel)
+	saveEditorStateHandler := application.NewSaveEditorStateHandler(editorRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -48,6 +49,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.UpdateMenuItemCommand, *application.UpdateMenuItemHandlerResponse](updateMenuItemHandler))
 	hE(mediatr.RegisterRequestHandler[*application.DeleteMenuItemCommand, *application.DeleteMenuItemHandlerResponse](deleteMenuItemHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetEditorsQuery, *application.GetEditorsHandlerResponse](getEditorsHandler))
+	hE(mediatr.RegisterRequestHandler[*application.SaveEditorStateCommand, *application.SaveEditorStateHandlerResponse](saveEditorStateHandler))
 }
 
 func hE(err error) {
