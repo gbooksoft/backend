@@ -39,7 +39,7 @@ func (a *ProjectCreate) Invoke(ctx *gin.Context) {
 
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
-		ctx.Error(gerr.NewValidationError(err))
+		ctx.Error(err)
 		return
 	}
 

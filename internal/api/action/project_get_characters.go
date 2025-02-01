@@ -1,7 +1,6 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gin-gonic/gin"
 	"github.com/mehdihadeli/go-mediatr"
@@ -30,7 +29,6 @@ func (a *ProjectGetCharacters) Invoke(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
 		ctx.Error(err)
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
 		return
 	}
 

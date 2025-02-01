@@ -3,7 +3,6 @@ package action
 import (
 	"errors"
 	"fmt"
-	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account/application"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
@@ -29,7 +28,7 @@ type updateSettingsRequest struct {
 func (a *AccountUpdateSettings) Invoke(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
-		ctx.Error(gerr.NewValidationError(err))
+		ctx.Error(err)
 		return
 	}
 
@@ -44,7 +43,7 @@ func (a *AccountUpdateSettings) Invoke(ctx *gin.Context) {
 	err = validate.Struct(req)
 
 	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
+		ctx.Error(gerr.NewValidationError(err))
 		return
 	}
 

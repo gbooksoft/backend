@@ -1,8 +1,8 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/mehdihadeli/go-mediatr"
 	"net/http"
@@ -22,13 +22,13 @@ type toggleExpandRequest struct {
 func (a *ProjectToggleExpandMenuItem) Invoke(ctx *gin.Context) {
 	var req toggleExpandRequest
 	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
+		ctx.Error(gerr.NewValidationError(err))
 		return
 	}
 
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		ctx.Error(err)
 		return
 	}
 	projectId := ctx.Params.ByName("id")

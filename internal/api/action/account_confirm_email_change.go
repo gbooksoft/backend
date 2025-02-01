@@ -1,8 +1,8 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/account/application"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/mehdihadeli/go-mediatr"
 	"net/http"
@@ -22,7 +22,7 @@ type confirmationEmailChangeRequest struct {
 func (a *AccountConfirmEmailChange) Invoke(ctx *gin.Context) {
 	var req confirmationEmailChangeRequest
 	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
+		ctx.Error(gerr.NewValidationError(err))
 		return
 	}
 
