@@ -15,6 +15,8 @@ func RegisterMediatr() {
 	editorRepository := infrastructure.NewMySqlEditorRepository(dbPool)
 	menuReadModel := infrastructure.NewMySqlMenuReadModel(dbPool)
 	projectReadModel := infrastructure.NewMySqlProjectReadModel(dbPool)
+	locationRepository := infrastructure.NewMySqlLocationRepository(dbPool)
+	characterRepository := infrastructure.NewMySqlCharacterRepository(dbPool)
 
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository)
 	expandItemHandler := application.NewExpandItemHandler(menuReadModel)
@@ -25,6 +27,7 @@ func RegisterMediatr() {
 	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
 	getMenuHandler := application.NewGetMenuHandler(menuReadModel)
 	getExpandedItemsHandler := application.NewGetExpandedItemsHandler(menuReadModel)
+	addMenuItemHandler := application.NewAddMenuItemHandler(menuRepository, editorRepository, locationRepository, characterRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -35,6 +38,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.UpdateMetadataCommand, *application.UpdateMetadataHandlerResponse](updateMetadataHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetMenuQuery, *application.GetMenuHandlerResponse](getMenuHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetExpandedItemsQuery, *application.GetExpandedItemsHandlerResponse](getExpandedItemsHandler))
+	hE(mediatr.RegisterRequestHandler[*application.AddMenuItemCommand, *application.AddMenuItemHandlerResponse](addMenuItemHandler))
 }
 
 func hE(err error) {

@@ -18,45 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type addMenuItemRequest struct {
-	Id       string `json:"id" validate:"required,uuid"`
-	ParentId string `json:"parent_id" validate:"required,uuid"`
-}
-
-func (a *Project) AddMenuItem(ctx *gin.Context) {
-	var req addMenuItemRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	err = a.service.AddMenuItem(req.Id, claims.Subject, projectId, req.ParentId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
 type toggleExpandRequest struct {
 	Expand bool `json:"expand" validate:"required"`
 }
