@@ -36,6 +36,7 @@ func RegisterMediatr() {
 	getEditorsHandler := application.NewGetEditorsHandler(editorReadModel)
 	saveEditorStateHandler := application.NewSaveEditorStateHandler(editorRepository)
 	getCharactersHandler := application.NewGetCharactersHandler(characterReadModel)
+	updateCharacterHandler := application.NewUpdateCharacterHandler(characterRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -53,6 +54,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.GetEditorsQuery, *application.GetEditorsHandlerResponse](getEditorsHandler))
 	hE(mediatr.RegisterRequestHandler[*application.SaveEditorStateCommand, *application.SaveEditorStateHandlerResponse](saveEditorStateHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetCharactersQuery, *application.GetCharactersHandlerResponse](getCharactersHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateCharacterCommand, *application.UpdateCharacterHandlerResponse](updateCharacterHandler))
 }
 
 func hE(err error) {

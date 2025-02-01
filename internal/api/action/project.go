@@ -59,60 +59,6 @@ func (a *Project) GetLocations(ctx *gin.Context) {
 	return
 }
 
-type updateCharacterAttributeRequest struct {
-	Field string `json:"field"`
-	Value string `json:"value"`
-}
-
-type updateCharacterRequest struct {
-	Name        string                            `json:"name" validate:"required,max=255,min=1"`
-	Description *string                           `json:"description" validate:"max=5000,omitempty"`
-	Attributes  []updateCharacterAttributeRequest `json:"attributes"`
-}
-
-func (a *Project) UpdateCharacter(ctx *gin.Context) {
-	var req updateCharacterRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-	menuItemId := ctx.Params.ByName("item_id")
-
-	var charAttrs []application.CharacterAttribute
-	for _, attr := range req.Attributes {
-		charAttrs = append(charAttrs, application.CharacterAttribute{
-			Field: attr.Field,
-			Value: attr.Value,
-		})
-	}
-	err = a.service.UpdateCharacter(claims.Subject, projectId, menuItemId, req.Name, req.Description, charAttrs)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-	return
-}
-
 type updateLocationRequest struct {
 	Name        string  `json:"name" validate:"required,max=255,min=1"`
 	Description *string `json:"description" validate:"max=5000,omitempty"`
