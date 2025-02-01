@@ -355,20 +355,6 @@ func (s *Service) GetProject(userId string, projectId string) (readmodel.Project
 	return s.projectReadModel.GetById(userId, projectId)
 }
 
-func (s *Service) GetProjectMetadata(userId string, projectId string) (*readmodel.Metadata, error) {
-	metadata, err := s.projectReadModel.GetMetadata(userId, projectId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if metadata == nil {
-		return nil, gerr.NewBusinessLogicErr("metadata not found", gerr.NotFound)
-	}
-
-	return metadata, nil
-}
-
 type MetadataFields struct {
 	Author   string
 	Genre    string

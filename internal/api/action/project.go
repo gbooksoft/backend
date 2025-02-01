@@ -174,39 +174,6 @@ func (a *Project) ToggleExpandMenuItem(ctx *gin.Context) {
 	return
 }
 
-type metadataResponse struct {
-	Author   string `json:"author"`
-	Genre    string `json:"genre"`
-	Keywords string `json:"keywords"`
-	Language string `json:"language"`
-	Isbn     string `json:"isbn"`
-}
-
-func (a *Project) GetMetadata(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	metadata, err := a.service.GetProjectMetadata(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(&metadataResponse{
-		Author:   metadata.Author,
-		Genre:    metadata.Genre,
-		Keywords: metadata.Keywords,
-		Language: metadata.Language,
-		Isbn:     metadata.Isbn,
-	}).Write()
-}
-
 type metadataRequest struct {
 	Author   string `json:"author,omitempty" validate:"omitempty,max=255"`
 	Genre    string `json:"genre,omitempty" validate:"omitempty,max=255"`
