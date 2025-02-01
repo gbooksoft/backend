@@ -18,29 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-func (a *Project) GetProject(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	project, err := a.service.GetProject(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(&projectItemResponse{
-		Id:          project.Id,
-		Title:       project.Title,
-		Description: project.Description,
-	}).Write()
-}
-
 type updateProjectRequest struct {
 	Title       string  `json:"title" validate:"required,max=255,min=1"`
 	Description *string `json:"description" validate:"max=255,omitempty"`

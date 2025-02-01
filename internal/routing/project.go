@@ -62,6 +62,6 @@ func projectRoutes(e *gin.Engine) {
 	project.GET("/:id/locations", projectGetLocationsAction.Invoke)
 	project.POST("/:id/locations/:item_id", projectUpdateLocationAction.Invoke)
 
-	project.GET("/:id", actionProject.GetProject)
+	project.GET("/:id", projectGetAction.Invoke)
 	project.POST("/:id", actionProject.UpdateProject)
 }

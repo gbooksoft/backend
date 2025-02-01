@@ -47,10 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) GetProject(userId string, projectId string) (readmodel.Project, error) {
-	return s.projectReadModel.GetById(userId, projectId)
-}
-
 func (s *Service) UpdateProject(userId string, projectId string, title string, description *string) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
