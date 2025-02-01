@@ -1,8 +1,8 @@
 package routing
 
 import (
-	"github.com/gbooksoft/backend/internal/database"
 	"github.com/gbooksoft/backend/internal/routing/middleware"
+	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis_rate/v10"
 )

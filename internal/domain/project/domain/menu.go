@@ -2,7 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"github.com/gbooksoft/backend/internal/gerr"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/google/uuid"
 	"slices"
 )
@@ -43,13 +43,13 @@ func (m *Menu) findItemsWithType(itemTypes ...MenuItemType) []*MenuItem {
 func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*MenuItem, error) {
 	_, ok := m.findItemById(newMenuItemId)
 	if ok {
-		return nil, gerr.NewBusinessLogicErr("Menu item already exists", gerr.ProjectMenuItemAlreadyExists, nil)
+		return nil, gerr.NewBusinessLogicErr("Menu item already exists", gerr.ProjectMenuItemAlreadyExists)
 	}
 
 	item, ok := m.findItemById(parentItemId)
 
 	if !ok {
-		return nil, gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound, nil)
+		return nil, gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuParentItemNotFound)
 	}
 
 	var title string
@@ -61,7 +61,7 @@ func (m *Menu) AddNewItem(newMenuItemId MenuItemId, parentItemId MenuItemId) (*M
 	} else if item.Type == TypeLocation {
 		title = "Локация"
 	} else {
-		return nil, gerr.NewBusinessLogicErr(fmt.Sprintf("can not add menu item to %s type", item.Type), gerr.ProjectCanNotAddMenuItemToType, nil)
+		return nil, gerr.NewBusinessLogicErr(fmt.Sprintf("can not add menu item to %s type", item.Type), gerr.ProjectCanNotAddMenuItemToType)
 	}
 
 	newItem := &MenuItem{
@@ -103,7 +103,7 @@ func (m *Menu) UpdateItemTitle(itemUuid MenuItemId, title string) error {
 	item, found := m.findItemById(itemUuid)
 
 	if !found {
-		return gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuItemNotFound, nil)
+		return gerr.NewBusinessLogicErr("Could not find parent item", gerr.ProjectMenuItemNotFound)
 	}
 
 	item.Title = title

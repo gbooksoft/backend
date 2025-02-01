@@ -18,11 +18,11 @@ func init() {
 func authRoutes(e *gin.Engine) {
 	oauth := e.Group("/auth")
 
-	oauth.POST("/authorize", actionAuthorize.SignIn)
-	oauth.POST("/register", actionAuthorize.SignUp)
-	oauth.POST("/refresh", actionAuthorize.Refresh)
-	oauth.POST("/logout", actionAuthorize.Logout)
-	oauth.POST("/confirm-registration", actionAuthorize.ConfirmRegistration)
-	oauth.POST("/forgot-password", actionAuthorize.SendForgotPasswordNotification)
-	oauth.POST("/reset-password", actionAuthorize.ResetPassword)
+	oauth.POST("/authorize", authSignInAction.Invoke)
+	oauth.POST("/register", authSignUpAction.Invoke)
+	oauth.POST("/refresh", authRefreshAction.Invoke)
+	oauth.POST("/logout", authLogoutAction.Invoke)
+	oauth.POST("/confirm-registration", authConfirmRegistrationAction.Invoke)
+	oauth.POST("/forgot-password", authForgotPasswordAction.Invoke)
+	oauth.POST("/reset-password", authResetPasswordAction.Invoke)
 }

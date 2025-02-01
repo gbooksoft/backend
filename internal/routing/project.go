@@ -38,30 +38,30 @@ func projectRoutes(e *gin.Engine) {
 
 	project.Use(middleware.AuthRequired())
 
-	project.POST("", actionProject.Create)
-	project.GET("", actionProject.GetAllProjects)
+	project.POST("", projectCreateAction.Invoke)
+	project.GET("", projectGetAllAction.Invoke)
 
-	project.GET("/recent", actionProject.GetRecent)
+	project.GET("/recent", projectGetRecentAction.Invoke)
 
-	project.GET("/:id/access", actionProject.CanAccess)
-	project.GET("/:id/metadata", actionProject.GetMetadata)
-	project.POST("/:id/metadata", actionProject.CreateOrUpdateMetadata)
+	project.GET("/:id/access", projectCanAccessAction.Invoke)
+	project.GET("/:id/metadata", projectGetMetadataAction.Invoke)
+	project.POST("/:id/metadata", projectUpdateMetadataAction.Invoke)
 
-	project.GET("/:id/menu", actionProject.GetProjectMenu)
-	project.POST("/:id/menu", actionProject.AddMenuItem)
-	project.POST("/:id/menu/:item_id/toggle-expand", actionProject.ToggleExpandMenuItem)
-	project.POST("/:id/menu/:item_id", actionProject.UpdateMenuItem)
-	project.DELETE("/:id/menu/:item_id", actionProject.DeleteMenuItem)
+	project.GET("/:id/menu", projectGetMenuAction.Invoke)
+	project.POST("/:id/menu", projectAddMenuItemAction.Invoke)
+	project.POST("/:id/menu/:item_id/toggle-expand", projectToggleExpandMenuItemAction.Invoke)
+	project.POST("/:id/menu/:item_id", projectUpdateMenuItemAction.Invoke)
+	project.DELETE("/:id/menu/:item_id", projectDeleteMenuItemAction.Invoke)
 
-	project.GET("/:id/editors", actionProject.GetEditors)
-	project.POST("/:id/editors/:item_id", actionProject.SaveEditorState)
+	project.GET("/:id/editors", projectGetEditorsAction.Invoke)
+	project.POST("/:id/editors/:item_id", projectSaveEditorStateAction.Invoke)
 
-	project.GET("/:id/characters", actionProject.GetCharacters)
-	project.POST("/:id/characters/:item_id", actionProject.UpdateCharacter)
+	project.GET("/:id/characters", projectGetCharactersAction.Invoke)
+	project.POST("/:id/characters/:item_id", projectUpdateCharacterAction.Invoke)
 
-	project.GET("/:id/locations", actionProject.GetLocations)
-	project.POST("/:id/locations/:item_id", actionProject.UpdateLocation)
+	project.GET("/:id/locations", projectGetLocationsAction.Invoke)
+	project.POST("/:id/locations/:item_id", projectUpdateLocationAction.Invoke)
 
-	project.GET("/:id", actionProject.GetProject)
-	project.POST("/:id", actionProject.UpdateProject)
+	project.GET("/:id", projectGetAction.Invoke)
+	project.POST("/:id", projectUpdateAction.Invoke)
 }

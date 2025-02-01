@@ -4,11 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"github.com/gbooksoft/backend/internal/database"
-	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/worker"
+	accountConfig "github.com/gbooksoft/backend/internal/domain/account/infrastructure/config"
+	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/infrastructure/worker"
+	authConfig "github.com/gbooksoft/backend/internal/domain/authorization/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
+	projectConfig "github.com/gbooksoft/backend/internal/domain/project/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/routing"
+	"github.com/gbooksoft/backend/pkg/database"
+	"github.com/gbooksoft/backend/pkg/http/middleware"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -47,6 +51,8 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	e.Use(middleware.ErrorHandler(log.Logger))
+
 	db, err := database.SetUpMysqlConnection(ctx)
 
 	if err != nil {
@@ -70,6 +76,8 @@ func main() {
 	} else {
 		log.Info().Msg("connected to s3")
 	}
+
+	configureModules()
 
 	routing.Add(e)
 
@@ -121,4 +129,10 @@ func main() {
 	}
 
 	log.Info().Msg("Server exiting")
+}
+
+func configureModules() {
+	projectConfig.RegisterMediatr()
+	authConfig.RegisterMediatr()
+	accountConfig.RegisterMediatr()
 }
