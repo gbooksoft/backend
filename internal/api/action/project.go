@@ -18,61 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type getCharactersResponse struct {
-	Items []getCharacterItemResponse `json:"items"`
-}
-type getCharacterItemResponse struct {
-	MenuItemId  string                              `json:"menu_item_id"`
-	Name        string                              `json:"name"`
-	Description string                              `json:"description"`
-	Attributes  []getCharacterItemAttributeResponse `json:"attributes"`
-}
-type getCharacterItemAttributeResponse struct {
-	Field string `json:"field"`
-	Value string `json:"value"`
-}
-
-func (a *Project) GetCharacters(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	characters, err := a.service.FetchCharacters(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	var result []getCharacterItemResponse
-	for _, item := range characters {
-		var attributes []getCharacterItemAttributeResponse
-
-		for _, attr := range item.Attributes {
-			attributes = append(attributes, getCharacterItemAttributeResponse{
-				Field: attr.Field,
-				Value: attr.Value,
-			})
-		}
-
-		result = append(result, getCharacterItemResponse{
-			MenuItemId:  item.MenuItemId,
-			Name:        item.Name,
-			Description: item.Description,
-			Attributes:  attributes,
-		})
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getCharactersResponse{
-		Items: result,
-	}).Write()
-	return
-}
-
 type getLocationsResponse struct {
 	Items []getLocationItemResponse `json:"items"`
 }

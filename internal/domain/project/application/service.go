@@ -47,10 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) FetchCharacters(userId string, projectId string) ([]readmodel.Character, error) {
-	return s.characterReadModel.GetCharacters(userId, projectId)
-}
-
 func (s *Service) FetchLocations(userId string, projectId string) ([]readmodel.Location, error) {
 	return s.locationReadModel.GetLocations(userId, projectId)
 }
