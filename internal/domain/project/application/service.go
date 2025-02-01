@@ -47,10 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) FetchLocations(userId string, projectId string) ([]readmodel.Location, error) {
-	return s.locationReadModel.GetLocations(userId, projectId)
-}
-
 func (s *Service) UpdateLocation(
 	userId string,
 	projectId string,

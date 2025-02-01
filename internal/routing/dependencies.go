@@ -37,6 +37,7 @@ var projectGetEditorsAction *action.ProjectGetEditors
 var projectSaveEditorStateAction *action.ProjectSaveEditorState
 var projectGetCharactersAction *action.ProjectGetCharacters
 var projectUpdateCharacterAction *action.ProjectUpdateCharacter
+var projectGetLocationsAction *action.ProjectGetLocations
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -87,4 +88,5 @@ func initializeDependencies() {
 	projectSaveEditorStateAction = action.NewProjectSaveEditorState()
 	projectGetCharactersAction = action.NewProjectGetCharacters()
 	projectUpdateCharacterAction = action.NewProjectUpdateCharacter()
+	projectGetLocationsAction = action.NewProjectGetLocations()
 }

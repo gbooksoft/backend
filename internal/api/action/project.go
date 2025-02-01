@@ -18,47 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type getLocationsResponse struct {
-	Items []getLocationItemResponse `json:"items"`
-}
-type getLocationItemResponse struct {
-	MenuItemId  string `json:"menu_item_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-func (a *Project) GetLocations(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	characters, err := a.service.FetchLocations(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	var result []getLocationItemResponse
-	for _, item := range characters {
-
-		result = append(result, getLocationItemResponse{
-			MenuItemId:  item.MenuItemId,
-			Name:        item.Name,
-			Description: item.Description,
-		})
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getLocationsResponse{
-		Items: result,
-	}).Write()
-	return
-}
-
 type updateLocationRequest struct {
 	Name        string  `json:"name" validate:"required,max=255,min=1"`
 	Description *string `json:"description" validate:"max=5000,omitempty"`
