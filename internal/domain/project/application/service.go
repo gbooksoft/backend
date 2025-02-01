@@ -47,47 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) UpdateMenuItem(userId string, projectId string, menuItemId string, title string, setSelected bool) error {
-	userUUid := domain.UserId(uuid.MustParse(userId))
-	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
-	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
-
-	tx, err := s.menuRepository.BeginTransaction(context.TODO())
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	menu, err := s.menuRepository.FindByProjectId(tx, userUUid, projectUUid)
-	if err != nil {
-		return err
-	}
-
-	if len(title) > 0 {
-		err = menu.UpdateItemTitle(menuItemUuid, title)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if setSelected {
-		menu.SelectItem(menuItemUuid)
-	}
-
-	err = s.menuRepository.Save(tx, userUUid, projectUUid, menu)
-
-	if err != nil {
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) SaveEditorState(userId, projectId, menuItemId, editorState string) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))

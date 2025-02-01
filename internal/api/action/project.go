@@ -18,46 +18,6 @@ func NewProject(service *application.Service) *Project {
 	}
 }
 
-type updateMenuItemRequest struct {
-	Title    string `json:"title" validate:"max=255"`
-	Selected bool   `json:"selected" validate:"boolean"`
-}
-
-func (a *Project) UpdateMenuItem(ctx *gin.Context) {
-	var req updateMenuItemRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-	menuItemId := ctx.Params.ByName("item_id")
-
-	err = a.service.UpdateMenuItem(claims.Subject, projectId, menuItemId, req.Title, req.Selected)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
 func (a *Project) DeleteMenuItem(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
