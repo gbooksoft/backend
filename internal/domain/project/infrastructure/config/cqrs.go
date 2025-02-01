@@ -18,11 +18,13 @@ func RegisterMediatr() {
 
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository)
 	expandItemHandler := application.NewExpandItemHandler(menuReadModel)
-	getAllProjectsHandler := application.NewGetAllProjectsQueryHandler(projectReadModel)
+	getAllProjectsHandler := application.NewGetAllProjectsHandler(projectReadModel)
+	getRecentProjectsHandler := application.NewGetRecentProjectsQueryHandler(projectReadModel)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
-	hE(mediatr.RegisterRequestHandler[*application.GetAllProjectsQuery, *application.GetAllProjectsQueryHandlerResponse](getAllProjectsHandler))
+	hE(mediatr.RegisterRequestHandler[*application.GetAllProjectsQuery, *application.GetAllProjectsHandlerResponse](getAllProjectsHandler))
+	hE(mediatr.RegisterRequestHandler[*application.GetRecentProjectsQuery, *application.GetRecentProjectsHandlerResponse](getRecentProjectsHandler))
 }
 
 func hE(err error) {

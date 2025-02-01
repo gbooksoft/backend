@@ -512,35 +512,6 @@ func (a *Project) GetLocations(ctx *gin.Context) {
 	return
 }
 
-func (a *Project) GetRecent(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projects, err := a.service.GetRecentProjects(claims.Subject)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	var result []projectItemResponse
-	for _, item := range projects {
-		result = append(result, projectItemResponse{
-			Id:          item.Id,
-			Title:       item.Title,
-			Description: item.Description,
-		})
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getAllResponse{
-		Items: result,
-	}).Write()
-	return
-}
-
 type updateCharacterAttributeRequest struct {
 	Field string `json:"field"`
 	Value string `json:"value"`

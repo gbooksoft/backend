@@ -9,24 +9,24 @@ type GetAllProjectsQuery struct {
 	UserId string
 }
 
-type GetAllProjectsQueryHandlerResponse struct {
+type GetAllProjectsHandlerResponse struct {
 	Projects []readmodel.Project
 }
 
-type GetAllProjectsQueryHandler struct {
+type GetAllProjectsHandler struct {
 	projectReadModel readmodel.ProjectReadModel
 }
 
-func NewGetAllProjectsQueryHandler(projectReadModel readmodel.ProjectReadModel) *GetAllProjectsQueryHandler {
-	return &GetAllProjectsQueryHandler{projectReadModel: projectReadModel}
+func NewGetAllProjectsHandler(projectReadModel readmodel.ProjectReadModel) *GetAllProjectsHandler {
+	return &GetAllProjectsHandler{projectReadModel: projectReadModel}
 }
 
-func (h *GetAllProjectsQueryHandler) Handle(ctx context.Context, query *GetAllProjectsQuery) (*GetAllProjectsQueryHandlerResponse, error) {
+func (h *GetAllProjectsHandler) Handle(ctx context.Context, query *GetAllProjectsQuery) (*GetAllProjectsHandlerResponse, error) {
 	projects, err := h.projectReadModel.GetAll(query.UserId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &GetAllProjectsQueryHandlerResponse{Projects: projects}, nil
+	return &GetAllProjectsHandlerResponse{Projects: projects}, nil
 }

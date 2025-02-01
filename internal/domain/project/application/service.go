@@ -244,10 +244,6 @@ func (s *Service) FetchLocations(userId string, projectId string) ([]readmodel.L
 	return s.locationReadModel.GetLocations(userId, projectId)
 }
 
-func (s *Service) GetRecentProjects(userId string) ([]readmodel.Project, error) {
-	return s.projectReadModel.GetRecent(userId, 3)
-}
-
 func (s *Service) DeleteMenuItem(userId string, projectId string, menuItemId string) error {
 	userUUid := domain.UserId(uuid.MustParse(userId))
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))

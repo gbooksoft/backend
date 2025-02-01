@@ -24,6 +24,7 @@ var authResetPasswordAction *action.AuthResetPassword
 
 var projectCreateAction *action.ProjectCreate
 var projectGetAllAction *action.ProjectGetAll
+var projectGetRecentAction *action.ProjectGetRecent
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -61,4 +62,5 @@ func initializeDependencies() {
 	// project
 	projectCreateAction = action.NewProjectCreate()
 	projectGetAllAction = action.NewProjectGetAll()
+	projectGetRecentAction = action.NewProjectGetRecent()
 }
