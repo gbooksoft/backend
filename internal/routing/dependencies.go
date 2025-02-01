@@ -2,12 +2,7 @@ package routing
 
 import (
 	"github.com/gbooksoft/backend/internal/api/action"
-	project_application "github.com/gbooksoft/backend/internal/domain/project/application"
-	project_infrastructure "github.com/gbooksoft/backend/internal/domain/project/infrastructure"
-	"github.com/gbooksoft/backend/pkg/database"
 )
-
-var actionProject *action.Project
 
 var accountGetProfileAction *action.AccountGetProfile
 var accountUpdatePasswordAction *action.AccountUpdatePassword
@@ -40,25 +35,9 @@ var projectUpdateCharacterAction *action.ProjectUpdateCharacter
 var projectGetLocationsAction *action.ProjectGetLocations
 var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectGetAction *action.ProjectGet
+var projectUpdateAction *action.ProjectUpdate
 
 func initializeDependencies() {
-	dbPool := database.GetDBPool()
-
-	actionProject = action.NewProject(
-		project_application.NewService(
-			project_infrastructure.NewMySqlProjectRepository(dbPool),
-			project_infrastructure.NewMySqlMenuRepository(dbPool),
-			project_infrastructure.NewMySqlMenuReadModel(dbPool),
-			project_infrastructure.NewMySqlEditorRepository(dbPool),
-			project_infrastructure.NewMySqlEditorReadModel(dbPool),
-			project_infrastructure.NewMySqlProjectReadModel(dbPool),
-			project_infrastructure.NewMySqlCharacterRepository(dbPool),
-			project_infrastructure.NewMySqlCharacterReadModel(dbPool),
-			project_infrastructure.NewMySqlLocationRepository(dbPool),
-			project_infrastructure.NewMySqlLocationReadModel(dbPool),
-		),
-	)
-
 	// account
 	accountGetProfileAction = action.NewAccountGetProfile()
 	accountUpdatePasswordAction = action.NewAccountUpdatePassword()
@@ -93,4 +72,5 @@ func initializeDependencies() {
 	projectGetLocationsAction = action.NewProjectGetLocations()
 	projectUpdateLocationAction = action.NewProjectUpdateLocation()
 	projectGetAction = action.NewProjectGet()
+	projectUpdateAction = action.NewProjectUpdate()
 }

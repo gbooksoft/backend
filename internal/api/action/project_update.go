@@ -1,21 +1,19 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
+	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/mehdihadeli/go-mediatr"
 	"net/http"
 )
 
-type Project struct {
-	service *application.Service
+type ProjectUpdate struct {
 }
 
-func NewProject(service *application.Service) *Project {
-	return &Project{
-		service: service,
-	}
+func NewProjectUpdate() *ProjectUpdate {
+	return new(ProjectUpdate)
 }
 
 type updateProjectRequest struct {
@@ -23,10 +21,10 @@ type updateProjectRequest struct {
 	Description *string `json:"description" validate:"max=255,omitempty"`
 }
 
-func (a *Project) UpdateProject(ctx *gin.Context) {
+func (a *ProjectUpdate) Invoke(ctx *gin.Context) {
 	var req updateProjectRequest
 	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
+		ctx.Error(gerr.NewValidationError(err))
 		return
 	}
 
@@ -35,25 +33,32 @@ func (a *Project) UpdateProject(ctx *gin.Context) {
 	err := validate.Struct(req)
 
 	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
+		ctx.Error(gerr.NewValidationError(err))
 		return
 	}
 
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
+		ctx.Error(err)
 		return
 	}
 
 	projectId := ctx.Params.ByName("id")
 
-	err = a.service.UpdateProject(claims.Subject, projectId, req.Title, req.Description)
+	cmd := &application.UpdateProjectCommand{
+		ProjectId:   projectId,
+		Title:       req.Title,
+		Description: req.Description,
+		UserId:      claims.Subject,
+	}
+
+	_, err = mediatr.Send[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](ctx, cmd)
 
 	if err != nil {
-		response.HandleErr(err, ctx.Writer)
+		ctx.Error(err)
 		return
 	}
 
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
+	ctx.JSON(http.StatusOK, 1)
 	return
 }

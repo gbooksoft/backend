@@ -41,6 +41,7 @@ func RegisterMediatr() {
 	getLocationsHandler := application.NewGetLocationsHandler(locationReadModel)
 	updateLocationHandler := application.NewUpdateLocationHandler(locationRepository)
 	getProjectHandler := application.NewGetProjectHandler(projectReadModel)
+	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -62,6 +63,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.GetLocationsQuery, *application.GetLocationsHandlerResponse](getLocationsHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateLocationCommand, *application.UpdateLocationHandlerResponse](updateLocationHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetProjectQuery, *application.GetProjectHandlerResponse](getProjectHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
 }
 
 func hE(err error) {
