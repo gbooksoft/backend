@@ -47,7 +47,7 @@ func projectRoutes(e *gin.Engine) {
 	project.GET("/:id/metadata", projectGetMetadataAction.Invoke)
 	project.POST("/:id/metadata", projectUpdateMetadataAction.Invoke)
 
-	project.GET("/:id/menu", actionProject.GetProjectMenu)
+	project.GET("/:id/menu", projectGetMenuAction.Invoke)
 	project.POST("/:id/menu", actionProject.AddMenuItem)
 	project.POST("/:id/menu/:item_id/toggle-expand", actionProject.ToggleExpandMenuItem)
 	project.POST("/:id/menu/:item_id", actionProject.UpdateMenuItem)

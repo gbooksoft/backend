@@ -23,6 +23,8 @@ func RegisterMediatr() {
 	canAccessHandler := application.NewCanAccessHandler(projectRepository)
 	getMetadataHandler := application.NewGetMetadataHandler(projectReadModel)
 	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
+	getMenuHandler := application.NewGetMenuHandler(menuReadModel)
+	getExpandedItemsHandler := application.NewGetExpandedItemsHandler(menuReadModel)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -31,6 +33,8 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.CanAccessCommand, *application.CanAccessHandlerResponse](canAccessHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetMetadataQuery, *application.GetMetadataHandlerResponse](getMetadataHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateMetadataCommand, *application.UpdateMetadataHandlerResponse](updateMetadataHandler))
+	hE(mediatr.RegisterRequestHandler[*application.GetMenuQuery, *application.GetMenuHandlerResponse](getMenuHandler))
+	hE(mediatr.RegisterRequestHandler[*application.GetExpandedItemsQuery, *application.GetExpandedItemsHandlerResponse](getExpandedItemsHandler))
 }
 
 func hE(err error) {

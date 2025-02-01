@@ -47,20 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) GetProjectMenu(userId string, projectId string) (*readmodel.Menu, error) {
-	menu, err := s.menuReadModel.GetByUserIdAndProjectId(userId, projectId)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if menu == nil || len(menu.Items) == 0 {
-		return nil, gerr.NewBusinessLogicErr("Menu not found", gerr.NotFound)
-	}
-
-	return menu, nil
-}
-
 func (s *Service) AddMenuItem(newMenuItemId, userId, projectId, parentId string) error {
 	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
 	newMenuItemUUid := domain.MenuItemId(uuid.MustParse(newMenuItemId))
@@ -127,10 +113,6 @@ func (s *Service) AddMenuItem(newMenuItemId, userId, projectId, parentId string)
 	}
 
 	return nil
-}
-
-func (s *Service) GetExpandedItems(userId string, projectId string) ([]string, error) {
-	return s.menuReadModel.GetExpandedItems(userId, projectId)
 }
 
 func (s *Service) ExpandItem(userId string, projectId string, menuItemId string) error {

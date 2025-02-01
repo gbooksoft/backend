@@ -3,7 +3,6 @@ package action
 import (
 	"github.com/gbooksoft/backend/internal/api/action/response"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
-	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -17,47 +16,6 @@ func NewProject(service *application.Service) *Project {
 	return &Project{
 		service: service,
 	}
-}
-
-type getProjectMenuResponse struct {
-	Menu          []getProjectMenuItemResponse `json:"menu"`
-	ExpandedItems []string                     `json:"expanded_items"`
-}
-
-type getProjectMenuItemResponse struct {
-	Id         string                       `json:"id"`
-	Title      string                       `json:"title"`
-	Type       string                       `json:"type"`
-	ParentId   *string                      `json:"parent_id"`
-	Children   []getProjectMenuItemResponse `json:"children"`
-	IsSelected bool                         `json:"is_selected"`
-	Order      int                          `json:"order"`
-}
-
-func (a *Project) GetProjectMenu(ctx *gin.Context) {
-	projectId := ctx.Params.ByName("id")
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	menu, err := a.service.GetProjectMenu(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	responseItems := a.groupMenuByParentId(menu)
-	expandedItems, _ := a.service.GetExpandedItems(claims.Subject, projectId)
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getProjectMenuResponse{
-		Menu:          responseItems,
-		ExpandedItems: expandedItems,
-	}).Write()
-
-	return
 }
 
 type addMenuItemRequest struct {
@@ -97,47 +55,6 @@ func (a *Project) AddMenuItem(ctx *gin.Context) {
 	}
 
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
-func (a *Project) groupMenuByParentId(menu *readmodel.Menu) []getProjectMenuItemResponse {
-	grouped := make(map[string][]getProjectMenuItemResponse)
-	for _, item := range menu.Items {
-		var parentId string
-
-		if item.ParentId == nil {
-			parentId = "ROOT"
-		} else {
-			parentId = *item.ParentId
-		}
-
-		menuItem := getProjectMenuItemResponse{
-			Id:         item.Id,
-			Title:      item.Title,
-			Type:       item.ItemType,
-			ParentId:   item.ParentId,
-			Children:   nil,
-			IsSelected: item.IsSelected,
-			Order:      item.Order,
-		}
-
-		grouped[parentId] = append(grouped[parentId], menuItem)
-	}
-
-	for parentId, children := range grouped {
-		for childI := range children {
-			curId := grouped[parentId][childI].Id
-
-			if itsChildren, ok := grouped[curId]; ok {
-				grouped[parentId][childI].Children = itsChildren
-			}
-		}
-	}
-
-	if v, ok := grouped["ROOT"]; ok {
-		return v
-	}
-
-	return []getProjectMenuItemResponse{}
 }
 
 type toggleExpandRequest struct {

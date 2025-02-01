@@ -28,6 +28,7 @@ var projectGetRecentAction *action.ProjectGetRecent
 var projectCanAccessAction *action.ProjectCanAccess
 var projectGetMetadataAction *action.ProjectGetMetadata
 var projectUpdateMetadataAction *action.ProjectUpdateMetadata
+var projectGetMenuAction *action.ProjectGetMenu
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -69,4 +70,5 @@ func initializeDependencies() {
 	projectCanAccessAction = action.NewProjectCanAccess()
 	projectGetMetadataAction = action.NewProjectGetMetadata()
 	projectUpdateMetadataAction = action.NewProjectUpdateMetadata()
+	projectGetMenuAction = action.NewProjectGetMenu()
 }
