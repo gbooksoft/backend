@@ -57,44 +57,6 @@ func (a *Project) SaveEditorState(ctx *gin.Context) {
 	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
 }
 
-type getEditorsResponse struct {
-	Items []getEditorItemResponse `json:"items"`
-}
-type getEditorItemResponse struct {
-	MenuItemId  string `json:"menu_item_id"`
-	EditorState string `json:"editor_state"`
-}
-
-func (a *Project) GetEditors(ctx *gin.Context) {
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	editors, err := a.service.FetchEditors(claims.Subject, projectId)
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	var result []getEditorItemResponse
-	for _, item := range editors {
-		result = append(result, getEditorItemResponse{
-			MenuItemId:  item.MenuItemId,
-			EditorState: item.EditorState,
-		})
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Struct(getEditorsResponse{
-		Items: result,
-	}).Write()
-	return
-}
-
 type getCharactersResponse struct {
 	Items []getCharacterItemResponse `json:"items"`
 }

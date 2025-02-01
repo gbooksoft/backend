@@ -80,10 +80,6 @@ func (s *Service) SaveEditorState(userId, projectId, menuItemId, editorState str
 	return nil
 }
 
-func (s *Service) FetchEditors(userId string, projectId string) ([]readmodel.Editor, error) {
-	return s.editorReadModel.GetEditors(userId, projectId)
-}
-
 func (s *Service) FetchCharacters(userId string, projectId string) ([]readmodel.Character, error) {
 	return s.characterReadModel.GetCharacters(userId, projectId)
 }
