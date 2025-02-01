@@ -47,47 +47,6 @@ func NewService(
 	}
 }
 
-func (s *Service) UpdateLocation(
-	userId string,
-	projectId string,
-	menuItemId string,
-	name string,
-	description *string,
-) error {
-	userUUid := domain.UserId(uuid.MustParse(userId))
-	projectUUid := domain.ProjectId(uuid.MustParse(projectId))
-	menuItemUuid := domain.MenuItemId(uuid.MustParse(menuItemId))
-
-	tx, err := s.locationRepository.BeginTransaction(context.TODO())
-
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	location, err := s.locationRepository.FindLocation(tx, userUUid, projectUUid, menuItemUuid)
-	if err != nil {
-		return err
-	}
-
-	location.Name = name
-	if description != nil {
-		location.Description = description
-	}
-
-	err = s.locationRepository.Save(tx, location)
-
-	if err != nil {
-		return err
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Service) GetProject(userId string, projectId string) (readmodel.Project, error) {
 	return s.projectReadModel.GetById(userId, projectId)
 }
