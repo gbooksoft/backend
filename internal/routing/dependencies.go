@@ -27,6 +27,7 @@ var projectGetAllAction *action.ProjectGetAll
 var projectGetRecentAction *action.ProjectGetRecent
 var projectCanAccessAction *action.ProjectCanAccess
 var projectGetMetadataAction *action.ProjectGetMetadata
+var projectUpdateMetadataAction *action.ProjectUpdateMetadata
 
 func initializeDependencies() {
 	dbPool := database.GetDBPool()
@@ -67,4 +68,5 @@ func initializeDependencies() {
 	projectGetRecentAction = action.NewProjectGetRecent()
 	projectCanAccessAction = action.NewProjectCanAccess()
 	projectGetMetadataAction = action.NewProjectGetMetadata()
+	projectUpdateMetadataAction = action.NewProjectUpdateMetadata()
 }

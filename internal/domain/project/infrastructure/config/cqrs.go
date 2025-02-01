@@ -22,6 +22,7 @@ func RegisterMediatr() {
 	getRecentProjectsHandler := application.NewGetRecentProjectsQueryHandler(projectReadModel)
 	canAccessHandler := application.NewCanAccessHandler(projectRepository)
 	getMetadataHandler := application.NewGetMetadataHandler(projectReadModel)
+	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](expandItemHandler))
@@ -29,6 +30,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.GetRecentProjectsQuery, *application.GetRecentProjectsHandlerResponse](getRecentProjectsHandler))
 	hE(mediatr.RegisterRequestHandler[*application.CanAccessCommand, *application.CanAccessHandlerResponse](canAccessHandler))
 	hE(mediatr.RegisterRequestHandler[*application.GetMetadataQuery, *application.GetMetadataHandlerResponse](getMetadataHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateMetadataCommand, *application.UpdateMetadataHandlerResponse](updateMetadataHandler))
 }
 
 func hE(err error) {

@@ -40,4 +40,5 @@ const (
 	ProjectMenuParentItemNotFound
 	ProjectMenuItemNotFound
 	ProjectCanNotAddMenuItemToType
+	ProjectMetadataNotFound
 )

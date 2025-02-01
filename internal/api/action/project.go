@@ -174,54 +174,6 @@ func (a *Project) ToggleExpandMenuItem(ctx *gin.Context) {
 	return
 }
 
-type metadataRequest struct {
-	Author   string `json:"author,omitempty" validate:"omitempty,max=255"`
-	Genre    string `json:"genre,omitempty" validate:"omitempty,max=255"`
-	Keywords string `json:"keywords,omitempty" validate:"omitempty,max=255"`
-	Language string `json:"language,omitempty" validate:"omitempty,max=255"`
-	Isbn     string `json:"isbn,omitempty" validate:"omitempty,max=255"`
-}
-
-func (a *Project) CreateOrUpdateMetadata(ctx *gin.Context) {
-	var req metadataRequest
-	if err := ctx.ShouldBind(&req); err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	err := validate.Struct(req)
-
-	if err != nil {
-		response.Json(ctx.Writer).ErrValidation(err).Write()
-		return
-	}
-
-	claims, err := getJwtClaims(ctx)
-	if err != nil {
-		response.Json(ctx.Writer).Unauthorized(err.Error()).Write()
-		return
-	}
-
-	projectId := ctx.Params.ByName("id")
-
-	err = a.service.CreateOrUpdateMetadata(claims.Subject, projectId, application.MetadataFields{
-		Author:   req.Author,
-		Genre:    req.Genre,
-		Keywords: req.Keywords,
-		Language: req.Language,
-		Isbn:     req.Isbn,
-	})
-
-	if err != nil {
-		response.HandleErr(err, ctx.Writer)
-		return
-	}
-
-	response.Json(ctx.Writer).StatusCode(http.StatusOK).Write()
-}
-
 type updateMenuItemRequest struct {
 	Title    string `json:"title" validate:"max=255"`
 	Selected bool   `json:"selected" validate:"boolean"`
