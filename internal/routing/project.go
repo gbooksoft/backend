@@ -30,8 +30,8 @@ func init() {
 	middleware.RegisterLimit("GET", "/projects/:id/locations", 10)
 	middleware.RegisterLimit("POST", "/projects/:id/locations/:item_id", 10)
 
-	middleware.RegisterLimit("GET", "/projects/:id", 10)
-	middleware.RegisterLimit("POST", "/projects/:id", 10)
+	middleware.RegisterLimit("GET", "/projects/:id", 3)
+	middleware.RegisterLimit("POST", "/projects/:id", 3)
 }
 
 func projectRoutes(e *gin.Engine) {
