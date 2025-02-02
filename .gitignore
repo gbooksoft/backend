@@ -1,6 +1,7 @@
 .idea
 dbdata
 .env
+.docker/valley_data
 .docker/redis_data
 .docker/minio-data
 .docker/minio-config

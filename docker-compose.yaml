@@ -28,13 +28,13 @@ services:
     ports:
       - "1025:1025"  # SMTP порт для отправки писем
       - "8025:8025"  # Веб-интерфейс для просмотра сообщений
-  redis:
-    image: redis:7.2
+  valley:
+    image: valkey/valkey:7.2
     ports:
       - "6379:6379"
     volumes:
-      - ./.docker/redis_data:/data
-    command: [ "redis-server", "--appendonly", "yes" ]
+      - ./.docker/valley_data:/data
+    command: [ "valkey-server", "--appendonly", "yes" ]
   minio:
     image: minio/minio:latest
     container_name: minio
