@@ -14,11 +14,12 @@ func init() {
 	middleware.RegisterLimit("GET", "/projects/:id/access", 10)
 	middleware.RegisterLimit("GET", "/projects/:id/metadata", 10)
 
-	middleware.RegisterLimit("GET", "/projects/:id/menu", 10)
-	middleware.RegisterLimit("POST", "/projects/:id/menu", 10)
+	middleware.RegisterLimit("GET", "/projects/:id/menu", 3)
+	middleware.RegisterLimit("POST", "/projects/:id/menu", 5)
+	middleware.RegisterLimit("POST", "/projects/:id/menu/reorder", 3)
 	middleware.RegisterLimit("POST", "/projects/:id/menu/:item_id/toggle-expand", 10)
-	middleware.RegisterLimit("POST", "/projects/:id/menu/:item_id", 10)
-	middleware.RegisterLimit("DELETE", "/projects/:id/menu/:item_id", 10)
+	middleware.RegisterLimit("POST", "/projects/:id/menu/:item_id", 5)
+	middleware.RegisterLimit("DELETE", "/projects/:id/menu/:item_id", 5)
 
 	middleware.RegisterLimit("GET", "/projects/:id/editors", 10)
 	middleware.RegisterLimit("POST", "/projects/:id/editors/:item_id", 10)
