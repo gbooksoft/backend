@@ -40,8 +40,9 @@ func RateLimiterMiddleware(limiter *redis_rate.Limiter) gin.HandlerFunc {
 		res, err := limiter.Allow(c, key, limit)
 		if err != nil {
 			log.Err(err).Msg("rate limiter internal err")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			c.Abort()
+
+			// Продолжаем выполнение запроса, мы не можем положить приложение если редис не работает
+			c.Next()
 			return
 		}
 
