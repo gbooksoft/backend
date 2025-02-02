@@ -121,6 +121,88 @@ func (m *Menu) SelectItem(itemUuid MenuItemId) {
 	}
 }
 
+type ReorderItem struct {
+	ItemId       string
+	ParentItemId string
+	Order        int
+}
+
+func (m *Menu) Reorder(itemsToReorder []ReorderItem) error {
+	var newItems []*MenuItem
+	for _, r := range itemsToReorder {
+		for _, item := range m.Items {
+			if item.Id.String() == r.ItemId && item.ParentId.String() == r.ParentItemId && item.Type == TypeChapter {
+				rItem := item
+				rItem.Order = r.Order
+
+				newItems = append(newItems, rItem)
+			}
+		}
+	}
+
+	group := m.groupByParentId(newItems)
+
+	for parentId, items := range group {
+		if len(items) != m.lenItemsByParentId(parentId) {
+			return gerr.NewBusinessLogicErr("incorrect amount of items", gerr.ProjectIncorrectAmountOfItems)
+		}
+
+		if !m.validateOrdering(items) {
+			return gerr.NewBusinessLogicErr("incorrect ordering of items", gerr.ProjectIncorrectOrderingOfItems)
+		}
+
+		m.replaceItemsOrder(items)
+	}
+
+	return nil
+}
+
+func (m *Menu) groupByParentId(items []*MenuItem) map[string][]*MenuItem {
+	result := make(map[string][]*MenuItem)
+
+	for _, item := range items {
+		result[item.ParentId.String()] = append(result[item.ParentId.String()], item)
+	}
+
+	return result
+}
+
+func (m *Menu) lenItemsByParentId(parentId string) int {
+	c := 0
+
+	for _, item := range m.Items {
+		if item.ParentId != nil && item.ParentId.String() == parentId {
+			c++
+		}
+	}
+
+	return c
+}
+
+// validateOrdering проверяет что все объекты имеют разный Order
+func (m *Menu) validateOrdering(items []*MenuItem) bool {
+	orderMap := make(map[int]struct{})
+
+	for _, obj := range items {
+		if _, exists := orderMap[obj.Order]; exists {
+			return false
+		}
+		orderMap[obj.Order] = struct{}{}
+	}
+
+	return true
+}
+
+func (m *Menu) replaceItemsOrder(items []*MenuItem) {
+	for _, item := range m.Items {
+		for _, nI := range items {
+			if item.Id.String() == nI.Id.String() {
+				item.Order = nI.Order
+			}
+		}
+	}
+}
+
 type MenuItem struct {
 	Id        MenuItemId
 	ProjectId ProjectId

@@ -124,14 +124,14 @@ func (r *MySqlMenuRepository) Save(tx *sql.Tx, userId domain.UserId, projectId d
 
 	for _, newItem := range newMenu.Items {
 		if existingItem, found := existingItems[newItem.Id.String()]; found {
-			if existingItem.Title != newItem.Title || existingItem.Selected != newItem.Selected {
+			if existingItem.Title != newItem.Title || existingItem.Selected != newItem.Selected || existingItem.Order != newItem.Order {
 				var isSelected uint8
 				if newItem.Selected {
 					isSelected = 1
 				}
 				_, err := tx.Exec(
-					"UPDATE project_menu_items SET title = ?, is_selected = ? WHERE id = ?",
-					newItem.Title, isSelected, newItem.Id.String(),
+					"UPDATE project_menu_items SET title = ?, is_selected = ?, `order` = ? WHERE id = ?",
+					newItem.Title, isSelected, newItem.Order, newItem.Id.String(),
 				)
 				if err != nil {
 					return fmt.Errorf("error updating item with id %s: %w", newItem.Id, err)
@@ -185,7 +185,7 @@ func (r *MySqlMenuRepository) addMenuItem(tx *sql.Tx, menuItem *domain.MenuItem)
 	}
 
 	_, err := tx.Exec(
-		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id, is_selected, `order`	) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		"INSERT INTO project_menu_items (id, project_id, title, type, parent_id, is_selected, `order`) VALUES (?, ?, ?, ?, ?, ?, ?)",
 		menuItem.Id.String(),
 		menuItem.ProjectId.String(),
 		menuItem.Title,

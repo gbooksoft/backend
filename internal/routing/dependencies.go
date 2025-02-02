@@ -36,6 +36,7 @@ var projectGetLocationsAction *action.ProjectGetLocations
 var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
+var projectReorderMenuAction *action.ProjectReorderMenu
 
 func initializeDependencies() {
 	// account
@@ -73,4 +74,5 @@ func initializeDependencies() {
 	projectUpdateLocationAction = action.NewProjectUpdateLocation()
 	projectGetAction = action.NewProjectGet()
 	projectUpdateAction = action.NewProjectUpdate()
+	projectReorderMenuAction = action.NewProjectReorderMenu()
 }

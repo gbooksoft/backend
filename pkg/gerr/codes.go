@@ -41,4 +41,6 @@ const (
 	ProjectMenuItemNotFound
 	ProjectCanNotAddMenuItemToType
 	ProjectMetadataNotFound
+	ProjectIncorrectAmountOfItems
+	ProjectIncorrectOrderingOfItems
 )
