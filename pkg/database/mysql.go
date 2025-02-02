@@ -17,9 +17,10 @@ func SetUpMysqlConnection(ctx context.Context) (*sql.DB, error) {
 		return nil, err
 	}
 
-	db.SetConnMaxLifetime(0)
-	db.SetMaxIdleConns(3)
-	db.SetMaxOpenConns(3)
+	db.SetMaxIdleConns(25)
+	db.SetMaxOpenConns(25)
+	db.SetConnMaxLifetime(10 * time.Minute)
+	db.SetConnMaxIdleTime(2 * time.Minute)
 
 	err = openDbConnection(ctx, db)
 
