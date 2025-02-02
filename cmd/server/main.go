@@ -61,12 +61,12 @@ func main() {
 		log.Info().Msg("connected to database")
 	}
 
-	_, err = database.SetUpRedisConnection(ctx)
+	_, err = database.SetUpValkeyConnection(ctx)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("can not connect to redis")
+		log.Fatal().Err(err).Msg("can not connect to valkey")
 	} else {
-		log.Info().Msg("connected to redis")
+		log.Info().Msg("connected to valkey")
 	}
 
 	_, err = database.SetUpS3Connection(ctx)

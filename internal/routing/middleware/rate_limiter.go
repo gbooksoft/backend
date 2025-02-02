@@ -2,24 +2,32 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis_rate/v10"
 	"github.com/rs/zerolog/log"
+	"github.com/valkey-io/valkey-go"
+	"github.com/valkey-io/valkey-go/valkeylimiter"
 	"net/http"
 	"time"
 )
 
-var routeLimits = map[string]redis_rate.Limit{}
+type rateLimit struct {
+	Rate   int
+	Burst  int
+	Period time.Duration
+}
+
+var routeLimits = map[string]rateLimit{}
 
 func RegisterLimit(method, path string, perSecond int) {
-	routeLimits[method+"~"+path] = redis_rate.Limit{
+	routeLimits[method+"~"+path] = rateLimit{
 		Rate:   perSecond,
 		Burst:  perSecond,
 		Period: time.Second,
 	}
 }
 
-func RateLimiterMiddleware(limiter *redis_rate.Limiter) gin.HandlerFunc {
+func RateLimiterMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Получаем маршрут
 		route := c.FullPath()
@@ -33,25 +41,37 @@ func RateLimiterMiddleware(limiter *redis_rate.Limiter) gin.HandlerFunc {
 			return
 		}
 
-		// Генерация ключа для лимитера (на основе IP клиента)
+		limiter, err := valkeylimiter.NewRateLimiter(valkeylimiter.RateLimiterOption{
+			ClientBuilder: func(option valkey.ClientOption) (valkey.Client, error) {
+				return *database.GetValkeyClient(), nil
+			},
+			KeyPrefix: "limiter_" + reqMethod + "~" + route,
+			Limit:     limit.Rate,
+			Window:    limit.Period,
+		})
+
+		if err != nil {
+			log.Err(err).Msg("rate limiter internal err")
+			// Продолжаем выполнение запроса, мы не можем положить приложение если редис не работает
+			c.Next()
+			return
+		}
+
 		key := c.ClientIP()
 
-		// Проверяем лимиты
-		res, err := limiter.Allow(c, key, limit)
+		res, err := limiter.Allow(c, key)
 		if err != nil {
 			log.Err(err).Msg("rate limiter internal err")
 
-			// Продолжаем выполнение запроса, мы не можем положить приложение если редис не работает
 			c.Next()
 			return
 		}
 
 		c.Header("X-Rate-Limit-Limit", fmt.Sprintf("%d", limit.Burst))
 		c.Header("X-Rate-Limit-Remaining", fmt.Sprintf("%d", res.Remaining))
-		c.Header("X-Rate-Limit-Reset", fmt.Sprintf("%d", time.Now().Add(res.RetryAfter).Unix()))
 
 		// Если лимит исчерпан, возвращаем 429
-		if res.Allowed == 0 {
+		if !res.Allowed {
 			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
 			c.Abort()
 			return
