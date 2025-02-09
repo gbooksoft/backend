@@ -38,6 +38,8 @@ var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
 var projectReorderMenuAction *action.ProjectReorderMenu
 
+var genreGetAllAction *action.GenreGetAll
+
 func initializeDependencies() {
 	// account
 	accountGetProfileAction = action.NewAccountGetProfile()
@@ -75,4 +77,7 @@ func initializeDependencies() {
 	projectGetAction = action.NewProjectGet()
 	projectUpdateAction = action.NewProjectUpdate()
 	projectReorderMenuAction = action.NewProjectReorderMenu()
+
+	// genre
+	genreGetAllAction = action.NewGenreGetAll()
 }

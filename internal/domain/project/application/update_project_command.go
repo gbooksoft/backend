@@ -12,6 +12,8 @@ type UpdateProjectCommand struct {
 	ProjectId   string
 	Title       string
 	Description *string
+	Genres      []string
+	Tags        []string
 }
 
 type UpdateProjectHandlerResponse struct {
@@ -19,11 +21,13 @@ type UpdateProjectHandlerResponse struct {
 
 type UpdateProjectHandler struct {
 	projectRepository domain.ProjectRepository
+	genreRepository   domain.GenreRepository
 }
 
-func NewUpdateProjectHandler(projectRepository domain.ProjectRepository) *UpdateProjectHandler {
+func NewUpdateProjectHandler(projectRepository domain.ProjectRepository, genreRepository domain.GenreRepository) *UpdateProjectHandler {
 	return &UpdateProjectHandler{
 		projectRepository: projectRepository,
+		genreRepository:   genreRepository,
 	}
 }
 
@@ -49,6 +53,20 @@ func (h *UpdateProjectHandler) Handle(ctx context.Context, cmd *UpdateProjectCom
 		return nil, gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists)
 	}
 
+	genresExists, err := h.genreRepository.Exists(tx, cmd.Genres)
+	if err != nil {
+		return nil, err
+	}
+
+	if !genresExists {
+		return nil, gerr.NewBusinessLogicErr("Not all of given genres are exists", gerr.GenreNotExists)
+	}
+
+	var genres []domain.GenreId
+	for _, genre := range cmd.Genres {
+		genres = append(genres, domain.GenreId(uuid.MustParse(genre)))
+	}
+
 	project, err := h.projectRepository.FindByUserIdAndProjectId(tx, userUUid, projectUUid)
 
 	if err != nil {
@@ -65,6 +83,9 @@ func (h *UpdateProjectHandler) Handle(ctx context.Context, cmd *UpdateProjectCom
 	} else {
 		project.Description = ""
 	}
+
+	project.GenresIds = genres
+	project.Tags = cmd.Tags
 
 	err = h.projectRepository.Save(tx, project)
 

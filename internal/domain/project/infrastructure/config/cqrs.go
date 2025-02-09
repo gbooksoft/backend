@@ -20,8 +20,9 @@ func RegisterMediatr() {
 	editorReadModel := infrastructure.NewMySqlEditorReadModel(dbPool)
 	characterReadModel := infrastructure.NewMySqlCharacterReadModel(dbPool)
 	locationReadModel := infrastructure.NewMySqlLocationReadModel(dbPool)
+	genreRepository := infrastructure.NewMySqlGenreRepository(dbPool)
 
-	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository)
+	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository, genreRepository)
 	expandItemHandler := application.NewExpandItemHandler(menuReadModel)
 	getAllProjectsHandler := application.NewGetAllProjectsHandler(projectReadModel)
 	getRecentProjectsHandler := application.NewGetRecentProjectsQueryHandler(projectReadModel)
@@ -41,7 +42,7 @@ func RegisterMediatr() {
 	getLocationsHandler := application.NewGetLocationsHandler(locationReadModel)
 	updateLocationHandler := application.NewUpdateLocationHandler(locationRepository)
 	getProjectHandler := application.NewGetProjectHandler(projectReadModel)
-	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
+	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository, genreRepository)
 	reorderMenuHandler := application.NewReorderMenuHandler(menuRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))

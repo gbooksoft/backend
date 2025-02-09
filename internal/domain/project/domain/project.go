@@ -19,14 +19,18 @@ type Project struct {
 	UserId      UserId
 	Title       string
 	Description string
+	GenresIds   []GenreId
+	Tags        []string
 }
 
-func NewProject(id ProjectId, userId UserId, title, description string) *Project {
+func NewProject(id ProjectId, userId UserId, title, description string, GenresIds []GenreId, tags []string) *Project {
 	return &Project{
 		Id:          id,
 		UserId:      userId,
 		Title:       title,
 		Description: description,
+		GenresIds:   GenresIds,
+		Tags:        tags,
 	}
 }
 

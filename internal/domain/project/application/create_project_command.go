@@ -12,6 +12,8 @@ type CreateProjectCommand struct {
 	UserFullName string
 	Title        string
 	Description  string
+	Genres       []string
+	Tags         []string
 }
 
 type CreateProjectHandlerResponse struct {
@@ -23,13 +25,20 @@ type CreateProjectHandler struct {
 	projectRepository domain.ProjectRepository
 	menuRepository    domain.MenuRepository
 	editorRepository  domain.EditorRepository
+	genreRepository   domain.GenreRepository
 }
 
-func NewCreateProjectHandler(projectRepository domain.ProjectRepository, menuRepository domain.MenuRepository, editorRepository domain.EditorRepository) *CreateProjectHandler {
+func NewCreateProjectHandler(
+	projectRepository domain.ProjectRepository,
+	menuRepository domain.MenuRepository,
+	editorRepository domain.EditorRepository,
+	genreRepository domain.GenreRepository,
+) *CreateProjectHandler {
 	return &CreateProjectHandler{
 		projectRepository: projectRepository,
 		menuRepository:    menuRepository,
 		editorRepository:  editorRepository,
+		genreRepository:   genreRepository,
 	}
 }
 
@@ -38,6 +47,7 @@ func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCom
 	description := cmd.Description
 	userId := cmd.UserId
 	userFullName := cmd.UserFullName
+	tags := cmd.Tags
 
 	tx, err := h.projectRepository.BeginTransaction(context.TODO())
 
@@ -54,13 +64,27 @@ func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCom
 		return nil, err
 	}
 
+	genresExists, err := h.genreRepository.Exists(tx, cmd.Genres)
+	if err != nil {
+		return nil, err
+	}
+
+	if !genresExists {
+		return nil, gerr.NewBusinessLogicErr("Not all of given genres are exists", gerr.GenreNotExists)
+	}
+
+	var genres []domain.GenreId
+	for _, genre := range cmd.Genres {
+		genres = append(genres, domain.GenreId(uuid.MustParse(genre)))
+	}
+
 	if exists {
 		return nil, gerr.NewBusinessLogicErr("Project with this title already exists", gerr.ProjectAlreadyExists)
 	}
 
 	projectId := domain.ProjectId(h.projectRepository.GetNextId())
 
-	project := domain.NewProject(projectId, userUuid, title, description)
+	project := domain.NewProject(projectId, userUuid, title, description, genres, tags)
 
 	err = h.projectRepository.Add(tx, project)
 

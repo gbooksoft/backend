@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
+	"strings"
 )
 
 type MySqlProjectReadModel struct {
@@ -16,9 +17,12 @@ func NewMySqlProjectReadModel(db *sql.DB) *MySqlProjectReadModel {
 
 func (r *MySqlProjectReadModel) GetAll(userId string) ([]readmodel.Project, error) {
 	query := `
-SELECT p.id, p.title, p.description 
+SELECT p.id, p.title, p.description, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name  SEPARATOR '<|>')
 FROM projects p
+JOIN project_genres pg ON pg.project_id = p.id
+JOIN genres g ON g.id = pg.genre_id
 WHERE p.user_id = ?
+GROUP BY p.id
 ORDER BY p.created_at DESC
 `
 	rows, err := r.db.Query(query, userId)
@@ -35,13 +39,17 @@ ORDER BY p.created_at DESC
 		var project readmodel.Project
 
 		var pDesc sql.NullString
-		if err := rows.Scan(&project.Id, &project.Title, &pDesc); err != nil {
+		var gIds string
+		var gNames string
+		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &gIds, &gNames); err != nil {
 			return nil, err
 		}
 
 		if pDesc.Valid {
 			project.Description = pDesc.String
 		}
+
+		r.attachGenres(&project, gIds, gNames)
 
 		projects = append(projects, project)
 	}
@@ -51,10 +59,12 @@ ORDER BY p.created_at DESC
 
 func (r *MySqlProjectReadModel) GetRecent(userId string, limit int) ([]readmodel.Project, error) {
 	query := `
-SELECT p.id, p.title, p.description, MAX(pe.updated_at) AS last_updated
+SELECT p.id, p.title, p.description, MAX(pe.updated_at) AS last_updated, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name SEPARATOR '<|>')
 FROM projects p
 JOIN project_menu_items pmi ON pmi.project_id = p.id
 JOIN project_editors pe ON pe.project_menu_id = pmi.id
+JOIN project_genres pg ON pg.project_id = p.id
+JOIN genres g ON g.id = pg.genre_id
 WHERE p.user_id = ?
 GROUP BY p.id, p.title, p.description
 ORDER BY last_updated DESC
@@ -75,13 +85,17 @@ LIMIT ?
 
 		var pDesc sql.NullString
 		var pUpdateAt sql.NullString
-		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &pUpdateAt); err != nil {
+		var gIds string
+		var gNames string
+		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &pUpdateAt, &gIds, &gNames); err != nil {
 			return nil, err
 		}
 
 		if pDesc.Valid {
 			project.Description = pDesc.String
 		}
+
+		r.attachGenres(&project, gIds, gNames)
 
 		projects = append(projects, project)
 	}
@@ -91,21 +105,28 @@ LIMIT ?
 
 func (r *MySqlProjectReadModel) GetById(userId string, projectId string) (readmodel.Project, error) {
 	query := `
-SELECT p.id, p.title, p.description
+SELECT p.id, p.title, p.description, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name SEPARATOR '<|>')
 FROM projects p
+JOIN project_genres pg ON pg.project_id = p.id
+JOIN genres g ON g.id = pg.genre_id
 WHERE p.user_id = ? AND p.id = ?
+GROUP BY p.id
 `
 	row := r.db.QueryRow(query, userId, projectId)
 
 	var project readmodel.Project
 	var desc sql.NullString
-	if err := row.Scan(&project.Id, &project.Title, &desc); err != nil {
+	var gIds string
+	var gNames string
+	if err := row.Scan(&project.Id, &project.Title, &desc, &gIds, &gNames); err != nil {
 		return readmodel.Project{}, err
 	}
 
 	if desc.Valid {
 		project.Description = desc.String
 	}
+
+	r.attachGenres(&project, gIds, gNames)
 
 	return project, nil
 }
@@ -151,4 +172,18 @@ WHERE p.user_id = ? AND p.id = ?
 	}
 
 	return metadata, nil
+}
+
+func (r2 *MySqlProjectReadModel) attachGenres(project *readmodel.Project, ids string, names string) {
+	gIdsSlice := strings.Split(ids, ",")
+	gNamesSlice := strings.Split(names, "<|>")
+
+	for i, gName := range gNamesSlice {
+		id := gIdsSlice[i]
+
+		project.Genres = append(project.Genres, readmodel.Genre{
+			Id:   id,
+			Name: gName,
+		})
+	}
 }

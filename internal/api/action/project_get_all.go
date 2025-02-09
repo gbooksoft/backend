@@ -17,10 +17,17 @@ func NewProjectGetAll() *ProjectGetAll {
 type getAllResponse struct {
 	Items []projectItemResponse `json:"projects"`
 }
+
+type projectGenreItemResponse struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type projectItemResponse struct {
-	Id          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Id          string                     `json:"id"`
+	Title       string                     `json:"title"`
+	Description string                     `json:"description"`
+	Genres      []projectGenreItemResponse `json:"genres"`
 }
 
 func (a *ProjectGetAll) Invoke(ctx *gin.Context) {
@@ -43,11 +50,20 @@ func (a *ProjectGetAll) Invoke(ctx *gin.Context) {
 
 	var result []projectItemResponse
 	for _, item := range resp.Projects {
-		result = append(result, projectItemResponse{
+		responseItem := projectItemResponse{
 			Id:          item.Id,
 			Title:       item.Title,
 			Description: item.Description,
-		})
+		}
+
+		for _, genre := range item.Genres {
+			responseItem.Genres = append(responseItem.Genres, projectGenreItemResponse{
+				Id:   genre.Id,
+				Name: genre.Name,
+			})
+		}
+
+		result = append(result, responseItem)
 	}
 
 	ctx.JSON(http.StatusOK, getAllResponse{Items: result})
