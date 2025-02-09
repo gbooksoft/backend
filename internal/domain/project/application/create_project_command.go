@@ -12,6 +12,8 @@ type CreateProjectCommand struct {
 	UserFullName string
 	Title        string
 	Description  string
+	Genres       []string
+	Tags         []string
 }
 
 type CreateProjectHandlerResponse struct {

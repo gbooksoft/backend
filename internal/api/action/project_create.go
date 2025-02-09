@@ -3,8 +3,8 @@ package action
 import (
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/pkg/gerr"
+	"github.com/gbooksoft/backend/pkg/validator"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/mehdihadeli/go-mediatr"
 	"net/http"
 )
@@ -17,8 +17,10 @@ func NewProjectCreate() *ProjectCreate {
 }
 
 type createProjectRequest struct {
-	Title       string `json:"title" binding:"required" validate:"required,max=255"`
-	Description string `json:"description" validate:"max=255"`
+	Title       string   `json:"title" binding:"required" validate:"required,max=255"`
+	Description string   `json:"description" validate:"max=255"`
+	Genres      []string `json:"genres" validate:"uuid4_slice,max_slice_size=5,min_slice_size=1"`
+	Tags        []string `json:"tags" validate:"max_slice_size=5"`
 }
 
 func (a *ProjectCreate) Invoke(ctx *gin.Context) {
@@ -28,7 +30,7 @@ func (a *ProjectCreate) Invoke(ctx *gin.Context) {
 		return
 	}
 
-	validate := validator.New(validator.WithRequiredStructEnabled())
+	validate := validator.NewCustomValidator()
 
 	err := validate.Struct(req)
 
@@ -50,6 +52,8 @@ func (a *ProjectCreate) Invoke(ctx *gin.Context) {
 		UserFullName: userFullName,
 		Title:        req.Title,
 		Description:  req.Description,
+		Genres:       req.Genres,
+		Tags:         req.Tags,
 	}
 
 	resp, err := mediatr.Send[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](ctx, cmd)
