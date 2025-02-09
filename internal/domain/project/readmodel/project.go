@@ -1,9 +1,10 @@
 package readmodel
 
 type Project struct {
-	Id          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Id          string  `json:"id"`
+	Title       string  `json:"title"`
+	Description string  `json:"description"`
+	Genres      []Genre `json:"genres"`
 }
 
 type ProjectReadModel interface {

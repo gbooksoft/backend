@@ -206,7 +206,7 @@ WHERE id = ?
 
 func (r *MySqlProjectRepository) FindByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Project, error) {
 	query := `
-SELECT p.title, p.description, p.tags, GROUP_CONCAT(pg.genre_id, ',') AS genre_ids
+SELECT p.title, p.description, p.tags, GROUP_CONCAT(DISTINCT pg.genre_id SEPARATOR ',') AS genre_ids
 FROM projects p 
 JOIN project_genres pg ON pg.project_id = p.id
 WHERE p.user_id = ? AND p.id = ?
@@ -244,9 +244,6 @@ WHERE p.user_id = ? AND p.id = ?
 	}
 
 	for _, genre := range strings.Split(genres, ",") {
-		if len(genre) == 0 {
-			continue
-		}
 		project.GenresIds = append(project.GenresIds, domain.GenreId(uuid.MustParse(genre)))
 	}
 

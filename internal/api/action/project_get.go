@@ -35,9 +35,18 @@ func (a *ProjectGet) Invoke(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"id":          resp.Project.Id,
-		"title":       resp.Project.Title,
-		"description": resp.Project.Description,
-	})
+	responseItem := projectItemResponse{
+		Id:          resp.Project.Id,
+		Title:       resp.Project.Title,
+		Description: resp.Project.Description,
+	}
+
+	for _, genre := range resp.Project.Genres {
+		responseItem.Genres = append(responseItem.Genres, projectGenreItemResponse{
+			Id:   genre.Id,
+			Name: genre.Name,
+		})
+	}
+
+	ctx.JSON(http.StatusOK, responseItem)
 }
