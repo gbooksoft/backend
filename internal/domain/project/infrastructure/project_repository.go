@@ -7,6 +7,7 @@ import (
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
+	"strings"
 )
 
 type MySqlProjectRepository struct {
@@ -205,13 +206,17 @@ WHERE id = ?
 
 func (r *MySqlProjectRepository) FindByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Project, error) {
 	query := `
-SELECT p.title, p.description
+SELECT p.title, p.description, p.tags, GROUP_CONCAT(pg.genre_id, ',') AS genre_ids
 FROM projects p 
+JOIN project_genres pg ON pg.project_id = p.id
 WHERE p.user_id = ? AND p.id = ?
 `
 	var title string
 	var desc sql.NullString
-	err := r.Db.QueryRow(query, userId.String(), projectId.String()).Scan(&title, &desc)
+	var tags sql.NullString
+	var genres string
+
+	err := r.Db.QueryRow(query, userId.String(), projectId.String()).Scan(&title, &desc, &tags, &genres)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -231,13 +236,27 @@ WHERE p.user_id = ? AND p.id = ?
 		project.Description = desc.String
 	}
 
+	if tags.Valid {
+		err := json.Unmarshal([]byte(tags.String), &project.Tags)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for _, genre := range strings.Split(genres, ",") {
+		if len(genre) == 0 {
+			continue
+		}
+		project.GenresIds = append(project.GenresIds, domain.GenreId(uuid.MustParse(genre)))
+	}
+
 	return project, err
 }
 
 func (r *MySqlProjectRepository) Save(tx *sql.Tx, project *domain.Project) error {
 	query := `
 UPDATE projects
-SET title = ?, description = ?
+SET title = ?, description = ?, tags = ?
 WHERE id = ?
 `
 
@@ -246,8 +265,53 @@ WHERE id = ?
 		Valid:  len(project.Description) > 0,
 	}
 
-	_, err := tx.Exec(query, project.Title, desc, project.Id.String())
+	var tagsJSON interface{}
+	if len(project.Tags) == 0 {
+		tagsJSON = nil
+	} else {
+		jsonData, err := json.Marshal(project.Tags)
+		if err != nil {
+			return err
+		}
+		tagsJSON = string(jsonData)
+	}
 
+	_, err := tx.Exec(query, project.Title, desc, tagsJSON, project.Id.String())
+
+	if err != nil {
+		return err
+	}
+
+	err = r.updateGenresRelation(tx, project.Id.String(), project.GenresIds)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *MySqlProjectRepository) updateGenresRelation(tx *sql.Tx, projectID string, genreIDs []domain.GenreId) error {
+	_, err := tx.Exec("DELETE FROM project_genres WHERE project_id = ?", projectID)
+	if err != nil {
+		return err
+	}
+
+	if len(genreIDs) == 0 {
+		return nil
+	}
+
+	query := "INSERT INTO project_genres (project_id, genre_id) VALUES "
+
+	var values []interface{}
+	for _, genreID := range genreIDs {
+		query += "(?, ?),"
+		values = append(values, projectID, genreID.String())
+	}
+
+	// Убираем последнюю запятую
+	query = query[:len(query)-1]
+
+	_, err = tx.Exec(query, values...)
 	if err != nil {
 		return err
 	}

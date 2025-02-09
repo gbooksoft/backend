@@ -42,6 +42,9 @@ func projectRoutes(e *gin.Engine) {
 	project.POST("", projectCreateAction.Invoke)
 	project.GET("", projectGetAllAction.Invoke)
 
+	project.GET("/:id", projectGetAction.Invoke)
+	project.POST("/:id", projectUpdateAction.Invoke)
+
 	project.GET("/recent", projectGetRecentAction.Invoke)
 
 	project.GET("/:id/access", projectCanAccessAction.Invoke)
@@ -63,7 +66,4 @@ func projectRoutes(e *gin.Engine) {
 
 	project.GET("/:id/locations", projectGetLocationsAction.Invoke)
 	project.POST("/:id/locations/:item_id", projectUpdateLocationAction.Invoke)
-
-	project.GET("/:id", projectGetAction.Invoke)
-	project.POST("/:id", projectUpdateAction.Invoke)
 }

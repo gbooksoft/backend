@@ -42,7 +42,7 @@ func RegisterMediatr() {
 	getLocationsHandler := application.NewGetLocationsHandler(locationReadModel)
 	updateLocationHandler := application.NewUpdateLocationHandler(locationRepository)
 	getProjectHandler := application.NewGetProjectHandler(projectReadModel)
-	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
+	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository, genreRepository)
 	reorderMenuHandler := application.NewReorderMenuHandler(menuRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
