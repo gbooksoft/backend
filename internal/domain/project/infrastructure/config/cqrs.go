@@ -20,8 +20,9 @@ func RegisterMediatr() {
 	editorReadModel := infrastructure.NewMySqlEditorReadModel(dbPool)
 	characterReadModel := infrastructure.NewMySqlCharacterReadModel(dbPool)
 	locationReadModel := infrastructure.NewMySqlLocationReadModel(dbPool)
+	genreRepository := infrastructure.NewMySqlGenreRepository(dbPool)
 
-	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository)
+	createProjectHandler := application.NewCreateProjectHandler(projectRepository, menuRepository, editorRepository, genreRepository)
 	expandItemHandler := application.NewExpandItemHandler(menuReadModel)
 	getAllProjectsHandler := application.NewGetAllProjectsHandler(projectReadModel)
 	getRecentProjectsHandler := application.NewGetRecentProjectsQueryHandler(projectReadModel)

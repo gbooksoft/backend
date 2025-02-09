@@ -44,3 +44,8 @@ const (
 	ProjectIncorrectAmountOfItems
 	ProjectIncorrectOrderingOfItems
 )
+
+const (
+	_ ErrorCode = 4000 + iota
+	GenreNotExists
+)

@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/pkg/repository"
@@ -62,12 +63,30 @@ func (r *MySqlProjectRepository) ExistsByUserIdAndProjectId(tx *sql.Tx, userId d
 }
 
 func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error {
-	query := "INSERT INTO projects (id, user_id, title, description) VALUES (?, ?, ?, ?)"
+	query := "INSERT INTO projects (id, user_id, title, description, tags) VALUES (?, ?, ?, ?, ?)"
 	desc := sql.NullString{
 		String: project.Description,
 		Valid:  len(project.Description) > 0,
 	}
-	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, desc)
+
+	var tagsJSON interface{}
+	if len(project.Tags) == 0 {
+		tagsJSON = nil
+	} else {
+		jsonData, err := json.Marshal(project.Tags)
+		if err != nil {
+			return err
+		}
+		tagsJSON = string(jsonData)
+	}
+
+	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, desc, tagsJSON)
+
+	if err != nil {
+		return err
+	}
+
+	err = r.addGenresRelation(tx, project)
 
 	if err != nil {
 		return err
@@ -231,6 +250,23 @@ WHERE id = ?
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *MySqlProjectRepository) addGenresRelation(tx *sql.Tx, project *domain.Project) error {
+	if len(project.GenresIds) == 0 {
+		return nil
+	}
+
+	query := "INSERT INTO project_genres (project_id, genre_id) VALUES (?, ?)"
+
+	for _, genreID := range project.GenresIds {
+		_, err := tx.Exec(query, project.Id.String(), genreID.String())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

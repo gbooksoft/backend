@@ -19,8 +19,8 @@ func NewProjectCreate() *ProjectCreate {
 type createProjectRequest struct {
 	Title       string   `json:"title" binding:"required" validate:"required,max=255"`
 	Description string   `json:"description" validate:"max=255"`
-	Genres      []string `json:"genres" validate:"uuid4_slice,max_slice_size=5,min_slice_size=1"`
-	Tags        []string `json:"tags" validate:"max_slice_size=5"`
+	Genres      []string `json:"genres" validate:"min=1,max=5,dive,uuid4"`
+	Tags        []string `json:"tags" validate:"max=5"`
 }
 
 func (a *ProjectCreate) Invoke(ctx *gin.Context) {
