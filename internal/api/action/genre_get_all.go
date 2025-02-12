@@ -34,7 +34,7 @@ func (a *GenreGetAll) Invoke(ctx *gin.Context) {
 		return
 	}
 
-	var result []genreItemResponse
+	result := []genreItemResponse{}
 	for _, item := range resp.Genres {
 		result = append(result, genreItemResponse{
 			Id:   item.Id,
