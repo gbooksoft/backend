@@ -19,7 +19,7 @@ func NewMySqlCharacterRepository(db *sql.DB) *MySqlCharacterRepository {
 
 func (r *MySqlCharacterRepository) AddCharacter(tx *sql.Tx, character *domain.Character) error {
 	query := `
-INSERT INTO project_characters (project_menu_id, name, description, attributes) VALUES (?, ?, ?, ?)
+INSERT INTO project_characters (id, project_menu_id, name, description, attributes) VALUES (?, ?, ?, ?, ?)
 `
 	bytes, err := json.Marshal(character.Attributes)
 
@@ -36,7 +36,7 @@ INSERT INTO project_characters (project_menu_id, name, description, attributes) 
 		desc.String = *character.Description
 	}
 
-	_, err = tx.Exec(query, character.MenuItemId.String(), character.Name, desc, string(bytes))
+	_, err = tx.Exec(query, r.GetNextId().String(), character.MenuItemId.String(), character.Name, desc, string(bytes))
 
 	if err != nil {
 		return err

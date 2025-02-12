@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -109,7 +110,7 @@ func (r *MySqlMenuReadModel) ExpandItem(userId string, projectId string, menuIte
 
 	var dbErr error
 	if shouldInsert {
-		_, dbErr = r.db.Exec("INSERT INTO project_menu_items_expanded (project_id, expanded_items) VALUES (?, ?)", projectId, string(bytes))
+		_, dbErr = r.db.Exec("INSERT INTO project_menu_items_expanded (id, project_id, expanded_items) VALUES (?, ?, ?)", uuid.New().String(), projectId, string(bytes))
 	} else {
 		_, dbErr = r.db.Exec("UPDATE project_menu_items_expanded SET expanded_items = ? WHERE project_id = ?", string(bytes), projectId)
 	}

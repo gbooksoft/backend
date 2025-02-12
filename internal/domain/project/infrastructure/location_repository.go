@@ -18,7 +18,7 @@ func NewMySqlLocationRepository(db *sql.DB) *MySqlLocationRepository {
 
 func (r *MySqlLocationRepository) AddLocation(tx *sql.Tx, location *domain.Location) error {
 	query := `
-INSERT INTO project_locations (project_menu_id, name, description) VALUES (?, ?, ?)
+INSERT INTO project_locations (id, project_menu_id, name, description) VALUES (?, ?, ?, ?)
 `
 	desc := sql.NullString{
 		String: "",
@@ -29,7 +29,7 @@ INSERT INTO project_locations (project_menu_id, name, description) VALUES (?, ?,
 		desc.String = *location.Description
 	}
 
-	_, err := tx.Exec(query, location.MenuItemId.String(), location.Name, desc)
+	_, err := tx.Exec(query, r.GetNextId().String(), location.MenuItemId.String(), location.Name, desc)
 
 	if err != nil {
 		return err

@@ -17,9 +17,9 @@ func NewMySqlEditorRepository(db *sql.DB) *MySqlEditorRepository {
 
 func (r *MySqlEditorRepository) AddEditor(tx *sql.Tx, editor *domain.Editor) error {
 	query := `	
-INSERT INTO project_editors (project_menu_id) VALUES (?)
+INSERT INTO project_editors (id, project_menu_id) VALUES (?, ?)
 `
-	_, err := tx.Exec(query, editor.MenuItemId.String())
+	_, err := tx.Exec(query, r.GetNextId().String(), editor.MenuItemId.String())
 
 	if err != nil {
 		return err
