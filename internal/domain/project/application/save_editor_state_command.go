@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
 )
 
@@ -32,10 +33,14 @@ func (h *SaveEditorStateHandler) Handle(ctx context.Context, cmd *SaveEditorStat
 	menuItemUuid := domain.MenuItemId(uuid.MustParse(cmd.MenuItemId))
 	editorState := cmd.EditorState
 
-	tx, err := h.editorRepository.BeginTransaction(context.TODO())
+	ctx, err := h.editorRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
 		return nil, err
+	}
+	tx, ok := repository.FetchDBTransactionFromContext(ctx)
+	if !ok {
+		panic("transaction not found")
 	}
 	defer tx.Rollback()
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
 	"github.com/gbooksoft/backend/pkg/gerr"
+	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
 )
 
@@ -49,10 +50,14 @@ func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCom
 	userFullName := cmd.UserFullName
 	tags := cmd.Tags
 
-	tx, err := h.projectRepository.BeginTransaction(context.TODO())
+	ctx, err := h.projectRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
 		return nil, err
+	}
+	tx, ok := repository.FetchDBTransactionFromContext(ctx)
+	if !ok {
+		panic("transaction not found")
 	}
 	defer tx.Rollback()
 

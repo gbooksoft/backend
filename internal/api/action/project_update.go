@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/domain/project/application"
+	"github.com/gbooksoft/backend/internal/domain/project2/application"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -20,7 +20,6 @@ type updateProjectRequest struct {
 	Title       string   `json:"title" validate:"required,max=255,min=1"`
 	Description *string  `json:"description" validate:"max=255,omitempty"`
 	Genres      []string `json:"genres" validate:"required,min=1,max=5,dive,uuid4"`
-	Tags        []string `json:"tags" validate:"max=5,dive,min=1"`
 }
 
 func (a *ProjectUpdate) Invoke(ctx *gin.Context) {
@@ -51,9 +50,8 @@ func (a *ProjectUpdate) Invoke(ctx *gin.Context) {
 		ProjectId:   projectId,
 		Title:       req.Title,
 		Description: req.Description,
-		UserId:      claims.Subject,
+		AuthorId:    claims.Subject,
 		Genres:      req.Genres,
-		Tags:        req.Tags,
 	}
 
 	_, err = mediatr.Send[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](ctx, cmd)

@@ -14,4 +14,5 @@ func project2Routes(e *gin.Engine) {
 	project.Use(middleware.AuthRequired())
 
 	project.POST("", projectCreateAction.Invoke)
+	project.POST("/:id", projectUpdateAction.Invoke)
 }

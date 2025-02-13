@@ -33,16 +33,15 @@ func NewCreateProjectHandler(projectRepository domain.ProjectRepository, genreRe
 }
 
 func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCommand) (*CreateProjectHandlerResponse, error) {
-	tx, err := h.projectRepository.BeginTransaction(ctx)
-
+	ctx, err := h.projectRepository.BeginTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer h.projectRepository.RollbackTransaction(ctx)
 
 	authorId := domain.AuthorId(uuid.MustParse(cmd.AuthorId))
 
-	exists, err := h.projectRepository.ExistsByUserIdAndTitle(tx, authorId, cmd.Title)
+	exists, err := h.projectRepository.ExistsByUserIdAndTitle(ctx, authorId, cmd.Title, nil)
 
 	if err != nil {
 		return nil, err
@@ -52,19 +51,9 @@ func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCom
 		return nil, gerr.NewBusinessLogicErr("project already exists", gerr.ProjectAlreadyExists)
 	}
 
-	var genres []domain.GenreId
+	var genres []domain.Genre
 	for _, genre := range cmd.Genres {
-		genres = append(genres, domain.GenreId(uuid.MustParse(genre)))
-	}
-
-	genresExists, err := h.genreRepository.Exists(tx, genres)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !genresExists {
-		return nil, gerr.NewBusinessLogicErr("Not all of given genres are exists", gerr.GenreNotExists)
+		genres = append(genres, domain.Genre{Id: domain.GenreId(uuid.MustParse(genre))})
 	}
 
 	projectId := domain.ProjectId(h.projectRepository.GetNextId())
@@ -75,13 +64,13 @@ func (h *CreateProjectHandler) Handle(ctx context.Context, cmd *CreateProjectCom
 		return nil, err
 	}
 
-	err = h.projectRepository.Add(tx, project)
+	err = h.projectRepository.Add(ctx, project)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err := h.projectRepository.CommitTransaction(ctx); err != nil {
 		return nil, err
 	}
 

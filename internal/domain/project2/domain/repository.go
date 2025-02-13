@@ -1,18 +1,19 @@
 package domain
 
 import (
-	"database/sql"
+	"context"
 	"github.com/gbooksoft/backend/pkg/repository"
 )
 
 type ProjectRepository interface {
 	repository.BaseRepository
-	Add(tx *sql.Tx, project *Project) error
-	Save(tx *sql.Tx, project *Project) error
-	ExistsByUserIdAndTitle(tx *sql.Tx, authorId AuthorId, title string) (bool, error)
+	Add(ctx context.Context, project *Project) error
+	Save(ctx context.Context, project *Project) error
+	ExistsByUserIdAndTitle(ctx context.Context, authorId AuthorId, title string, ExceptProjectId *ProjectId) (bool, error)
+	FindByAuthorIdAndProjectId(ctx context.Context, authorId AuthorId, projectId ProjectId) (*Project, error)
 }
 
 type GenreRepository interface {
 	repository.BaseRepository
-	Exists(tx *sql.Tx, genres []GenreId) (bool, error)
+	Exists(ctx context.Context, genres []GenreId) (bool, error)
 }

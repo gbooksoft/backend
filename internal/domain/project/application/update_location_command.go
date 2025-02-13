@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
 )
 
@@ -34,10 +35,14 @@ func (h *UpdateLocationHandler) Handle(ctx context.Context, cmd *UpdateLocationC
 	name := cmd.Name
 	description := cmd.Description
 
-	tx, err := h.locationRepository.BeginTransaction(context.TODO())
+	ctx, err := h.locationRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
 		return nil, err
+	}
+	tx, ok := repository.FetchDBTransactionFromContext(ctx)
+	if !ok {
+		panic("transaction not found")
 	}
 	defer tx.Rollback()
 

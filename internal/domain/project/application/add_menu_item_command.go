@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
 )
 
@@ -44,10 +45,14 @@ func (h *AddMenuItemHandler) Handle(ctx context.Context, cmd *AddMenuItemCommand
 	parentUUid := domain.MenuItemId(uuid.MustParse(cmd.ParentId))
 	userUUid := domain.UserId(uuid.MustParse(cmd.UserId))
 
-	tx, err := h.menuRepository.BeginTransaction(context.TODO())
+	ctx, err := h.menuRepository.BeginTransaction(context.TODO())
 
 	if err != nil {
 		return nil, err
+	}
+	tx, ok := repository.FetchDBTransactionFromContext(ctx)
+	if !ok {
+		panic("transaction not found")
 	}
 	defer tx.Rollback()
 

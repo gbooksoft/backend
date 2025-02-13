@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/pkg/repository"
 	"github.com/google/uuid"
 )
 
@@ -35,9 +36,13 @@ func (h *ReorderMenuHandler) Handle(ctx context.Context, cmd *ReorderMenuCommand
 	userUUid := domain.UserId(uuid.MustParse(cmd.UserId))
 	projectUUid := domain.ProjectId(uuid.MustParse(cmd.ProjectId))
 
-	tx, err := h.menuRepository.BeginTransaction(context.TODO())
+	ctx, err := h.menuRepository.BeginTransaction(context.TODO())
 	if err != nil {
 		return nil, err
+	}
+	tx, ok := repository.FetchDBTransactionFromContext(ctx)
+	if !ok {
+		panic("transaction not found")
 	}
 	defer tx.Rollback()
 

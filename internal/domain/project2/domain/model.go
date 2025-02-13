@@ -9,6 +9,10 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	maxGenres = 5
+)
+
 type GenreId = model.Uuid
 type AuthorId = model.Uuid
 type ChapterId = model.Uuid
@@ -18,74 +22,72 @@ type ProjectId = model.Uuid
 type MetadataId = model.Uuid
 
 type Chapter struct {
-	Id        ChapterId
+	Id        ChapterId `gorm:"type:char(36);primaryKey"`
+	ProjectId ProjectId `gorm:"type:char(36);index"`
 	Title     string
 	Content   string
+	Version   int
 	DeletedAt *time.Time
 }
 
 type Character struct {
-	Id          CharacterId
+	Id          CharacterId `gorm:"type:char(36);primaryKey"`
+	ProjectId   ProjectId   `gorm:"type:char(36);index"`
 	Name        string
-	Attributes  map[string]string
+	Attributes  map[string]string `gorm:"type:json"`
 	Description string
+	Version     int
 	DeletedAt   *time.Time
 }
 
 type Location struct {
-	Id          LocationId
+	Id          LocationId `gorm:"type:char(36);primaryKey"`
+	ProjectId   ProjectId  `gorm:"type:char(36);index"`
 	Name        string
 	Description string
+	Version     int
 	DeletedAt   *time.Time
 }
 
-type Version[T any] struct {
-	Entity    T
-	Version   int
-	CreatedAt time.Time
-}
-
 type Metadata struct {
-	Id       MetadataId
-	Author   string
-	Genre    string
-	Keywords string
-	Language string
-	Isbn     string
+	Id        MetadataId `gorm:"type:char(36);primaryKey"`
+	ProjectId ProjectId  `gorm:"type:char(36);index"`
+	Author    string
+	Genre     string
+	Keywords  string
+	Language  string
+	Isbn      string
 }
 
-func nextVersion[T any](prev Version[T], entity T) Version[T] {
-	return Version[T]{
-		Entity:    entity,
-		Version:   prev.Version + 1, // Увеличиваем версию
-		CreatedAt: time.Now(),
-	}
+func (Metadata) TableName() string {
+	return "project_metadata"
 }
 
-func newVersion[T any](entity T) Version[T] {
-	return Version[T]{
-		Entity:    entity,
-		Version:   1,
-		CreatedAt: time.Now(),
-	}
+type Genre struct {
+	Id   GenreId `gorm:"type:char(36);primaryKey"`
+	Name string
 }
 
 type Project struct {
-	Id          ProjectId
-	Title       string
+	Id          ProjectId `gorm:"type:char(36);primaryKey"`
+	Title       string    `gorm:"not null"`
 	Description string
-	Genres      []GenreId
-	AuthorId    AuthorId
-	Chapters    []Version[Chapter]
-	Characters  []Version[Character]
-	Locations   []Version[Location]
-	Metadata    *Metadata
+	Genres      []Genre     `gorm:"many2many:project2_genres;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	AuthorId    AuthorId    `gorm:"type:char(36);not null"`
+	Chapters    []Chapter   `gorm:"foreignKey:project_id"`
+	Characters  []Character `gorm:"foreignKey:project_id"`
+	Locations   []Location  `gorm:"foreignKey:project_id"`
+	Metadata    *Metadata   `gorm:"foreignKey:project_id"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
 
-func NewProject(projectId ProjectId, title string, description string, genres []GenreId, authorId AuthorId) (*Project, error) {
-	if len(genres) > 5 {
+func (p *Project) TableName() string {
+	return "projects2"
+}
+
+func NewProject(projectId ProjectId, title string, description string, genres []Genre, authorId AuthorId) (*Project, error) {
+	if len(genres) > maxGenres {
 		return nil, gerr.NewBusinessLogicErr("max 5 genres", gerr.ProjectShouldHaveMaxFiveGenres)
 	}
 
@@ -95,10 +97,9 @@ func NewProject(projectId ProjectId, title string, description string, genres []
 		Description: description,
 		Genres:      genres,
 		AuthorId:    authorId,
-		Chapters:    []Version[Chapter]{},
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Metadata:    &Metadata{},
+		Metadata: &Metadata{
+			Id: MetadataId(uuid.New()),
+		},
 	}, nil
 }
 
@@ -107,8 +108,9 @@ func (p *Project) AddChapter(title, content string) {
 		Id:      ChapterId(uuid.New()),
 		Title:   title,
 		Content: content,
+		Version: 1,
 	}
-	p.Chapters = append(p.Chapters, newVersion(chapter))
+	p.Chapters = append(p.Chapters, chapter)
 	p.UpdatedAt = time.Now()
 }
 
@@ -118,8 +120,9 @@ func (p *Project) AddCharacter(name, description string, attributes map[string]s
 		Name:        name,
 		Description: description,
 		Attributes:  attributes,
+		Version:     1,
 	}
-	p.Characters = append(p.Characters, newVersion(character))
+	p.Characters = append(p.Characters, character)
 	p.UpdatedAt = time.Now()
 }
 
@@ -128,20 +131,20 @@ func (p *Project) AddLocation(name, description string) {
 		Id:          LocationId(uuid.New()),
 		Name:        name,
 		Description: description,
+		Version:     1,
 	}
-	p.Locations = append(p.Locations, newVersion(location))
+	p.Locations = append(p.Locations, location)
 	p.UpdatedAt = time.Now()
 }
 
 func (p *Project) UpdateChapter(chapterId ChapterId, newTitle, newContent string) error {
-	for i, v := range p.Chapters {
-		if v.Entity.Id.Equal(chapterId) && v.Entity.DeletedAt == nil {
-			updatedChapter := v.Entity
+	for i, c := range p.Chapters {
+		if c.Id.Equal(chapterId) && c.DeletedAt == nil {
+			updatedChapter := c
 			updatedChapter.Title = newTitle
 			updatedChapter.Content = newContent
-
-			// Создаём новую версию с увеличенным номером
-			p.Chapters[i] = nextVersion(v, updatedChapter)
+			updatedChapter.Version = updatedChapter.Version + 1
+			p.Chapters[i] = updatedChapter
 			p.UpdatedAt = time.Now()
 			return nil
 		}
@@ -150,15 +153,16 @@ func (p *Project) UpdateChapter(chapterId ChapterId, newTitle, newContent string
 }
 
 func (p *Project) UpdateCharacter(characterId CharacterId, newName, newDescription string, newAttributes map[string]string) error {
-	for i, v := range p.Characters {
-		if v.Entity.Id.Equal(characterId) && v.Entity.DeletedAt == nil {
-			updatedCharacter := v.Entity
+	for i, c := range p.Characters {
+		if c.Id.Equal(characterId) && c.DeletedAt == nil {
+			updatedCharacter := c
 			updatedCharacter.Name = newName
 			updatedCharacter.Description = newDescription
 			updatedCharacter.Attributes = newAttributes
+			updatedCharacter.Version = updatedCharacter.Version + 1
 
 			// Создаём новую версию с увеличенным номером
-			p.Characters[i] = nextVersion(v, updatedCharacter)
+			p.Characters[i] = updatedCharacter
 			p.UpdatedAt = time.Now()
 			return nil
 		}
@@ -167,14 +171,15 @@ func (p *Project) UpdateCharacter(characterId CharacterId, newName, newDescripti
 }
 
 func (p *Project) UpdateLocation(locationId LocationId, newName, newDescription string) error {
-	for i, v := range p.Locations {
-		if v.Entity.Id.Equal(locationId) && v.Entity.DeletedAt == nil {
-			updatedLocation := v.Entity
+	for i, l := range p.Locations {
+		if l.Id.Equal(locationId) && l.DeletedAt == nil {
+			updatedLocation := l
 			updatedLocation.Name = newName
 			updatedLocation.Description = newDescription
+			updatedLocation.Version = updatedLocation.Version + 1
 
 			// Создаём новую версию с увеличенным номером
-			p.Locations[i] = nextVersion(v, updatedLocation)
+			p.Locations[i] = updatedLocation
 			p.UpdatedAt = time.Now()
 			return nil
 		}
@@ -183,14 +188,14 @@ func (p *Project) UpdateLocation(locationId LocationId, newName, newDescription 
 }
 
 func (p *Project) DeleteChapter(chapterId ChapterId) error {
-	for i, v := range p.Chapters {
-		if v.Entity.Id.Equal(chapterId) && v.Entity.DeletedAt == nil {
+	for i, c := range p.Chapters {
+		if c.Id.Equal(chapterId) && c.DeletedAt == nil {
 			now := time.Now()
-			updatedChapter := v.Entity
+			updatedChapter := c
 			updatedChapter.DeletedAt = &now
 
 			// Создаём новую версию с увеличенным номером
-			p.Chapters[i] = nextVersion(v, updatedChapter)
+			p.Chapters[i] = updatedChapter
 			p.UpdatedAt = time.Now()
 			return nil
 		}
@@ -199,14 +204,14 @@ func (p *Project) DeleteChapter(chapterId ChapterId) error {
 }
 
 func (p *Project) DeleteCharacter(characterId CharacterId) error {
-	for i, v := range p.Characters {
-		if v.Entity.Id.Equal(characterId) && v.Entity.DeletedAt == nil {
+	for i, c := range p.Characters {
+		if c.Id.Equal(characterId) && c.DeletedAt == nil {
 			now := time.Now()
-			updatedCharacter := v.Entity
+			updatedCharacter := c
 			updatedCharacter.DeletedAt = &now
 
 			// Создаём новую версию с увеличенным номером
-			p.Characters[i] = nextVersion(v, updatedCharacter)
+			p.Characters[i] = updatedCharacter
 			p.UpdatedAt = time.Now()
 			return nil
 		}
@@ -215,17 +220,34 @@ func (p *Project) DeleteCharacter(characterId CharacterId) error {
 }
 
 func (p *Project) DeleteLocation(locationId LocationId) error {
-	for i, v := range p.Locations {
-		if v.Entity.Id.Equal(locationId) && v.Entity.DeletedAt == nil {
+	for i, l := range p.Locations {
+		if l.Id.Equal(locationId) && l.DeletedAt == nil {
 			now := time.Now()
-			updatedLocation := v.Entity
+			updatedLocation := l
 			updatedLocation.DeletedAt = &now
 
 			// Создаём новую версию с увеличенным номером
-			p.Locations[i] = nextVersion(v, updatedLocation)
+			p.Locations[i] = updatedLocation
 			p.UpdatedAt = time.Now()
 			return nil
 		}
 	}
 	return errors.New("локация не найдена или уже удалена")
+}
+
+func (p *Project) Update(title string, description *string, genres []Genre) error {
+	if len(genres) > maxGenres {
+		return gerr.NewBusinessLogicErr("max 5 genres", gerr.ProjectShouldHaveMaxFiveGenres)
+	}
+	if description != nil {
+		p.Description = *description
+	} else {
+		p.Description = ""
+	}
+
+	p.Title = title
+	p.Genres = genres
+	p.UpdatedAt = time.Now()
+
+	return nil
 }

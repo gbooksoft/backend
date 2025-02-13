@@ -14,8 +14,10 @@ func RegisterMediatr() {
 	projectRepository := infrastructure.NewMySqlProjectRepository(dbPool)
 	genreAdapter := adapter.NewGenreAdapter(dbPool)
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository, genreAdapter)
+	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository, genreAdapter)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
 }
 
 func hE(err error) {
