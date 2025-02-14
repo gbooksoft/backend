@@ -42,6 +42,8 @@ var projectCreateChapterAction *action.ProjectCreateChapter
 var projectUpdateChapterAction *action.ProjectUpdateChapter
 var projectDeleteChapterAction *action.ProjectDeleteChapter
 
+var projectCreateCharacterAction *action.ProjectCreateCharacter
+
 var genreGetAllAction *action.GenreGetAll
 
 func initializeDependencies() {
@@ -85,6 +87,8 @@ func initializeDependencies() {
 	projectCreateChapterAction = action.NewProjectCreateChapter()
 	projectUpdateChapterAction = action.NewProjectUpdateChapter()
 	projectDeleteChapterAction = action.NewProjectDeleteChapter()
+
+	projectCreateCharacterAction = action.NewProjectCreateCharacter()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

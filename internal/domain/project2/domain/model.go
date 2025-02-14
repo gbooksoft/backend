@@ -18,6 +18,7 @@ type AuthorId = model.Uuid
 type ChapterId = model.Uuid
 type ChapterInternalId = model.Uuid
 type CharacterId = model.Uuid
+type CharacterInternalId = model.Uuid
 type LocationId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
@@ -33,13 +34,14 @@ type Chapter struct {
 }
 
 type Character struct {
-	Id          CharacterId `gorm:"type:char(36);primaryKey"`
-	ProjectId   ProjectId   `gorm:"type:char(36);index"`
-	Name        string
-	Attributes  map[string]string `gorm:"type:json"`
-	Description string
-	Version     int
-	DeletedAt   *time.Time
+	Id                  CharacterId         `gorm:"type:char(36);primaryKey"`
+	CharacterInternalId CharacterInternalId `gorm:"type:char(36);index;column:character_id"`
+	ProjectId           ProjectId           `gorm:"type:char(36);index"`
+	Name                string
+	Attributes          model.JSONMap `gorm:"type:json"`
+	Description         *string
+	Version             int
+	DeletedAt           *time.Time
 }
 
 type Location struct {
@@ -125,16 +127,25 @@ func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content str
 	return nil
 }
 
-func (p *Project) AddCharacter(name, description string, attributes map[string]string) {
+func (p *Project) AddCharacter(newInternalId CharacterInternalId, name string, description *string, attributes map[string]string) error {
+	for _, c := range p.Characters {
+		if c.CharacterInternalId.Equal(newInternalId) {
+			return gerr.NewBusinessLogicErr("can not create character with this id", gerr.ProjectChapterAlreadyExists)
+		}
+	}
+
 	character := Character{
-		Id:          CharacterId(uuid.New()),
-		Name:        name,
-		Description: description,
-		Attributes:  attributes,
-		Version:     1,
+		Id:                  CharacterId(uuid.New()),
+		CharacterInternalId: newInternalId,
+		Name:                name,
+		Description:         description,
+		Attributes:          attributes,
+		Version:             1,
 	}
 	p.Characters = append(p.Characters, character)
 	p.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (p *Project) AddLocation(name, description string) {
@@ -173,7 +184,7 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 	return nil
 }
 
-func (p *Project) UpdateCharacter(characterId CharacterId, newName, newDescription string, newAttributes map[string]string) error {
+func (p *Project) UpdateCharacter(characterId CharacterId, newName string, newDescription *string, newAttributes map[string]string) error {
 	for i, c := range p.Characters {
 		if c.Id.Equal(characterId) && c.DeletedAt == nil {
 			updatedCharacter := c
