@@ -108,7 +108,7 @@ func NewProject(projectId ProjectId, title string, description string, genres []
 func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content string) error {
 	for _, c := range p.Chapters {
 		if c.ChapterInternalId.Equal(newInternalId) {
-			return gerr.NewBusinessLogicErr("chapter already exists", gerr.ProjectChapterAlreadyExists)
+			return gerr.NewBusinessLogicErr("can not create chapter with this id", gerr.ProjectChapterAlreadyExists)
 		}
 	}
 
