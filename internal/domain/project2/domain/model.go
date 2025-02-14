@@ -244,20 +244,25 @@ func (p *Project) DeleteChapter(chapterInternalId ChapterInternalId) error {
 	return nil
 }
 
-func (p *Project) DeleteCharacter(characterId CharacterId) error {
+func (p *Project) DeleteCharacter(characterInternalId CharacterInternalId) error {
+	lastVersion, ok := p.findLastVersionCharacter(characterInternalId)
+
+	if !ok {
+		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
+	}
+
 	for i, c := range p.Characters {
-		if c.Id.Equal(characterId) && c.DeletedAt == nil {
+		if c.Id.Equal(lastVersion.Id) && c.DeletedAt == nil {
 			now := time.Now()
 			updatedCharacter := c
 			updatedCharacter.DeletedAt = &now
 
-			// Создаём новую версию с увеличенным номером
 			p.Characters[i] = updatedCharacter
-			p.UpdatedAt = time.Now()
-			return nil
+			break
 		}
 	}
-	return errors.New("персонаж не найден или уже удалён")
+
+	return nil
 }
 
 func (p *Project) DeleteLocation(locationId LocationId) error {

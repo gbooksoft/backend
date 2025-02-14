@@ -43,6 +43,7 @@ var projectDeleteChapterAction *action.ProjectDeleteChapter
 
 var projectCreateCharacterAction *action.ProjectCreateCharacter
 var projectUpdateCharacterAction *action.ProjectUpdateCharacter
+var projectDeleteCharacterAction *action.ProjectDeleteCharacter
 
 var genreGetAllAction *action.GenreGetAll
 
@@ -77,7 +78,6 @@ func initializeDependencies() {
 	projectGetEditorsAction = action.NewProjectGetEditors()
 	projectSaveEditorStateAction = action.NewProjectSaveEditorState()
 	projectGetCharactersAction = action.NewProjectGetCharacters()
-	projectUpdateCharacterAction = action.NewProjectUpdateCharacter()
 	projectGetLocationsAction = action.NewProjectGetLocations()
 	projectUpdateLocationAction = action.NewProjectUpdateLocation()
 	projectGetAction = action.NewProjectGet()
@@ -89,6 +89,8 @@ func initializeDependencies() {
 	projectDeleteChapterAction = action.NewProjectDeleteChapter()
 
 	projectCreateCharacterAction = action.NewProjectCreateCharacter()
+	projectUpdateCharacterAction = action.NewProjectUpdateCharacter()
+	projectDeleteCharacterAction = action.NewProjectDeleteCharacter()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()
