@@ -217,21 +217,25 @@ func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newNa
 	return nil
 }
 
-func (p *Project) UpdateLocation(locationId LocationId, newName string, newDescription *string) error {
-	for i, l := range p.Locations {
-		if l.Id.Equal(locationId) && l.DeletedAt == nil {
-			updatedLocation := l
-			updatedLocation.Name = newName
-			updatedLocation.Description = newDescription
-			updatedLocation.Version = updatedLocation.Version + 1
+func (p *Project) UpdateLocation(locationInternalId LocationInternalId, newName string, newDescription *string) error {
+	lastVersion, ok := p.findLastVersionLocation(locationInternalId)
 
-			// Создаём новую версию с увеличенным номером
-			p.Locations[i] = updatedLocation
-			p.UpdatedAt = time.Now()
-			return nil
-		}
+	if !ok {
+		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
 	}
-	return errors.New("локация не найдена или удалена")
+
+	newLocation := Location{
+		Id:                 LocationId(uuid.New()),
+		LocationInternalId: locationInternalId,
+		ProjectId:          lastVersion.ProjectId,
+		Name:               newName,
+		Description:        newDescription,
+		Version:            lastVersion.Version + 1,
+	}
+
+	p.Locations = append(p.Locations, newLocation)
+
+	return nil
 }
 
 func (p *Project) DeleteChapter(chapterInternalId ChapterInternalId) error {
@@ -359,6 +363,34 @@ func (p *Project) findLastVersionCharacter(characterInternalId CharacterInternal
 
 	if lastVersion.DeletedAt != nil {
 		return Character{}, false
+
+	}
+
+	return lastVersion, true
+}
+
+func (p *Project) findLastVersionLocation(locationInternalId LocationInternalId) (Location, bool) {
+	var lastVersion Location
+	var found bool
+	maxVersion := 0
+
+	for _, l := range p.Locations {
+		if l.LocationInternalId.Equal(locationInternalId) {
+			if l.Version > maxVersion {
+				lastVersion = l
+				found = true
+			}
+
+			maxVersion = max(l.Version, maxVersion)
+		}
+	}
+
+	if !found {
+		return Location{}, false
+	}
+
+	if lastVersion.DeletedAt != nil {
+		return Location{}, false
 
 	}
 

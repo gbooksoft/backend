@@ -18,7 +18,7 @@ func NewProjectUpdateCharacter() *ProjectUpdateCharacter {
 
 type updateCharacterRequest struct {
 	Name        string                            `json:"name" validate:"required,max=255,min=1"`
-	Description *string                           `json:"description" validate:"max=5000,omitempty"`
+	Description *string                           `json:"description" validate:"omitempty,max=5000"`
 	Attributes  []updateCharacterAttributeRequest `json:"attributes"`
 }
 type updateCharacterAttributeRequest struct {

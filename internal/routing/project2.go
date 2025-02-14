@@ -25,4 +25,5 @@ func project2Routes(e *gin.Engine) {
 	project.DELETE("/:id/characters/:character_internal_id", projectDeleteCharacterAction.Invoke)
 
 	project.POST("/:id/locations", projectCreateLocationAction.Invoke)
+	project.POST("/:id/locations/:location_internal_id", projectUpdateLocationAction.Invoke)
 }

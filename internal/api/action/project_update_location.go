@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/domain/project/application"
+	"github.com/gbooksoft/backend/internal/domain/project2/application"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -18,7 +18,7 @@ func NewProjectUpdateLocation() *ProjectUpdateLocation {
 
 type updateLocationRequest struct {
 	Name        string  `json:"name" validate:"required,max=255,min=1"`
-	Description *string `json:"description" validate:"max=5000,omitempty"`
+	Description *string `json:"description" validate:"omitempty,max=5000"`
 }
 
 func (a *ProjectUpdateLocation) Invoke(ctx *gin.Context) {
@@ -44,14 +44,14 @@ func (a *ProjectUpdateLocation) Invoke(ctx *gin.Context) {
 	}
 
 	projectId := ctx.Params.ByName("id")
-	menuItemId := ctx.Params.ByName("item_id")
+	locationInternalId := ctx.Params.ByName("location_internal_id")
 
 	cmd := &application.UpdateLocationCommand{
-		UserId:      claims.Subject,
-		ProjectId:   projectId,
-		MenuItemId:  menuItemId,
-		Name:        req.Name,
-		Description: req.Description,
+		AuthorId:           claims.Subject,
+		ProjectId:          projectId,
+		LocationInternalId: locationInternalId,
+		Name:               req.Name,
+		Description:        req.Description,
 	}
 
 	_, err = mediatr.Send[*application.UpdateLocationCommand, *application.UpdateLocationHandlerResponse](ctx, cmd)

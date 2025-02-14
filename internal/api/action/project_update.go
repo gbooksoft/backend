@@ -18,7 +18,7 @@ func NewProjectUpdate() *ProjectUpdate {
 
 type updateProjectRequest struct {
 	Title       string   `json:"title" validate:"required,max=255,min=1"`
-	Description *string  `json:"description" validate:"max=255,omitempty"`
+	Description *string  `json:"description" validate:"omitempty,max=255"`
 	Genres      []string `json:"genres" validate:"required,min=1,max=5,dive,uuid4"`
 }
 
