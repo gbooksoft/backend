@@ -16,18 +16,20 @@ const (
 type GenreId = model.Uuid
 type AuthorId = model.Uuid
 type ChapterId = model.Uuid
+type ChapterInternalId = model.Uuid
 type CharacterId = model.Uuid
 type LocationId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
 
 type Chapter struct {
-	Id        ChapterId `gorm:"type:char(36);primaryKey"`
-	ProjectId ProjectId `gorm:"type:char(36);index"`
-	Title     string
-	Content   string
-	Version   int
-	DeletedAt *time.Time
+	Id                ChapterId         `gorm:"type:char(36);primaryKey"`
+	ChapterInternalId ChapterInternalId `gorm:"type:char(36);index;column:chapter_id"`
+	ProjectId         ProjectId         `gorm:"type:char(36);index"`
+	Title             string
+	Content           string
+	Version           int
+	DeletedAt         *time.Time
 }
 
 type Character struct {
@@ -103,15 +105,24 @@ func NewProject(projectId ProjectId, title string, description string, genres []
 	}, nil
 }
 
-func (p *Project) AddChapter(title, content string) {
+func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content string) error {
+	for _, c := range p.Chapters {
+		if c.ChapterInternalId.Equal(newInternalId) {
+			return gerr.NewBusinessLogicErr("chapter already exists", gerr.ProjectChapterAlreadyExists)
+		}
+	}
+
 	chapter := Chapter{
-		Id:      ChapterId(uuid.New()),
-		Title:   title,
-		Content: content,
-		Version: 1,
+		Id:                ChapterId(uuid.New()),
+		ChapterInternalId: newInternalId,
+		Title:             title,
+		Content:           content,
+		Version:           1,
 	}
 	p.Chapters = append(p.Chapters, chapter)
 	p.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (p *Project) AddCharacter(name, description string, attributes map[string]string) {
@@ -137,19 +148,29 @@ func (p *Project) AddLocation(name, description string) {
 	p.UpdatedAt = time.Now()
 }
 
-func (p *Project) UpdateChapter(chapterId ChapterId, newTitle, newContent string) error {
-	for i, c := range p.Chapters {
-		if c.Id.Equal(chapterId) && c.DeletedAt == nil {
-			updatedChapter := c
-			updatedChapter.Title = newTitle
-			updatedChapter.Content = newContent
-			updatedChapter.Version = updatedChapter.Version + 1
-			p.Chapters[i] = updatedChapter
-			p.UpdatedAt = time.Now()
-			return nil
-		}
+func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent string) error {
+	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+
+	if !ok {
+		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
 	}
-	return errors.New("глава не найдена или удалена")
+
+	if lastVersion.Title == newTitle && lastVersion.Content == newContent {
+		return nil
+	}
+
+	newChapter := Chapter{
+		Id:                ChapterId(uuid.New()),
+		ChapterInternalId: chapterInternalId,
+		ProjectId:         lastVersion.ProjectId,
+		Title:             newTitle,
+		Content:           newContent,
+		Version:           lastVersion.Version + 1,
+	}
+
+	p.Chapters = append(p.Chapters, newChapter)
+
+	return nil
 }
 
 func (p *Project) UpdateCharacter(characterId CharacterId, newName, newDescription string, newAttributes map[string]string) error {
@@ -250,4 +271,23 @@ func (p *Project) Update(title string, description *string, genres []Genre) erro
 	p.UpdatedAt = time.Now()
 
 	return nil
+}
+
+func (p *Project) findLastVersionChapter(chapterInternalId ChapterInternalId) (Chapter, bool) {
+	var lastVersion Chapter
+	var found bool
+	maxVersion := 0
+
+	for _, c := range p.Chapters {
+		if c.ChapterInternalId.Equal(chapterInternalId) {
+			if c.Version > maxVersion {
+				lastVersion = c
+				found = true
+			}
+
+			maxVersion = max(c.Version, maxVersion)
+		}
+	}
+
+	return lastVersion, found
 }

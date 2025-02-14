@@ -44,6 +44,8 @@ const (
 	ProjectIncorrectAmountOfItems
 	ProjectIncorrectOrderingOfItems
 	ProjectShouldHaveMaxFiveGenres
+	ProjectChapterAlreadyExists
+	ProjectChapterNotFound
 )
 
 const (

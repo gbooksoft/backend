@@ -38,6 +38,9 @@ var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
 var projectReorderMenuAction *action.ProjectReorderMenu
 
+var projectCreateChapterAction *action.ProjectCreateChapter
+var projectUpdateChapterAction *action.ProjectUpdateChapter
+
 var genreGetAllAction *action.GenreGetAll
 
 func initializeDependencies() {
@@ -77,6 +80,9 @@ func initializeDependencies() {
 	projectGetAction = action.NewProjectGet()
 	projectUpdateAction = action.NewProjectUpdate()
 	projectReorderMenuAction = action.NewProjectReorderMenu()
+
+	projectCreateChapterAction = action.NewProjectCreateChapter()
+	projectUpdateChapterAction = action.NewProjectUpdateChapter()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

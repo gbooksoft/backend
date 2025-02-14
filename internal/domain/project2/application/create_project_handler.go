@@ -22,13 +22,11 @@ type CreateProjectHandlerResponse struct {
 
 type CreateProjectHandler struct {
 	projectRepository domain.ProjectRepository
-	genreRepository   domain.GenreRepository
 }
 
-func NewCreateProjectHandler(projectRepository domain.ProjectRepository, genreRepository domain.GenreRepository) *CreateProjectHandler {
+func NewCreateProjectHandler(projectRepository domain.ProjectRepository) *CreateProjectHandler {
 	return &CreateProjectHandler{
 		projectRepository: projectRepository,
-		genreRepository:   genreRepository,
 	}
 }
 

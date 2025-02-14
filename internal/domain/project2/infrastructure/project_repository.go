@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project2/domain"
 	"github.com/gbooksoft/backend/pkg/database"
@@ -14,7 +13,7 @@ type MySqlProjectRepository struct {
 	*repository.BaseGormRepository
 }
 
-func NewMySqlProjectRepository(db *sql.DB) *MySqlProjectRepository {
+func NewMySqlProjectRepository() *MySqlProjectRepository {
 	return &MySqlProjectRepository{
 		repository.NewBaseGormRepository(database.GetGormDB()),
 	}
@@ -101,7 +100,13 @@ func (r *MySqlProjectRepository) FindByAuthorIdAndProjectId(ctx context.Context,
 
 	project := &domain.Project{}
 
-	if err := db.Table("projects2").Preload("Genres").First(project, "author_id = ? AND id = ?", authorId.String(), projectId.String()).Error; err != nil {
+	if err := db.Table("projects2").
+		Preload("Genres").
+		Preload("Chapters").
+		Preload("Locations").
+		Preload("Characters").
+		Preload("Metadata").
+		First(project, "author_id = ? AND id = ?", authorId.String(), projectId.String()).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}

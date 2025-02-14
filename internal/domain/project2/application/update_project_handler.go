@@ -20,13 +20,11 @@ type UpdateProjectHandlerResponse struct {
 
 type UpdateProjectHandler struct {
 	projectRepository domain.ProjectRepository
-	genreRepository   domain.GenreRepository
 }
 
-func NewUpdateProjectHandler(projectRepository domain.ProjectRepository, genreRepository domain.GenreRepository) *UpdateProjectHandler {
+func NewUpdateProjectHandler(projectRepository domain.ProjectRepository) *UpdateProjectHandler {
 	return &UpdateProjectHandler{
 		projectRepository: projectRepository,
-		genreRepository:   genreRepository,
 	}
 }
 
