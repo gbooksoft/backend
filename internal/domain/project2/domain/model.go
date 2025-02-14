@@ -208,20 +208,25 @@ func (p *Project) UpdateLocation(locationId LocationId, newName, newDescription 
 	return errors.New("локация не найдена или удалена")
 }
 
-func (p *Project) DeleteChapter(chapterId ChapterId) error {
+func (p *Project) DeleteChapter(chapterInternalId ChapterInternalId) error {
+	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+
+	if !ok {
+		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
+	}
+
 	for i, c := range p.Chapters {
-		if c.Id.Equal(chapterId) && c.DeletedAt == nil {
+		if c.Id.Equal(lastVersion.Id) && c.DeletedAt == nil {
 			now := time.Now()
 			updatedChapter := c
 			updatedChapter.DeletedAt = &now
 
-			// Создаём новую версию с увеличенным номером
 			p.Chapters[i] = updatedChapter
-			p.UpdatedAt = time.Now()
-			return nil
+			break
 		}
 	}
-	return errors.New("глава не найдена или уже удалена")
+
+	return nil
 }
 
 func (p *Project) DeleteCharacter(characterId CharacterId) error {
@@ -289,5 +294,14 @@ func (p *Project) findLastVersionChapter(chapterInternalId ChapterInternalId) (C
 		}
 	}
 
-	return lastVersion, found
+	if !found {
+		return Chapter{}, false
+	}
+
+	if lastVersion.DeletedAt != nil {
+		return Chapter{}, false
+
+	}
+
+	return lastVersion, true
 }

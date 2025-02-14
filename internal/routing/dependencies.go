@@ -40,6 +40,7 @@ var projectReorderMenuAction *action.ProjectReorderMenu
 
 var projectCreateChapterAction *action.ProjectCreateChapter
 var projectUpdateChapterAction *action.ProjectUpdateChapter
+var projectDeleteChapterAction *action.ProjectDeleteChapter
 
 var genreGetAllAction *action.GenreGetAll
 
@@ -83,6 +84,7 @@ func initializeDependencies() {
 
 	projectCreateChapterAction = action.NewProjectCreateChapter()
 	projectUpdateChapterAction = action.NewProjectUpdateChapter()
+	projectDeleteChapterAction = action.NewProjectDeleteChapter()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()
