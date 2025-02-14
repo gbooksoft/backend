@@ -15,6 +15,7 @@ func RegisterMediatr() {
 	deleteChapterHandler := application.NewDeleteChapterHandler(projectRepository)
 
 	createCharacterHandler := application.NewCreateCharacterHandler(projectRepository)
+	updateCharacterHandler := application.NewUpdateCharacterHandler(projectRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
@@ -24,6 +25,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.DeleteChapterCommand, *application.DeleteChapterHandlerResponse](deleteChapterHandler))
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateCharacterCommand, *application.CreateCharacterHandlerResponse](createCharacterHandler))
+	hE(mediatr.RegisterRequestHandler[*application.UpdateCharacterCommand, *application.UpdateCharacterHandlerResponse](updateCharacterHandler))
 }
 
 func hE(err error) {

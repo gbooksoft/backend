@@ -46,6 +46,7 @@ const (
 	ProjectShouldHaveMaxFiveGenres
 	ProjectChapterAlreadyExists
 	ProjectChapterNotFound
+	ProjectCharacterNotFound
 )
 
 const (

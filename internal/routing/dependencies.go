@@ -31,18 +31,18 @@ var projectDeleteMenuItemAction *action.ProjectDeleteMenuItem
 var projectGetEditorsAction *action.ProjectGetEditors
 var projectSaveEditorStateAction *action.ProjectSaveEditorState
 var projectGetCharactersAction *action.ProjectGetCharacters
-var projectUpdateCharacterAction *action.ProjectUpdateCharacter
 var projectGetLocationsAction *action.ProjectGetLocations
 var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
 var projectReorderMenuAction *action.ProjectReorderMenu
-
 var projectCreateChapterAction *action.ProjectCreateChapter
+
 var projectUpdateChapterAction *action.ProjectUpdateChapter
 var projectDeleteChapterAction *action.ProjectDeleteChapter
 
 var projectCreateCharacterAction *action.ProjectCreateCharacter
+var projectUpdateCharacterAction *action.ProjectUpdateCharacter
 
 var genreGetAllAction *action.GenreGetAll
 

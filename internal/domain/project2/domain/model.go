@@ -184,22 +184,26 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 	return nil
 }
 
-func (p *Project) UpdateCharacter(characterId CharacterId, newName string, newDescription *string, newAttributes map[string]string) error {
-	for i, c := range p.Characters {
-		if c.Id.Equal(characterId) && c.DeletedAt == nil {
-			updatedCharacter := c
-			updatedCharacter.Name = newName
-			updatedCharacter.Description = newDescription
-			updatedCharacter.Attributes = newAttributes
-			updatedCharacter.Version = updatedCharacter.Version + 1
+func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newName string, newDescription *string, newAttributes map[string]string) error {
+	lastVersion, ok := p.findLastVersionCharacter(characterInternalId)
 
-			// Создаём новую версию с увеличенным номером
-			p.Characters[i] = updatedCharacter
-			p.UpdatedAt = time.Now()
-			return nil
-		}
+	if !ok {
+		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
 	}
-	return errors.New("персонаж не найден или удалён")
+
+	newCharacter := Character{
+		Id:                  CharacterId(uuid.New()),
+		CharacterInternalId: characterInternalId,
+		ProjectId:           lastVersion.ProjectId,
+		Name:                newName,
+		Description:         newDescription,
+		Attributes:          newAttributes,
+		Version:             lastVersion.Version + 1,
+	}
+
+	p.Characters = append(p.Characters, newCharacter)
+
+	return nil
 }
 
 func (p *Project) UpdateLocation(locationId LocationId, newName, newDescription string) error {
@@ -311,6 +315,34 @@ func (p *Project) findLastVersionChapter(chapterInternalId ChapterInternalId) (C
 
 	if lastVersion.DeletedAt != nil {
 		return Chapter{}, false
+
+	}
+
+	return lastVersion, true
+}
+
+func (p *Project) findLastVersionCharacter(characterInternalId CharacterInternalId) (Character, bool) {
+	var lastVersion Character
+	var found bool
+	maxVersion := 0
+
+	for _, c := range p.Characters {
+		if c.CharacterInternalId.Equal(characterInternalId) {
+			if c.Version > maxVersion {
+				lastVersion = c
+				found = true
+			}
+
+			maxVersion = max(c.Version, maxVersion)
+		}
+	}
+
+	if !found {
+		return Character{}, false
+	}
+
+	if lastVersion.DeletedAt != nil {
+		return Character{}, false
 
 	}
 
