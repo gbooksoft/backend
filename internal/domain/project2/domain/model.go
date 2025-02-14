@@ -20,6 +20,7 @@ type ChapterInternalId = model.Uuid
 type CharacterId = model.Uuid
 type CharacterInternalId = model.Uuid
 type LocationId = model.Uuid
+type LocationInternalId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
 
@@ -45,12 +46,13 @@ type Character struct {
 }
 
 type Location struct {
-	Id          LocationId `gorm:"type:char(36);primaryKey"`
-	ProjectId   ProjectId  `gorm:"type:char(36);index"`
-	Name        string
-	Description string
-	Version     int
-	DeletedAt   *time.Time
+	Id                 LocationId         `gorm:"type:char(36);primaryKey"`
+	LocationInternalId LocationInternalId `gorm:"type:char(36);index;column:location_id"`
+	ProjectId          ProjectId          `gorm:"type:char(36);index"`
+	Name               string
+	Description        *string
+	Version            int
+	DeletedAt          *time.Time
 }
 
 type Metadata struct {
@@ -148,15 +150,24 @@ func (p *Project) AddCharacter(newInternalId CharacterInternalId, name string, d
 	return nil
 }
 
-func (p *Project) AddLocation(name, description string) {
+func (p *Project) AddLocation(newInternalId LocationInternalId, name string, description *string) error {
+	for _, l := range p.Locations {
+		if l.LocationInternalId.Equal(newInternalId) {
+			return gerr.NewBusinessLogicErr("can not create location with this id", gerr.ProjectLocationAlreadyExists)
+		}
+	}
+
 	location := Location{
-		Id:          LocationId(uuid.New()),
-		Name:        name,
-		Description: description,
-		Version:     1,
+		Id:                 LocationId(uuid.New()),
+		LocationInternalId: newInternalId,
+		Name:               name,
+		Description:        description,
+		Version:            1,
 	}
 	p.Locations = append(p.Locations, location)
 	p.UpdatedAt = time.Now()
+
+	return nil
 }
 
 func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent string) error {
@@ -206,7 +217,7 @@ func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newNa
 	return nil
 }
 
-func (p *Project) UpdateLocation(locationId LocationId, newName, newDescription string) error {
+func (p *Project) UpdateLocation(locationId LocationId, newName string, newDescription *string) error {
 	for i, l := range p.Locations {
 		if l.Id.Equal(locationId) && l.DeletedAt == nil {
 			updatedLocation := l

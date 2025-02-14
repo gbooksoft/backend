@@ -36,14 +36,16 @@ var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
 var projectReorderMenuAction *action.ProjectReorderMenu
-var projectCreateChapterAction *action.ProjectCreateChapter
 
+var projectCreateChapterAction *action.ProjectCreateChapter
 var projectUpdateChapterAction *action.ProjectUpdateChapter
 var projectDeleteChapterAction *action.ProjectDeleteChapter
 
 var projectCreateCharacterAction *action.ProjectCreateCharacter
 var projectUpdateCharacterAction *action.ProjectUpdateCharacter
 var projectDeleteCharacterAction *action.ProjectDeleteCharacter
+
+var projectCreateLocationAction *action.ProjectCreateLocation
 
 var genreGetAllAction *action.GenreGetAll
 
@@ -91,6 +93,8 @@ func initializeDependencies() {
 	projectCreateCharacterAction = action.NewProjectCreateCharacter()
 	projectUpdateCharacterAction = action.NewProjectUpdateCharacter()
 	projectDeleteCharacterAction = action.NewProjectDeleteCharacter()
+
+	projectCreateLocationAction = action.NewProjectCreateLocation()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

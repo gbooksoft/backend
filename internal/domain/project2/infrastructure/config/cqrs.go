@@ -10,6 +10,7 @@ func RegisterMediatr() {
 	projectRepository := infrastructure.NewMySqlProjectRepository()
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository)
 	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
+
 	createChapterHandler := application.NewCreateChapterHandler(projectRepository)
 	updateChapterHandler := application.NewUpdateChapterHandler(projectRepository)
 	deleteChapterHandler := application.NewDeleteChapterHandler(projectRepository)
@@ -17,6 +18,8 @@ func RegisterMediatr() {
 	createCharacterHandler := application.NewCreateCharacterHandler(projectRepository)
 	updateCharacterHandler := application.NewUpdateCharacterHandler(projectRepository)
 	deleteCharacterHandler := application.NewDeleteCharacterHandler(projectRepository)
+
+	createLocationHandler := application.NewCreateLocationHandler(projectRepository)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
@@ -28,6 +31,8 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.CreateCharacterCommand, *application.CreateCharacterHandlerResponse](createCharacterHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateCharacterCommand, *application.UpdateCharacterHandlerResponse](updateCharacterHandler))
 	hE(mediatr.RegisterRequestHandler[*application.DeleteCharacterCommand, *application.DeleteCharacterHandlerResponse](deleteCharacterHandler))
+
+	hE(mediatr.RegisterRequestHandler[*application.CreateLocationCommand, *application.CreateLocationHandlerResponse](createLocationHandler))
 }
 
 func hE(err error) {
