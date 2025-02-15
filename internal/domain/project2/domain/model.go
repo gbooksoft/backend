@@ -23,6 +23,12 @@ type LocationInternalId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
 
+type versional interface {
+	getInternalId() model.Uuid
+	isLastVersion() bool
+	isDeleted() bool
+}
+
 type Chapter struct {
 	Id                ChapterId         `gorm:"type:char(36);primaryKey"`
 	ChapterInternalId ChapterInternalId `gorm:"type:char(36);index;column:chapter_id"`
@@ -35,6 +41,18 @@ type Chapter struct {
 	DeletedAt         *time.Time
 }
 
+func (c Chapter) getInternalId() ChapterInternalId {
+	return c.ChapterInternalId
+}
+
+func (c Chapter) isLastVersion() bool {
+	return c.IsLastVersion
+}
+
+func (c Chapter) isDeleted() bool {
+	return c.DeletedAt != nil
+}
+
 type Character struct {
 	Id                  CharacterId         `gorm:"type:char(36);primaryKey"`
 	CharacterInternalId CharacterInternalId `gorm:"type:char(36);index;column:character_id"`
@@ -43,7 +61,20 @@ type Character struct {
 	Attributes          model.JSONMap `gorm:"type:json"`
 	Description         *string
 	Version             int
+	IsLastVersion       bool
 	DeletedAt           *time.Time
+}
+
+func (c Character) getInternalId() CharacterInternalId {
+	return c.CharacterInternalId
+}
+
+func (c Character) isLastVersion() bool {
+	return c.IsLastVersion
+}
+
+func (c Character) isDeleted() bool {
+	return c.DeletedAt != nil
 }
 
 type Location struct {
@@ -53,7 +84,20 @@ type Location struct {
 	Name               string
 	Description        *string
 	Version            int
+	IsLastVersion      bool
 	DeletedAt          *time.Time
+}
+
+func (l Location) getInternalId() LocationInternalId {
+	return l.LocationInternalId
+}
+
+func (l Location) isLastVersion() bool {
+	return l.IsLastVersion
+}
+
+func (l Location) isDeleted() bool {
+	return l.DeletedAt != nil
 }
 
 type Metadata struct {
@@ -151,6 +195,7 @@ func (p *Project) AddCharacter(newInternalId CharacterInternalId, name string, d
 		Name:                name,
 		Description:         description,
 		Attributes:          attributes,
+		IsLastVersion:       true,
 		Version:             1,
 	}
 	p.Characters = append(p.Characters, character)
@@ -171,6 +216,7 @@ func (p *Project) AddLocation(newInternalId LocationInternalId, name string, des
 		LocationInternalId: newInternalId,
 		Name:               name,
 		Description:        description,
+		IsLastVersion:      true,
 		Version:            1,
 	}
 	p.Locations = append(p.Locations, location)
@@ -180,7 +226,7 @@ func (p *Project) AddLocation(newInternalId LocationInternalId, name string, des
 }
 
 func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent string) error {
-	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+	lastVersion, ok := findLastVersion(p.Chapters, chapterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
@@ -213,10 +259,16 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 }
 
 func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newName string, newDescription *string, newAttributes map[string]string) error {
-	lastVersion, ok := p.findLastVersionCharacter(characterInternalId)
+	lastVersion, ok := findLastVersion(p.Characters, characterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
+	}
+
+	for i, c := range p.Characters {
+		if c.Id.Equal(lastVersion.Id) {
+			p.Characters[i].IsLastVersion = false
+		}
 	}
 
 	newCharacter := Character{
@@ -227,6 +279,7 @@ func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newNa
 		Description:         newDescription,
 		Attributes:          newAttributes,
 		Version:             lastVersion.Version + 1,
+		IsLastVersion:       true,
 	}
 
 	p.Characters = append(p.Characters, newCharacter)
@@ -235,10 +288,16 @@ func (p *Project) UpdateCharacter(characterInternalId CharacterInternalId, newNa
 }
 
 func (p *Project) UpdateLocation(locationInternalId LocationInternalId, newName string, newDescription *string) error {
-	lastVersion, ok := p.findLastVersionLocation(locationInternalId)
+	lastVersion, ok := findLastVersion(p.Locations, locationInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
+	}
+
+	for i, l := range p.Locations {
+		if l.Id.Equal(lastVersion.Id) {
+			p.Locations[i].IsLastVersion = false
+		}
 	}
 
 	newLocation := Location{
@@ -248,6 +307,7 @@ func (p *Project) UpdateLocation(locationInternalId LocationInternalId, newName 
 		Name:               newName,
 		Description:        newDescription,
 		Version:            lastVersion.Version + 1,
+		IsLastVersion:      true,
 	}
 
 	p.Locations = append(p.Locations, newLocation)
@@ -256,7 +316,7 @@ func (p *Project) UpdateLocation(locationInternalId LocationInternalId, newName 
 }
 
 func (p *Project) DeleteChapter(chapterInternalId ChapterInternalId) error {
-	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+	lastVersion, ok := findLastVersion(p.Chapters, chapterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
@@ -277,7 +337,7 @@ func (p *Project) DeleteChapter(chapterInternalId ChapterInternalId) error {
 }
 
 func (p *Project) DeleteCharacter(characterInternalId CharacterInternalId) error {
-	lastVersion, ok := p.findLastVersionCharacter(characterInternalId)
+	lastVersion, ok := findLastVersion(p.Characters, characterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
@@ -298,7 +358,7 @@ func (p *Project) DeleteCharacter(characterInternalId CharacterInternalId) error
 }
 
 func (p *Project) DeleteLocation(locationInternalId LocationInternalId) error {
-	lastVersion, ok := p.findLastVersionLocation(locationInternalId)
+	lastVersion, ok := findLastVersion(p.Locations, locationInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
@@ -335,82 +395,26 @@ func (p *Project) Update(title string, description *string, genres []Genre) erro
 	return nil
 }
 
-func (p *Project) findLastVersionChapter(chapterInternalId ChapterInternalId) (Chapter, bool) {
-	var lastVersion Chapter
+func findLastVersion[T versional](slice []T, internalId model.Uuid) (T, bool) {
+	var lastVersion T
 	var found bool
 
-	for _, c := range p.Chapters {
-		if c.ChapterInternalId.Equal(chapterInternalId) {
-			if c.IsLastVersion {
+	for _, c := range slice {
+		if c.getInternalId().Equal(internalId) {
+			if c.isLastVersion() {
 				lastVersion = c
 				found = true
+				break
 			}
 		}
 	}
 
 	if !found {
-		return Chapter{}, false
+		return lastVersion, false
 	}
 
-	if lastVersion.DeletedAt != nil {
-		return Chapter{}, false
-
-	}
-
-	return lastVersion, true
-}
-
-func (p *Project) findLastVersionCharacter(characterInternalId CharacterInternalId) (Character, bool) {
-	var lastVersion Character
-	var found bool
-	maxVersion := 0
-
-	for _, c := range p.Characters {
-		if c.CharacterInternalId.Equal(characterInternalId) {
-			if c.Version > maxVersion {
-				lastVersion = c
-				found = true
-			}
-
-			maxVersion = max(c.Version, maxVersion)
-		}
-	}
-
-	if !found {
-		return Character{}, false
-	}
-
-	if lastVersion.DeletedAt != nil {
-		return Character{}, false
-
-	}
-
-	return lastVersion, true
-}
-
-func (p *Project) findLastVersionLocation(locationInternalId LocationInternalId) (Location, bool) {
-	var lastVersion Location
-	var found bool
-	maxVersion := 0
-
-	for _, l := range p.Locations {
-		if l.LocationInternalId.Equal(locationInternalId) {
-			if l.Version > maxVersion {
-				lastVersion = l
-				found = true
-			}
-
-			maxVersion = max(l.Version, maxVersion)
-		}
-	}
-
-	if !found {
-		return Location{}, false
-	}
-
-	if lastVersion.DeletedAt != nil {
-		return Location{}, false
-
+	if lastVersion.isDeleted() {
+		return lastVersion, false
 	}
 
 	return lastVersion, true
@@ -430,7 +434,7 @@ func (p *Project) UpdateMetadata(author, keywords, language, isbn string) {
 }
 
 func (p *Project) ReorderChapter(chapterInternalId ChapterInternalId, newOrder int) {
-	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+	lastVersion, ok := findLastVersion(p.Chapters, chapterInternalId)
 	if !ok {
 		return
 	}
