@@ -22,7 +22,6 @@ var projectGetAllAction *action.ProjectGetAll
 var projectGetRecentAction *action.ProjectGetRecent
 var projectCanAccessAction *action.ProjectCanAccess
 var projectGetMetadataAction *action.ProjectGetMetadata
-var projectUpdateMetadataAction *action.ProjectUpdateMetadata
 var projectGetMenuAction *action.ProjectGetMenu
 var projectAddMenuItemAction *action.ProjectAddMenuItem
 var projectToggleExpandMenuItemAction *action.ProjectToggleExpandMenuItem
@@ -48,6 +47,8 @@ var projectCreateLocationAction *action.ProjectCreateLocation
 var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectDeleteLocationAction *action.ProjectDeleteLocation
 
+var projectUpdateMetadataAction *action.ProjectUpdateMetadata
+
 var genreGetAllAction *action.GenreGetAll
 
 func initializeDependencies() {
@@ -72,7 +73,6 @@ func initializeDependencies() {
 	projectGetRecentAction = action.NewProjectGetRecent()
 	projectCanAccessAction = action.NewProjectCanAccess()
 	projectGetMetadataAction = action.NewProjectGetMetadata()
-	projectUpdateMetadataAction = action.NewProjectUpdateMetadata()
 	projectGetMenuAction = action.NewProjectGetMenu()
 	projectAddMenuItemAction = action.NewProjectAddMenuItem()
 	projectToggleExpandMenuItemAction = action.NewProjectToggleExpandMenuItem()
@@ -82,7 +82,6 @@ func initializeDependencies() {
 	projectSaveEditorStateAction = action.NewProjectSaveEditorState()
 	projectGetCharactersAction = action.NewProjectGetCharacters()
 	projectGetLocationsAction = action.NewProjectGetLocations()
-	projectUpdateLocationAction = action.NewProjectUpdateLocation()
 	projectGetAction = action.NewProjectGet()
 	projectUpdateAction = action.NewProjectUpdate()
 	projectReorderMenuAction = action.NewProjectReorderMenu()
@@ -96,7 +95,10 @@ func initializeDependencies() {
 	projectDeleteCharacterAction = action.NewProjectDeleteCharacter()
 
 	projectCreateLocationAction = action.NewProjectCreateLocation()
+	projectUpdateLocationAction = action.NewProjectUpdateLocation()
 	projectDeleteLocationAction = action.NewProjectDeleteLocation()
+
+	projectUpdateMetadataAction = action.NewProjectUpdateMetadata()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

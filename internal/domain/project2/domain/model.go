@@ -58,14 +58,20 @@ type Metadata struct {
 	Id        MetadataId `gorm:"type:char(36);primaryKey"`
 	ProjectId ProjectId  `gorm:"type:char(36);index"`
 	Author    string
-	Genre     string
 	Keywords  string
 	Language  string
 	Isbn      string
 }
 
-func (Metadata) TableName() string {
+func (*Metadata) TableName() string {
 	return "project_metadata"
+}
+
+func (m *Metadata) fulfill(author, keywords, language, isbn string) {
+	m.Author = author
+	m.Keywords = keywords
+	m.Language = language
+	m.Isbn = isbn
 }
 
 type Genre struct {
@@ -399,4 +405,17 @@ func (p *Project) findLastVersionLocation(locationInternalId LocationInternalId)
 	}
 
 	return lastVersion, true
+}
+
+func (p *Project) UpdateMetadata(author, keywords, language, isbn string) {
+	if p.Metadata == nil {
+		p.Metadata = &Metadata{}
+	}
+
+	p.Metadata.fulfill(
+		author,
+		keywords,
+		language,
+		isbn,
+	)
 }
