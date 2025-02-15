@@ -6,7 +6,7 @@ import (
 )
 
 type GetAllProjectsQuery struct {
-	UserId string
+	AuthorId string
 }
 
 type GetAllProjectsHandlerResponse struct {
@@ -22,7 +22,7 @@ func NewGetAllProjectsHandler(projectReadModel readmodel.ProjectReadModel) *GetA
 }
 
 func (h *GetAllProjectsHandler) Handle(ctx context.Context, query *GetAllProjectsQuery) (*GetAllProjectsHandlerResponse, error) {
-	projects, err := h.projectReadModel.GetAllLoose(query.UserId)
+	projects, err := h.projectReadModel.GetAllLoose(query.AuthorId)
 
 	if err != nil {
 		return nil, err
