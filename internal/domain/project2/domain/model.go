@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"errors"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gbooksoft/backend/pkg/model"
 	"time"
@@ -280,20 +279,25 @@ func (p *Project) DeleteCharacter(characterInternalId CharacterInternalId) error
 	return nil
 }
 
-func (p *Project) DeleteLocation(locationId LocationId) error {
+func (p *Project) DeleteLocation(locationInternalId LocationInternalId) error {
+	lastVersion, ok := p.findLastVersionLocation(locationInternalId)
+
+	if !ok {
+		return gerr.NewBusinessLogicErr("character not found", gerr.ProjectCharacterNotFound)
+	}
+
 	for i, l := range p.Locations {
-		if l.Id.Equal(locationId) && l.DeletedAt == nil {
+		if l.Id.Equal(lastVersion.Id) && l.DeletedAt == nil {
 			now := time.Now()
 			updatedLocation := l
 			updatedLocation.DeletedAt = &now
 
-			// Создаём новую версию с увеличенным номером
 			p.Locations[i] = updatedLocation
-			p.UpdatedAt = time.Now()
-			return nil
+			break
 		}
 	}
-	return errors.New("локация не найдена или уже удалена")
+
+	return nil
 }
 
 func (p *Project) Update(title string, description *string, genres []Genre) error {

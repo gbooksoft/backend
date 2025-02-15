@@ -26,4 +26,5 @@ func project2Routes(e *gin.Engine) {
 
 	project.POST("/:id/locations", projectCreateLocationAction.Invoke)
 	project.POST("/:id/locations/:location_internal_id", projectUpdateLocationAction.Invoke)
+	project.DELETE("/:id/locations/:location_internal_id", projectDeleteLocationAction.Invoke)
 }
