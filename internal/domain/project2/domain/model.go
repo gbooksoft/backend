@@ -30,6 +30,8 @@ type Chapter struct {
 	Title             string
 	Content           string
 	Version           int
+	IsLastVersion     bool
+	Order             int `gorm:"not null,default:1"`
 	DeletedAt         *time.Time
 }
 
@@ -127,6 +129,8 @@ func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content str
 		Title:             title,
 		Content:           content,
 		Version:           1,
+		IsLastVersion:     true,
+		Order:             p.findLastOrderChapter() + 1,
 	}
 	p.Chapters = append(p.Chapters, chapter)
 	p.UpdatedAt = time.Now()
@@ -186,6 +190,12 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 		return nil
 	}
 
+	for i, c := range p.Chapters {
+		if c.Id.Equal(lastVersion.Id) {
+			p.Chapters[i].IsLastVersion = false
+		}
+	}
+
 	newChapter := Chapter{
 		Id:                ChapterId(uuid.New()),
 		ChapterInternalId: chapterInternalId,
@@ -193,6 +203,8 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 		Title:             newTitle,
 		Content:           newContent,
 		Version:           lastVersion.Version + 1,
+		Order:             lastVersion.Order,
+		IsLastVersion:     true,
 	}
 
 	p.Chapters = append(p.Chapters, newChapter)
@@ -326,16 +338,13 @@ func (p *Project) Update(title string, description *string, genres []Genre) erro
 func (p *Project) findLastVersionChapter(chapterInternalId ChapterInternalId) (Chapter, bool) {
 	var lastVersion Chapter
 	var found bool
-	maxVersion := 0
 
 	for _, c := range p.Chapters {
 		if c.ChapterInternalId.Equal(chapterInternalId) {
-			if c.Version > maxVersion {
+			if c.IsLastVersion {
 				lastVersion = c
 				found = true
 			}
-
-			maxVersion = max(c.Version, maxVersion)
 		}
 	}
 
@@ -418,4 +427,72 @@ func (p *Project) UpdateMetadata(author, keywords, language, isbn string) {
 		language,
 		isbn,
 	)
+}
+
+func (p *Project) ReorderChapter(chapterInternalId ChapterInternalId, newOrder int) {
+	lastVersion, ok := p.findLastVersionChapter(chapterInternalId)
+	if !ok {
+		return
+	}
+
+	oldOrder := lastVersion.Order
+
+	lastVersion.Order = newOrder
+
+	if newOrder < oldOrder {
+		for i, c := range p.Chapters {
+			if !c.IsLastVersion || c.DeletedAt != nil {
+				continue
+			}
+
+			if c.Order >= newOrder && c.Order < oldOrder {
+				n := c
+				n.Order = n.Order + 1
+				p.Chapters[i] = n
+			}
+
+			if c.Id.Equal(lastVersion.Id) {
+				n := c
+				n.Order = newOrder
+				p.Chapters[i] = n
+			}
+		}
+
+		return
+	}
+
+	if newOrder > oldOrder {
+		for i, c := range p.Chapters {
+			if !c.IsLastVersion || c.DeletedAt != nil {
+				continue
+			}
+
+			if c.Order > oldOrder && c.Order <= newOrder {
+				n := c
+				n.Order = n.Order - 1
+				p.Chapters[i] = n
+			}
+
+			if c.Id.Equal(lastVersion.Id) {
+				n := c
+				n.Order = newOrder
+				p.Chapters[i] = n
+			}
+		}
+
+		return
+	}
+}
+
+func (p *Project) findLastOrderChapter() int {
+	var order int
+	for _, c := range p.Chapters {
+		if !c.IsLastVersion || c.DeletedAt != nil {
+			continue
+		}
+
+		order = max(c.Order, order)
+	}
+
+	return order
 }

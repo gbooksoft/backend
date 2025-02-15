@@ -17,6 +17,7 @@ func project2Routes(e *gin.Engine) {
 	project.POST("/:id", projectUpdateAction.Invoke)
 
 	project.POST("/:id/chapters", projectCreateChapterAction.Invoke)
+	project.POST("/:id/chapters/:chapter_internal_id/reorder", projectReorderChapterAction.Invoke)
 	project.POST("/:id/chapters/:chapter_internal_id", projectUpdateChapterAction.Invoke)
 	project.DELETE("/:id/chapters/:chapter_internal_id", projectDeleteChapterAction.Invoke)
 

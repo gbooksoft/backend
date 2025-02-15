@@ -34,12 +34,13 @@ var projectGetLocationsAction *action.ProjectGetLocations
 var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
 var projectReorderMenuAction *action.ProjectReorderMenu
-var projectCreateChapterAction *action.ProjectCreateChapter
 
+var projectCreateChapterAction *action.ProjectCreateChapter
 var projectUpdateChapterAction *action.ProjectUpdateChapter
 var projectDeleteChapterAction *action.ProjectDeleteChapter
-var projectCreateCharacterAction *action.ProjectCreateCharacter
+var projectReorderChapterAction *action.ProjectReorderChapter
 
+var projectCreateCharacterAction *action.ProjectCreateCharacter
 var projectUpdateCharacterAction *action.ProjectUpdateCharacter
 var projectDeleteCharacterAction *action.ProjectDeleteCharacter
 
@@ -89,6 +90,7 @@ func initializeDependencies() {
 	projectCreateChapterAction = action.NewProjectCreateChapter()
 	projectUpdateChapterAction = action.NewProjectUpdateChapter()
 	projectDeleteChapterAction = action.NewProjectDeleteChapter()
+	projectReorderChapterAction = action.NewProjectReorderChapter()
 
 	projectCreateCharacterAction = action.NewProjectCreateCharacter()
 	projectUpdateCharacterAction = action.NewProjectUpdateCharacter()

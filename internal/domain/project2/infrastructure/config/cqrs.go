@@ -14,6 +14,7 @@ func RegisterMediatr() {
 	createChapterHandler := application.NewCreateChapterHandler(projectRepository)
 	updateChapterHandler := application.NewUpdateChapterHandler(projectRepository)
 	deleteChapterHandler := application.NewDeleteChapterHandler(projectRepository)
+	reorderChapterHandler := application.NewReorderChapterHandler(projectRepository)
 
 	createCharacterHandler := application.NewCreateCharacterHandler(projectRepository)
 	updateCharacterHandler := application.NewUpdateCharacterHandler(projectRepository)
@@ -31,6 +32,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.CreateChapterCommand, *application.CreateChapterHandlerResponse](createChapterHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateChapterCommand, *application.UpdateChapterHandlerResponse](updateChapterHandler))
 	hE(mediatr.RegisterRequestHandler[*application.DeleteChapterCommand, *application.DeleteChapterHandlerResponse](deleteChapterHandler))
+	hE(mediatr.RegisterRequestHandler[*application.ReorderChapterCommand, *application.ReorderChapterHandlerResponse](reorderChapterHandler))
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateCharacterCommand, *application.CreateCharacterHandlerResponse](createCharacterHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateCharacterCommand, *application.UpdateCharacterHandlerResponse](updateCharacterHandler))
