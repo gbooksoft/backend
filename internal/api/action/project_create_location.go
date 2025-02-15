@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/domain/project2/application"
+	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/pkg/gerr"
 	"github.com/gbooksoft/backend/pkg/validator"
 	"github.com/gin-gonic/gin"

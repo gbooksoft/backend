@@ -1,7 +1,7 @@
 package action
 
 import (
-	"github.com/gbooksoft/backend/internal/domain/project2/application"
+	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gin-gonic/gin"
 	"github.com/mehdihadeli/go-mediatr"
 	"net/http"

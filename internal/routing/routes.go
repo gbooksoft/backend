@@ -13,6 +13,5 @@ func Add(e *gin.Engine) {
 	authRoutes(e)
 	accountRoutes(e)
 	projectRoutes(e)
-	project2Routes(e)
 	genreRoutes(e)
 }

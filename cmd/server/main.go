@@ -11,7 +11,6 @@ import (
 	emailSender "github.com/gbooksoft/backend/internal/domain/email/worker"
 	genreConfig "github.com/gbooksoft/backend/internal/domain/genre/infrastructure/config"
 	projectConfig "github.com/gbooksoft/backend/internal/domain/project/infrastructure/config"
-	project2Config "github.com/gbooksoft/backend/internal/domain/project2/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/routing"
 	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/gbooksoft/backend/pkg/http/middleware"
@@ -135,7 +134,6 @@ func main() {
 
 func configureModules() {
 	projectConfig.RegisterMediatr()
-	project2Config.RegisterMediatr()
 	authConfig.RegisterMediatr()
 	accountConfig.RegisterMediatr()
 	genreConfig.RegisterMediatr()

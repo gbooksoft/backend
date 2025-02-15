@@ -45,6 +45,7 @@ const (
 	ProjectIncorrectOrderingOfItems
 	ProjectShouldHaveMaxFiveGenres
 	ProjectChapterAlreadyExists
+	ProjectCharacterAlreadyExists
 	ProjectLocationAlreadyExists
 	ProjectChapterNotFound
 	ProjectCharacterNotFound

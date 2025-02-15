@@ -19,21 +19,8 @@ var authResetPasswordAction *action.AuthResetPassword
 
 var projectCreateAction *action.ProjectCreate
 var projectGetAllAction *action.ProjectGetAll
-var projectGetRecentAction *action.ProjectGetRecent
-var projectCanAccessAction *action.ProjectCanAccess
-var projectGetMetadataAction *action.ProjectGetMetadata
-var projectGetMenuAction *action.ProjectGetMenu
-var projectAddMenuItemAction *action.ProjectAddMenuItem
-var projectToggleExpandMenuItemAction *action.ProjectToggleExpandMenuItem
-var projectUpdateMenuItemAction *action.ProjectUpdateMenuItem
-var projectDeleteMenuItemAction *action.ProjectDeleteMenuItem
-var projectGetEditorsAction *action.ProjectGetEditors
-var projectSaveEditorStateAction *action.ProjectSaveEditorState
-var projectGetCharactersAction *action.ProjectGetCharacters
-var projectGetLocationsAction *action.ProjectGetLocations
 var projectGetAction *action.ProjectGet
 var projectUpdateAction *action.ProjectUpdate
-var projectReorderMenuAction *action.ProjectReorderMenu
 
 var projectCreateChapterAction *action.ProjectCreateChapter
 var projectUpdateChapterAction *action.ProjectUpdateChapter
@@ -71,21 +58,8 @@ func initializeDependencies() {
 	// project
 	projectCreateAction = action.NewProjectCreate()
 	projectGetAllAction = action.NewProjectGetAll()
-	projectGetRecentAction = action.NewProjectGetRecent()
-	projectCanAccessAction = action.NewProjectCanAccess()
-	projectGetMetadataAction = action.NewProjectGetMetadata()
-	projectGetMenuAction = action.NewProjectGetMenu()
-	projectAddMenuItemAction = action.NewProjectAddMenuItem()
-	projectToggleExpandMenuItemAction = action.NewProjectToggleExpandMenuItem()
-	projectUpdateMenuItemAction = action.NewProjectUpdateMenuItem()
-	projectDeleteMenuItemAction = action.NewProjectDeleteMenuItem()
-	projectGetEditorsAction = action.NewProjectGetEditors()
-	projectSaveEditorStateAction = action.NewProjectSaveEditorState()
-	projectGetCharactersAction = action.NewProjectGetCharacters()
-	projectGetLocationsAction = action.NewProjectGetLocations()
 	projectGetAction = action.NewProjectGet()
 	projectUpdateAction = action.NewProjectUpdate()
-	projectReorderMenuAction = action.NewProjectReorderMenu()
 
 	projectCreateChapterAction = action.NewProjectCreateChapter()
 	projectUpdateChapterAction = action.NewProjectUpdateChapter()
