@@ -85,9 +85,12 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
             pm.author, pm.keywords, pm.language, pm.isbn,
             c.chapter_id AS chapter_id, c.title AS chapter_title, c.content AS chapter_content, c.order AS chapter_order,
             l.location_id AS location_id, l.name AS location_name, l.description AS location_description,
-            ch.character_id AS character_id, ch.name AS character_name, ch.description AS character_description, ch.attributes AS character_attributes
+            ch.character_id AS character_id, ch.name AS character_name, ch.description AS character_description, ch.attributes AS character_attributes,
+            g.id AS genre_id, g.name AS genre_name
         FROM projects2 p
         JOIN project_metadata pm ON p.id = pm.project_id
+		JOIN project2_genres pg ON pg.project_id = p.id
+		JOIN genres g ON g.id = pg.genre_id
         LEFT JOIN chapters c ON c.project_id = p.id AND c.is_last_version = 1 AND c.deleted_at IS NULL
         LEFT JOIN locations l ON l.project_id = p.id AND l.is_last_version = 1 AND l.deleted_at IS NULL
         LEFT JOIN characters ch ON ch.project_id = p.id AND ch.is_last_version = 1 AND ch.deleted_at IS NULL
@@ -107,6 +110,7 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 	seenChapters := make(map[string]struct{})
 	seenLocations := make(map[string]struct{})
 	seenCharacters := make(map[string]struct{})
+	seenGenres := make(map[string]struct{})
 
 	for rows.Next() {
 		var projectId, title, description, author, keywords, language, isbn sql.NullString
@@ -114,11 +118,13 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 		var chapterOrder sql.NullInt64
 		var locationId, locationName, locationDescription sql.NullString
 		var characterId, characterName, characterDescription, characterAttributes sql.NullString
+		var genreId, genreName string
 
 		err := rows.Scan(&projectId, &title, &description, &author, &keywords, &language, &isbn,
 			&chapterId, &chapterTitle, &chapterContent, &chapterOrder,
 			&locationId, &locationName, &locationDescription,
-			&characterId, &characterName, &characterDescription, &characterAttributes)
+			&characterId, &characterName, &characterDescription, &characterAttributes,
+			&genreId, &genreName)
 		if err != nil {
 			return readmodel.Project{}, err
 		}
@@ -135,6 +141,13 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 					Isbn:     isbn.String,
 				},
 			}
+		}
+
+		if _, exists := seenGenres[genreId]; !exists {
+			project.Genres = append(project.Genres, readmodel.Genre{
+				Id:   genreId,
+				Name: genreName,
+			})
 		}
 
 		if chapterId.Valid {

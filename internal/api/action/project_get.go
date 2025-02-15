@@ -96,6 +96,9 @@ func (a *ProjectGet) Invoke(ctx *gin.Context) {
 		})
 	}
 
+	if len(resp.Project.Chapters) == 0 {
+		responseItem.Chapters = []chapterResponse{}
+	}
 	for _, chapter := range resp.Project.Chapters {
 		responseItem.Chapters = append(responseItem.Chapters, chapterResponse{
 			Id:      chapter.Id,
@@ -105,6 +108,9 @@ func (a *ProjectGet) Invoke(ctx *gin.Context) {
 		})
 	}
 
+	if len(resp.Project.Characters) == 0 {
+		responseItem.Characters = []characterResponse{}
+	}
 	for _, character := range resp.Project.Characters {
 		responseItem.Characters = append(responseItem.Characters, characterResponse{
 			Id:          character.Id,
@@ -114,6 +120,9 @@ func (a *ProjectGet) Invoke(ctx *gin.Context) {
 		})
 	}
 
+	if len(resp.Project.Locations) == 0 {
+		responseItem.Locations = []locationResponse{}
+	}
 	for _, location := range resp.Project.Locations {
 		responseItem.Locations = append(responseItem.Locations, locationResponse{
 			Id:          location.Id,
