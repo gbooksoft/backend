@@ -3,11 +3,16 @@ package config
 import (
 	"github.com/gbooksoft/backend/internal/domain/project2/application"
 	"github.com/gbooksoft/backend/internal/domain/project2/infrastructure"
+	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/mehdihadeli/go-mediatr"
 )
 
 func RegisterMediatr() {
+	gormDb := database.GetGormDB()
+
+	projectReadmodel := infrastructure.NewMySqlProjectReadModel(gormDb)
 	projectRepository := infrastructure.NewMySqlProjectRepository()
+
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository)
 	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
 
@@ -26,6 +31,8 @@ func RegisterMediatr() {
 
 	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
 
+	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadmodel)
+
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
 
@@ -43,6 +50,8 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.DeleteLocationCommand, *application.DeleteLocationHandlerResponse](deleteLocationHandler))
 
 	hE(mediatr.RegisterRequestHandler[*application.UpdateMetadataCommand, *application.UpdateMetadataHandlerResponse](updateMetadataHandler))
+
+	hE(mediatr.RegisterRequestHandler[*application.GetAllProjectsQuery, *application.GetAllProjectsHandlerResponse](getAllProjectsQuery))
 }
 
 func hE(err error) {

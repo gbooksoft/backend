@@ -14,6 +14,7 @@ func project2Routes(e *gin.Engine) {
 	project.Use(middleware.AuthRequired())
 
 	project.POST("", projectCreateAction.Invoke)
+	project.GET("", projectGetAllAction.Invoke)
 	project.POST("/:id", projectUpdateAction.Invoke)
 
 	project.POST("/:id/chapters", projectCreateChapterAction.Invoke)

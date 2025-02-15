@@ -77,7 +77,7 @@ func (r *MySqlProjectRepository) Save(ctx context.Context, project *domain.Proje
 		db = tx
 	}
 
-	result := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(project)
+	result := db.Session(&gorm.Session{FullSaveAssociations: true}).Omit("Genres").Updates(project)
 
 	if err := result.Error; err != nil {
 		return err
