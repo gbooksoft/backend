@@ -1,334 +1,168 @@
 package infrastructure
 
 import (
-	"database/sql"
-	"encoding/json"
+	"context"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/domain"
+	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/gbooksoft/backend/pkg/repository"
-	"github.com/google/uuid"
-	"strings"
+	"gorm.io/gorm"
 )
 
 type MySqlProjectRepository struct {
-	*repository.BaseMysqlRepository
+	*repository.BaseGormRepository
 }
 
-func NewMySqlProjectRepository(db *sql.DB) *MySqlProjectRepository {
-	return &MySqlProjectRepository{repository.NewBaseMysqlRepository(db)}
+func NewMySqlProjectRepository() *MySqlProjectRepository {
+	return &MySqlProjectRepository{
+		repository.NewBaseGormRepository(database.GetGormDB()),
+	}
 }
 
-func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(tx *sql.Tx, userId domain.UserId, title string, ExceptProjectId *domain.ProjectId) (bool, error) {
-	query := `
-SELECT 1 
-FROM projects 
-WHERE user_id = ? AND title = ?
-`
+func (r *MySqlProjectRepository) ExistsByUserIdAndTitle(ctx context.Context, authorId domain.AuthorId, title string, ExceptProjectId *domain.ProjectId) (bool, error) {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
+
+	db := r.Db
+	if ok {
+		db = tx
+	}
+
+	project := &domain.Project{}
+
 	if ExceptProjectId != nil {
-		query = query + " AND id != ?"
-	}
-
-	var exists sql.NullBool
-
-	var err error
-	if ExceptProjectId != nil {
-		err = tx.QueryRow(query, userId.String(), title, ExceptProjectId.String()).Scan(&exists)
-	} else {
-		err = tx.QueryRow(query, userId.String(), title).Scan(&exists)
-	}
-
-	if err == nil {
-		return true, nil
-	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	return false, err
-}
-
-func (r *MySqlProjectRepository) ExistsByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (bool, error) {
-	var exists sql.NullBool
-	err := tx.QueryRow("SELECT 1 FROM projects WHERE user_id = ? AND id = ?", userId.String(), projectId.String()).Scan(&exists)
-
-	if err == nil {
-		return true, nil
-	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	return false, err
-}
-
-func (r *MySqlProjectRepository) Add(tx *sql.Tx, project *domain.Project) error {
-	query := "INSERT INTO projects (id, user_id, title, description, tags) VALUES (?, ?, ?, ?, ?)"
-	desc := sql.NullString{
-		String: project.Description,
-		Valid:  len(project.Description) > 0,
-	}
-
-	var tagsJSON interface{}
-	if len(project.Tags) == 0 {
-		tagsJSON = nil
-	} else {
-		jsonData, err := json.Marshal(project.Tags)
-		if err != nil {
-			return err
+		if err := db.Table("projects").First(project, "title = ? AND author_id = ? AND id != ?", title, authorId.String(), ExceptProjectId.String()).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, nil
+			}
+			return false, err
 		}
-		tagsJSON = string(jsonData)
+	} else {
+		if err := db.Table("projects").First(project, "title = ? AND author_id = ?", title, authorId.String()).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return false, nil
+			}
+			return false, err
+		}
 	}
 
-	_, err := tx.Exec(query, project.Id.String(), project.UserId.String(), project.Title, desc, tagsJSON)
-
-	if err != nil {
-		return err
+	if project.Id.String() == "" {
+		return false, nil
 	}
 
-	err = r.addGenresRelation(tx, project)
+	return true, nil
+}
 
-	if err != nil {
+func (r *MySqlProjectRepository) Add(ctx context.Context, project *domain.Project) error {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
+
+	db := r.Db
+	if ok {
+		db = tx
+	}
+
+	result := db.Table("projects").Create(project)
+
+	if err := result.Error; err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *MySqlProjectRepository) UserHasAccess(userId domain.UserId, projectId domain.ProjectId) (bool, error) {
-	var exists sql.NullBool
-	err := r.Db.QueryRow("SELECT 1 FROM projects WHERE user_id = ? AND id = ?", userId.String(), projectId.String()).Scan(&exists)
+func (r *MySqlProjectRepository) Save(ctx context.Context, project *domain.Project) error {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
 
-	if err == nil {
-		return true, nil
+	db := r.Db
+	if ok {
+		db = tx
 	}
 
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
+	result := db.Session(&gorm.Session{FullSaveAssociations: true}).Omit("Genres").Updates(project)
+
+	if err := result.Error; err != nil {
+		return err
 	}
 
-	return false, err
+	if err := db.Model(project).Association("Genres").Replace(project.Genres); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (r *MySqlProjectRepository) FindMetadataByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Metadata, error) {
-	query := `
-SELECT pm.id, pm.author, pm.genre, pm.keywords, pm.language, pm.isbn
-FROM project_metadata  pm
-JOIN projects p ON p.id = pm.project_id
-WHERE p.user_id = ? AND p.id = ?
-`
+func (r *MySqlProjectRepository) FindByAuthorIdAndProjectId(ctx context.Context, authorId domain.AuthorId, projectId domain.ProjectId) (*domain.Project, error) {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
 
-	metadata := &domain.Metadata{}
-	var id string
-	var author sql.NullString
-	var genre sql.NullString
-	var keywords sql.NullString
-	var language sql.NullString
-	var isbn sql.NullString
-	err := tx.QueryRow(query, userId.String(), projectId.String()).Scan(&id, &author, &genre, &keywords, &language, &isbn)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+	db := r.Db
+	if ok {
+		db = tx
+	}
+
+	project := &domain.Project{}
+
+	if err := db.Table("projects").
+		Preload("Genres").
+		Preload("Chapters").
+		Preload("Locations").
+		Preload("Characters").
+		Preload("Metadata").
+		First(project, "author_id = ? AND id = ?", authorId.String(), projectId.String()).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
 
-	metadata.Id = domain.MetadataId(uuid.MustParse(id))
-	metadata.ProjectId = projectId
-	if author.Valid {
-		metadata.Author = author.String
-	}
-	if genre.Valid {
-		metadata.Genre = genre.String
-	}
-	if keywords.Valid {
-		metadata.Keywords = keywords.String
-	}
-	if language.Valid {
-		metadata.Language = language.String
-	}
-	if isbn.Valid {
-		metadata.Isbn = isbn.String
-	}
-
-	return metadata, nil
+	return project, nil
 }
 
-func (r *MySqlProjectRepository) AddMetadata(tx *sql.Tx, metadata *domain.Metadata) error {
-	query := `
-INSERT INTO project_metadata (id, project_id, author, genre, keywords, language, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)
-`
-	_, err := tx.Exec(query, metadata.Id.String(), metadata.ProjectId.String(), metadata.Author, metadata.Genre, metadata.Keywords, metadata.Language, metadata.Isbn)
-
-	if err != nil {
-		return err
+func (r *MySqlProjectRepository) ChapterInternalIdExists(ctx context.Context, chapterInternalId domain.ChapterInternalId) (bool, error) {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
+	db := r.Db
+	if ok {
+		db = tx
 	}
 
-	return nil
+	var exists bool
+	err := db.
+		Table("chapters").
+		Select("COUNT(*) > 0").
+		Where("chapter_id = ?", chapterInternalId).
+		Find(&exists).Error
+
+	return exists, err
 }
 
-func (r *MySqlProjectRepository) SaveMetadata(tx *sql.Tx, metadata *domain.Metadata) error {
-	query := `
-UPDATE project_metadata 
-SET author=?, genre=?, keywords=?, language=?, isbn=?
-WHERE id = ?
-`
-	author := sql.NullString{
-		String: metadata.Author,
-		Valid:  metadata.Author != "",
-	}
-	genre := sql.NullString{
-		String: metadata.Genre,
-		Valid:  metadata.Genre != "",
-	}
-	keywords := sql.NullString{
-		String: metadata.Keywords,
-		Valid:  metadata.Keywords != "",
-	}
-	language := sql.NullString{
-		String: metadata.Language,
-		Valid:  metadata.Language != "",
-	}
-	isbn := sql.NullString{
-		String: metadata.Isbn,
-		Valid:  metadata.Isbn != "",
+func (r *MySqlProjectRepository) CharacterInternalIdExists(ctx context.Context, characterInternalId domain.CharacterInternalId) (bool, error) {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
+	db := r.Db
+	if ok {
+		db = tx
 	}
 
-	_, err := tx.Exec(query, author, genre, keywords, language, isbn, metadata.Id.String())
+	var exists bool
+	err := db.
+		Table("characters").
+		Select("COUNT(*) > 0").
+		Where("character_id = ?", characterInternalId).
+		Find(&exists).Error
 
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return exists, err
 }
 
-func (r *MySqlProjectRepository) FindByUserIdAndProjectId(tx *sql.Tx, userId domain.UserId, projectId domain.ProjectId) (*domain.Project, error) {
-	query := `
-SELECT p.title, p.description, p.tags, GROUP_CONCAT(DISTINCT pg.genre_id SEPARATOR ',') AS genre_ids
-FROM projects p 
-JOIN project_genres pg ON pg.project_id = p.id
-WHERE p.user_id = ? AND p.id = ?
-`
-	var title string
-	var desc sql.NullString
-	var tags sql.NullString
-	var genres string
-
-	err := r.Db.QueryRow(query, userId.String(), projectId.String()).Scan(&title, &desc, &tags, &genres)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
-		}
-
-		return nil, err
+func (r *MySqlProjectRepository) LocationInternalIdExists(ctx context.Context, locationInternalId domain.LocationInternalId) (bool, error) {
+	tx, ok := repository.FetchGormTransactionFromContext(ctx)
+	db := r.Db
+	if ok {
+		db = tx
 	}
 
-	project := &domain.Project{
-		Id:     projectId,
-		UserId: userId,
-		Title:  title,
-	}
+	var exists bool
+	err := db.
+		Table("locations").
+		Select("COUNT(*) > 0").
+		Where("location_id = ?", locationInternalId).
+		Find(&exists).Error
 
-	if desc.Valid {
-		project.Description = desc.String
-	}
-
-	if tags.Valid {
-		err := json.Unmarshal([]byte(tags.String), &project.Tags)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	for _, genre := range strings.Split(genres, ",") {
-		project.GenresIds = append(project.GenresIds, domain.GenreId(uuid.MustParse(genre)))
-	}
-
-	return project, err
-}
-
-func (r *MySqlProjectRepository) Save(tx *sql.Tx, project *domain.Project) error {
-	query := `
-UPDATE projects
-SET title = ?, description = ?, tags = ?
-WHERE id = ?
-`
-
-	desc := sql.NullString{
-		String: project.Description,
-		Valid:  len(project.Description) > 0,
-	}
-
-	var tagsJSON interface{}
-	if len(project.Tags) == 0 {
-		tagsJSON = nil
-	} else {
-		jsonData, err := json.Marshal(project.Tags)
-		if err != nil {
-			return err
-		}
-		tagsJSON = string(jsonData)
-	}
-
-	_, err := tx.Exec(query, project.Title, desc, tagsJSON, project.Id.String())
-
-	if err != nil {
-		return err
-	}
-
-	err = r.updateGenresRelation(tx, project.Id.String(), project.GenresIds)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *MySqlProjectRepository) updateGenresRelation(tx *sql.Tx, projectID string, genreIDs []domain.GenreId) error {
-	_, err := tx.Exec("DELETE FROM project_genres WHERE project_id = ?", projectID)
-	if err != nil {
-		return err
-	}
-
-	if len(genreIDs) == 0 {
-		return nil
-	}
-
-	query := "INSERT INTO project_genres (project_id, genre_id) VALUES "
-
-	var values []interface{}
-	for _, genreID := range genreIDs {
-		query += "(?, ?),"
-		values = append(values, projectID, genreID.String())
-	}
-
-	// Убираем последнюю запятую
-	query = query[:len(query)-1]
-
-	_, err = tx.Exec(query, values...)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *MySqlProjectRepository) addGenresRelation(tx *sql.Tx, project *domain.Project) error {
-	if len(project.GenresIds) == 0 {
-		return nil
-	}
-
-	query := "INSERT INTO project_genres (project_id, genre_id) VALUES (?, ?)"
-
-	for _, genreID := range project.GenresIds {
-		_, err := tx.Exec(query, project.Id.String(), genreID.String())
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return exists, err
 }

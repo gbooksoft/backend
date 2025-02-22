@@ -20,7 +20,6 @@ type createProjectRequest struct {
 	Title       string   `json:"title" binding:"required" validate:"required,max=255"`
 	Description string   `json:"description" validate:"max=255"`
 	Genres      []string `json:"genres" validate:"min=1,max=5,dive,uuid4"`
-	Tags        []string `json:"tags" validate:"omitempty,max=5,dive,min=1"`
 }
 
 func (a *ProjectCreate) Invoke(ctx *gin.Context) {
@@ -48,28 +47,14 @@ func (a *ProjectCreate) Invoke(ctx *gin.Context) {
 	userFullName := claims.FirstName + " " + claims.LastName
 
 	cmd := &application.CreateProjectCommand{
-		UserId:       claims.Subject,
+		AuthorId:     claims.Subject,
 		UserFullName: userFullName,
 		Title:        req.Title,
 		Description:  req.Description,
 		Genres:       req.Genres,
-		Tags:         req.Tags,
 	}
 
 	resp, err := mediatr.Send[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](ctx, cmd)
-
-	if err != nil {
-		ctx.Error(err)
-		return
-	}
-
-	expandCmd := &application.ExpandItemCommand{
-		MenuItemId: resp.ItemIdToExpand,
-		ProjectId:  resp.ProjectId,
-		UserId:     claims.Subject,
-	}
-
-	_, err = mediatr.Send[*application.ExpandItemCommand, *application.ExpandItemHandlerResponse](ctx, expandCmd)
 
 	if err != nil {
 		ctx.Error(err)

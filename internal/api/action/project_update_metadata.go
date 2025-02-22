@@ -18,7 +18,6 @@ func NewProjectUpdateMetadata() *ProjectUpdateMetadata {
 
 type metadataRequest struct {
 	Author   string `json:"author,omitempty" validate:"omitempty,max=255"`
-	Genre    string `json:"genre,omitempty" validate:"omitempty,max=255"`
 	Keywords string `json:"keywords,omitempty" validate:"omitempty,max=255"`
 	Language string `json:"language,omitempty" validate:"omitempty,max=255"`
 	Isbn     string `json:"isbn,omitempty" validate:"omitempty,max=255"`
@@ -50,9 +49,8 @@ func (a *ProjectUpdateMetadata) Invoke(ctx *gin.Context) {
 
 	cmd := &application.UpdateMetadataCommand{
 		ProjectId: projectId,
-		UserId:    claims.Subject,
+		AuthorId:  claims.Subject,
 		Author:    req.Author,
-		Genre:     req.Genre,
 		Keywords:  req.Keywords,
 		Language:  req.Language,
 		Isbn:      req.Isbn,

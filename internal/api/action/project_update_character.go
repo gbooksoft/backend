@@ -18,7 +18,7 @@ func NewProjectUpdateCharacter() *ProjectUpdateCharacter {
 
 type updateCharacterRequest struct {
 	Name        string                            `json:"name" validate:"required,max=255,min=1"`
-	Description *string                           `json:"description" validate:"max=5000,omitempty"`
+	Description *string                           `json:"description" validate:"omitempty,max=5000"`
 	Attributes  []updateCharacterAttributeRequest `json:"attributes"`
 }
 type updateCharacterAttributeRequest struct {
@@ -49,23 +49,23 @@ func (a *ProjectUpdateCharacter) Invoke(ctx *gin.Context) {
 	}
 
 	projectId := ctx.Params.ByName("id")
-	menuItemId := ctx.Params.ByName("item_id")
+	characterInternalId := ctx.Params.ByName("character_internal_id")
 
-	var charAttrs []application.CharacterAttribute
-	for _, attr := range req.Attributes {
-		charAttrs = append(charAttrs, application.CharacterAttribute{
-			Field: attr.Field,
-			Value: attr.Value,
-		})
+	var charAttrs map[string]string
+	if len(req.Attributes) > 0 {
+		charAttrs = make(map[string]string, len(req.Attributes))
+		for _, attr := range req.Attributes {
+			charAttrs[attr.Field] = attr.Value
+		}
 	}
 
 	cmd := &application.UpdateCharacterCommand{
-		ProjectId:   projectId,
-		MenuItemId:  menuItemId,
-		Name:        req.Name,
-		Description: req.Description,
-		UserId:      claims.Subject,
-		Attributes:  charAttrs,
+		CharacterInternalId: characterInternalId,
+		AuthorId:            claims.Subject,
+		ProjectId:           projectId,
+		Name:                req.Name,
+		Description:         req.Description,
+		Attributes:          charAttrs,
 	}
 
 	_, err = mediatr.Send[*application.UpdateCharacterCommand, *application.UpdateCharacterHandlerResponse](ctx, cmd)

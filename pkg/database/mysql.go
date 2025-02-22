@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	gormMysql "gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"os"
 	"time"
 )
 
 var databasePool *sql.DB
+var gormDB *gorm.DB
 
 func SetUpMysqlConnection(ctx context.Context) (*sql.DB, error) {
 	db, err := sql.Open("mysql", os.Getenv("DB_DSN"))
@@ -28,6 +31,11 @@ func SetUpMysqlConnection(ctx context.Context) (*sql.DB, error) {
 		return nil, err
 	}
 
+	gormConnection, err := gorm.Open(gormMysql.New(gormMysql.Config{
+		Conn: db,
+	}), &gorm.Config{})
+
+	gormDB = gormConnection
 	databasePool = db
 
 	return db, nil
@@ -35,6 +43,10 @@ func SetUpMysqlConnection(ctx context.Context) (*sql.DB, error) {
 
 func GetDBPool() *sql.DB {
 	return databasePool
+}
+
+func GetGormDB() *gorm.DB {
+	return gormDB
 }
 
 func openDbConnection(ctx context.Context, db *sql.DB) error {

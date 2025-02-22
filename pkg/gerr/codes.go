@@ -43,6 +43,12 @@ const (
 	ProjectMetadataNotFound
 	ProjectIncorrectAmountOfItems
 	ProjectIncorrectOrderingOfItems
+	ProjectShouldHaveMaxFiveGenres
+	ProjectChapterAlreadyExists
+	ProjectCharacterAlreadyExists
+	ProjectLocationAlreadyExists
+	ProjectChapterNotFound
+	ProjectCharacterNotFound
 )
 
 const (

@@ -2,188 +2,210 @@ package infrastructure
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"github.com/gbooksoft/backend/internal/domain/project/readmodel"
-	"strings"
+	"gorm.io/gorm"
 )
 
 type MySqlProjectReadModel struct {
-	db *sql.DB
+	db *gorm.DB
 }
 
-func NewMySqlProjectReadModel(db *sql.DB) *MySqlProjectReadModel {
-	return &MySqlProjectReadModel{db: db}
+func NewMySqlProjectReadModel(db *gorm.DB) *MySqlProjectReadModel {
+	return &MySqlProjectReadModel{
+		db: db,
+	}
 }
 
-func (r *MySqlProjectReadModel) GetAll(userId string) ([]readmodel.Project, error) {
-	query := `
-SELECT p.id, p.title, p.description, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name  SEPARATOR '<|>')
-FROM projects p
-JOIN project_genres pg ON pg.project_id = p.id
-JOIN genres g ON g.id = pg.genre_id
-WHERE p.user_id = ?
-GROUP BY p.id
-ORDER BY p.created_at DESC
-`
-	rows, err := r.db.Query(query, userId)
+func (r *MySqlProjectReadModel) GetAllLoose(authorId string) ([]readmodel.Project, error) {
+	rows, err := r.db.
+		Table("projects AS p").
+		Select("p.id AS project_id", "p.title", "p.description", "pm.author", "pm.keywords", "pm.language", "pm.isbn").
+		Joins("JOIN project_metadata pm ON p.id = pm.project_id").
+		Where("p.author_id = ?", authorId).
+		Order("p.updated_at DESC").
+		Rows()
 
 	if err != nil {
 		return nil, err
 	}
-
 	defer rows.Close()
 
 	var projects []readmodel.Project
+	var projectIds []string
 
 	for rows.Next() {
 		var project readmodel.Project
-
-		var pDesc sql.NullString
-		var gIds string
-		var gNames string
-		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &gIds, &gNames); err != nil {
+		err = rows.Scan(&project.Id, &project.Title, &project.Description, &project.Metadata.Author, &project.Metadata.Keywords, &project.Metadata.Language, &project.Metadata.Isbn)
+		if err != nil {
 			return nil, err
 		}
 
-		if pDesc.Valid {
-			project.Description = pDesc.String
+		projectIds = append(projectIds, project.Id)
+		projects = append(projects, project)
+	}
+
+	if len(projectIds) == 0 {
+		return projects, nil
+	}
+
+	genres, err := r.db.
+		Table("genres AS g").
+		Select("g.id AS genre_id", "g.name", "pg.project_id").
+		Joins("JOIN project_genres pg ON pg.genre_id = g.id").
+		Where("pg.project_id IN ?", projectIds).
+		Rows()
+
+	if err != nil {
+		return nil, err
+	}
+	defer genres.Close()
+
+	for genres.Next() {
+		var genre readmodel.Genre
+		var projectId string
+
+		err = genres.Scan(&genre.Id, &genre.Name, &projectId)
+		if err != nil {
+			return nil, err
 		}
 
-		r.attachGenres(&project, gIds, gNames)
-
-		projects = append(projects, project)
+		for i := range projects {
+			if projects[i].Id == projectId {
+				projects[i].Genres = append(projects[i].Genres, genre)
+				break
+			}
+		}
 	}
 
 	return projects, nil
 }
 
-func (r *MySqlProjectReadModel) GetRecent(userId string, limit int) ([]readmodel.Project, error) {
-	query := `
-SELECT p.id, p.title, p.description, MAX(pe.updated_at) AS last_updated, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name SEPARATOR '<|>')
-FROM projects p
-JOIN project_menu_items pmi ON pmi.project_id = p.id
-JOIN project_editors pe ON pe.project_menu_id = pmi.id
-JOIN project_genres pg ON pg.project_id = p.id
-JOIN genres g ON g.id = pg.genre_id
-WHERE p.user_id = ?
-GROUP BY p.id, p.title, p.description
-ORDER BY last_updated DESC
-LIMIT ?
-`
-	rows, err := r.db.Query(query, userId, limit)
+func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (readmodel.Project, error) {
+	rows, err := r.db.Raw(`
+        SELECT 
+            p.id AS project_id, p.title, p.description,
+            pm.author, pm.keywords, pm.language, pm.isbn,
+            c.chapter_id AS chapter_id, c.title AS chapter_title, c.content AS chapter_content, c.order AS chapter_order,
+            l.location_id AS location_id, l.name AS location_name, l.description AS location_description,
+            ch.character_id AS character_id, ch.name AS character_name, ch.description AS character_description, ch.attributes AS character_attributes,
+            g.id AS genre_id, g.name AS genre_name
+        FROM projects p
+        JOIN project_metadata pm ON p.id = pm.project_id
+		JOIN project_genres pg ON pg.project_id = p.id
+		JOIN genres g ON g.id = pg.genre_id
+        LEFT JOIN chapters c ON c.project_id = p.id AND c.is_last_version = 1 AND c.deleted_at IS NULL
+        LEFT JOIN locations l ON l.project_id = p.id AND l.is_last_version = 1 AND l.deleted_at IS NULL
+        LEFT JOIN characters ch ON ch.project_id = p.id AND ch.is_last_version = 1 AND ch.deleted_at IS NULL
+        WHERE p.id = ? AND p.author_id = ?
+        ORDER BY c.order
+    `, projectId, authorId).Rows()
 
 	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	var projects []readmodel.Project
-
-	for rows.Next() {
-		var project readmodel.Project
-
-		var pDesc sql.NullString
-		var pUpdateAt sql.NullString
-		var gIds string
-		var gNames string
-		if err := rows.Scan(&project.Id, &project.Title, &pDesc, &pUpdateAt, &gIds, &gNames); err != nil {
-			return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return readmodel.Project{}, nil
 		}
-
-		if pDesc.Valid {
-			project.Description = pDesc.String
-		}
-
-		r.attachGenres(&project, gIds, gNames)
-
-		projects = append(projects, project)
-	}
-
-	return projects, nil
-}
-
-func (r *MySqlProjectReadModel) GetById(userId string, projectId string) (readmodel.Project, error) {
-	query := `
-SELECT p.id, p.title, p.description, GROUP_CONCAT(DISTINCT g.id SEPARATOR ','), GROUP_CONCAT(DISTINCT g.name SEPARATOR '<|>')
-FROM projects p
-JOIN project_genres pg ON pg.project_id = p.id
-JOIN genres g ON g.id = pg.genre_id
-WHERE p.user_id = ? AND p.id = ?
-GROUP BY p.id
-`
-	row := r.db.QueryRow(query, userId, projectId)
-
-	var project readmodel.Project
-	var desc sql.NullString
-	var gIds string
-	var gNames string
-	if err := row.Scan(&project.Id, &project.Title, &desc, &gIds, &gNames); err != nil {
 		return readmodel.Project{}, err
 	}
+	defer rows.Close()
 
-	if desc.Valid {
-		project.Description = desc.String
-	}
+	var project readmodel.Project
+	seenChapters := make(map[string]struct{})
+	seenLocations := make(map[string]struct{})
+	seenCharacters := make(map[string]struct{})
+	seenGenres := make(map[string]struct{})
 
-	r.attachGenres(&project, gIds, gNames)
+	for rows.Next() {
+		var projectId, title, description, author, keywords, language, isbn sql.NullString
+		var chapterId, chapterTitle, chapterContent sql.NullString
+		var chapterOrder sql.NullInt64
+		var locationId, locationName, locationDescription sql.NullString
+		var characterId, characterName, characterDescription, characterAttributes sql.NullString
+		var genreId, genreName string
 
-	return project, nil
-}
-
-func (r *MySqlProjectReadModel) GetMetadata(userId string, projectId string) (*readmodel.Metadata, error) {
-	query := `
-SELECT pm.author, pm.genre, pm.keywords, pm.language, pm.isbn
-FROM project_metadata  pm
-JOIN projects p ON p.id = pm.project_id
-WHERE p.user_id = ? AND p.id = ?
-`
-	row := r.db.QueryRow(query, userId, projectId)
-
-	metadata := &readmodel.Metadata{}
-	var author sql.NullString
-	var genre sql.NullString
-	var keywords sql.NullString
-	var language sql.NullString
-	var isbn sql.NullString
-
-	if err := row.Scan(&author, &genre, &keywords, &language, &isbn); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, nil
+		err := rows.Scan(&projectId, &title, &description, &author, &keywords, &language, &isbn,
+			&chapterId, &chapterTitle, &chapterContent, &chapterOrder,
+			&locationId, &locationName, &locationDescription,
+			&characterId, &characterName, &characterDescription, &characterAttributes,
+			&genreId, &genreName)
+		if err != nil {
+			return readmodel.Project{}, err
 		}
 
-		return nil, err
+		if project.Id == "" {
+			project = readmodel.Project{
+				Id:          projectId.String,
+				Title:       title.String,
+				Description: description.String,
+				Metadata: readmodel.Metadata{
+					Author:   author.String,
+					Keywords: keywords.String,
+					Language: language.String,
+					Isbn:     isbn.String,
+				},
+			}
+		}
+
+		if _, exists := seenGenres[genreId]; !exists {
+			project.Genres = append(project.Genres, readmodel.Genre{
+				Id:   genreId,
+				Name: genreName,
+			})
+		}
+
+		if chapterId.Valid {
+			if _, exists := seenChapters[chapterId.String]; !exists {
+				project.Chapters = append(project.Chapters, readmodel.Chapter{
+					Id:      chapterId.String,
+					Name:    chapterTitle.String,
+					Content: chapterContent.String,
+					Order:   int(chapterOrder.Int64),
+				})
+				seenChapters[chapterId.String] = struct{}{}
+			}
+		}
+
+		if locationId.Valid {
+			if _, exists := seenLocations[locationId.String]; !exists {
+
+				var locDescription *string
+				if locationDescription.Valid {
+					locDescription = &locationDescription.String
+				}
+				project.Locations = append(project.Locations, readmodel.Location{
+					Id:          locationId.String,
+					Name:        locationName.String,
+					Description: locDescription,
+				})
+				seenLocations[locationId.String] = struct{}{}
+			}
+		}
+
+		if characterId.Valid {
+			if _, exists := seenCharacters[characterId.String]; !exists {
+				var attributes map[string]string
+				if characterAttributes.Valid {
+					json.Unmarshal([]byte(characterAttributes.String), &attributes)
+				}
+				var charDescription *string
+				if characterDescription.Valid {
+					charDescription = &characterDescription.String
+				}
+				project.Characters = append(project.Characters, readmodel.Character{
+					Id:          characterId.String,
+					Name:        characterName.String,
+					Attributes:  attributes,
+					Description: charDescription,
+				})
+				seenCharacters[characterId.String] = struct{}{}
+			}
+		}
 	}
 
-	if author.Valid {
-		metadata.Author = author.String
-	}
-	if genre.Valid {
-		metadata.Genre = genre.String
-	}
-	if keywords.Valid {
-		metadata.Keywords = keywords.String
-	}
-	if language.Valid {
-		metadata.Language = language.String
-	}
-	if isbn.Valid {
-		metadata.Isbn = isbn.String
+	if project.Id == "" {
+		return readmodel.Project{}, nil
 	}
 
-	return metadata, nil
-}
-
-func (r2 *MySqlProjectReadModel) attachGenres(project *readmodel.Project, ids string, names string) {
-	gIdsSlice := strings.Split(ids, ",")
-	gNamesSlice := strings.Split(names, "<|>")
-
-	for i, gName := range gNamesSlice {
-		id := gIdsSlice[i]
-
-		project.Genres = append(project.Genres, readmodel.Genre{
-			Id:   id,
-			Name: gName,
-		})
-	}
+	return project, nil
 }

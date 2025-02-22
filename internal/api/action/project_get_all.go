@@ -38,7 +38,7 @@ func (a *ProjectGetAll) Invoke(ctx *gin.Context) {
 	}
 
 	query := &application.GetAllProjectsQuery{
-		UserId: claims.Subject,
+		AuthorId: claims.Subject,
 	}
 
 	resp, err := mediatr.Send[*application.GetAllProjectsQuery, *application.GetAllProjectsHandlerResponse](ctx, query)
