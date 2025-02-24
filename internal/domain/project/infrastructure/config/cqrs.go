@@ -1,8 +1,10 @@
 package config
 
 import (
+	bookInfrastructure "github.com/gbooksoft/backend/internal/domain/book/infrastructure"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/internal/domain/project/infrastructure"
+	"github.com/gbooksoft/backend/internal/domain/project/infrastructure/adapter"
 	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/mehdihadeli/go-mediatr"
 )
@@ -12,6 +14,11 @@ func RegisterMediatr() {
 
 	projectReadmodel := infrastructure.NewMySqlProjectReadModel(gormDb)
 	projectRepository := infrastructure.NewMySqlProjectRepository()
+	bookRepository := bookInfrastructure.NewMySqlBookRepository()
+	publishService := bookInfrastructure.NewPublishService(bookRepository)
+	bookAdapter := adapter.NewBookAdapter(publishService)
+
+	projectService := infrastructure.NewProjectService(projectRepository, bookAdapter)
 
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository)
 	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
@@ -34,6 +41,8 @@ func RegisterMediatr() {
 	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadmodel)
 	getProjectsQuery := application.NewGetProjectHandler(projectReadmodel)
 
+	publishProjectHandler := application.NewPublishProjectHandler(projectService)
+
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
 
@@ -54,6 +63,8 @@ func RegisterMediatr() {
 
 	hE(mediatr.RegisterRequestHandler[*application.GetAllProjectsQuery, *application.GetAllProjectsHandlerResponse](getAllProjectsQuery))
 	hE(mediatr.RegisterRequestHandler[*application.GetProjectQuery, *application.GetProjectHandlerResponse](getProjectsQuery))
+
+	hE(mediatr.RegisterRequestHandler[*application.PublishProjectCommand, *application.PublishProjectHandlerResponse](publishProjectHandler))
 }
 
 func hE(err error) {

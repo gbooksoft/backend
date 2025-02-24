@@ -49,6 +49,7 @@ const (
 	ProjectLocationAlreadyExists
 	ProjectChapterNotFound
 	ProjectCharacterNotFound
+	ProjectAlreadyPublished
 )
 
 const (

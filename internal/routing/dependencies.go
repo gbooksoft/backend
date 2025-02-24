@@ -36,6 +36,7 @@ var projectUpdateLocationAction *action.ProjectUpdateLocation
 var projectDeleteLocationAction *action.ProjectDeleteLocation
 
 var projectUpdateMetadataAction *action.ProjectUpdateMetadata
+var projectPublishAction *action.ProjectPublish
 
 var genreGetAllAction *action.GenreGetAll
 
@@ -75,6 +76,8 @@ func initializeDependencies() {
 	projectDeleteLocationAction = action.NewProjectDeleteLocation()
 
 	projectUpdateMetadataAction = action.NewProjectUpdateMetadata()
+
+	projectPublishAction = action.NewProjectPublish()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

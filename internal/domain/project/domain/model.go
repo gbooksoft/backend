@@ -22,6 +22,7 @@ type LocationId = model.Uuid
 type LocationInternalId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
+type BookId = model.Uuid
 
 type versional interface {
 	getInternalId() model.Uuid
@@ -39,6 +40,10 @@ type Chapter struct {
 	IsLastVersion     bool
 	Order             int `gorm:"not null,default:1"`
 	DeletedAt         *time.Time
+}
+
+func (Chapter) TableName() string {
+	return "project_chapters"
 }
 
 func (c Chapter) getInternalId() ChapterInternalId {
@@ -65,6 +70,10 @@ type Character struct {
 	DeletedAt           *time.Time
 }
 
+func (Character) TableName() string {
+	return "project_characters"
+}
+
 func (c Character) getInternalId() CharacterInternalId {
 	return c.CharacterInternalId
 }
@@ -86,6 +95,10 @@ type Location struct {
 	Version            int
 	IsLastVersion      bool
 	DeletedAt          *time.Time
+}
+
+func (Location) TableName() string {
+	return "project_locations"
 }
 
 func (l Location) getInternalId() LocationInternalId {
@@ -137,6 +150,7 @@ type Project struct {
 	Metadata    *Metadata   `gorm:"foreignKey:project_id"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	BookId      *BookId `gorm:"type:char(36);index"`
 }
 
 func (p *Project) TableName() string {
