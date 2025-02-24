@@ -264,6 +264,7 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 		Id:                ChapterId(uuid.New()),
 		ChapterInternalId: chapterInternalId,
 		ProjectId:         lastVersion.ProjectId,
+		BookChapterId:     lastVersion.BookChapterId,
 		Title:             newTitle,
 		Content:           newContent,
 		ContentHtml:       newContentHtml,

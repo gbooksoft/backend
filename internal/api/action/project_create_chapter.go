@@ -20,7 +20,7 @@ type createProjectChapterRequest struct {
 	Id          string `json:"id" validate:"required,uuid"`
 	Name        string `json:"name" validate:"required,max=255"`
 	Content     string `json:"content" validate:"required"`
-	ContentHtml string `json:"content_html" validate:"required"`
+	ContentHtml string `json:"content_html" validate:"omitempty,required"`
 }
 
 func (a *ProjectCreateChapter) Invoke(ctx *gin.Context) {
