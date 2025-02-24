@@ -29,18 +29,22 @@ func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*do
 	}
 
 	var chapters []bookDomain.Chapter
-	for _, chapter := range project.Chapters {
+	for i, chapter := range project.Chapters {
 		if !chapter.IsLastVersion || chapter.DeletedAt != nil {
 			continue
 		}
 
+		bookChapterId := bookDomain.ChapterId(uuid.MustParse(chapter.Id.String()))
 		chapters = append(chapters, bookDomain.Chapter{
-			Id:      bookDomain.ChapterId(uuid.MustParse(chapter.Id.String())),
+			Id:      bookChapterId,
 			BookId:  bookId,
 			Title:   chapter.Title,
 			Content: chapter.ContentHtml,
 			Order:   chapter.Order,
 		})
+
+		projectBookChapterId := domain.BookChapterId(uuid.MustParse(bookChapterId.String()))
+		project.Chapters[i].BookChapterId = &projectBookChapterId
 	}
 
 	book := bookDomain.NewBook(

@@ -23,6 +23,7 @@ type LocationInternalId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
 type BookId = model.Uuid
+type BookChapterId = model.Uuid
 
 type versional interface {
 	getInternalId() model.Uuid
@@ -34,6 +35,7 @@ type Chapter struct {
 	Id                ChapterId         `gorm:"type:char(36);primaryKey"`
 	ChapterInternalId ChapterInternalId `gorm:"type:char(36);index;column:chapter_id"`
 	ProjectId         ProjectId         `gorm:"type:char(36);index"`
+	BookChapterId     *BookChapterId    `gorm:"type:char(36);index;column:book_chapter_id"`
 	Title             string
 	Content           string
 	ContentHtml       string
