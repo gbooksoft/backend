@@ -17,7 +17,7 @@ func NewBookAdapter(publishService bookDomain.PublishService) *BookAdapter {
 	}
 }
 
-func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*domain.BookId, error) {
+func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project, chaptersToPublish []domain.ChapterInternalId) (*domain.BookId, error) {
 	bookId := bookDomain.BookId(uuid.New())
 
 	var genres []bookDomain.Genre
@@ -31,6 +31,10 @@ func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*do
 	var chapters []bookDomain.Chapter
 	for i, chapter := range project.Chapters {
 		if !chapter.IsLastVersion || chapter.DeletedAt != nil {
+			continue
+		}
+
+		if !a.shouldPublishChapter(chapter, chaptersToPublish) {
 			continue
 		}
 
@@ -66,4 +70,18 @@ func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*do
 	projectBookId := domain.BookId(uuid.MustParse(bookId.String()))
 
 	return &projectBookId, nil
+}
+
+func (a *BookAdapter) shouldPublishChapter(chapter domain.Chapter, chaptersToPublish []domain.ChapterInternalId) bool {
+	if len(chaptersToPublish) == 0 {
+		return true
+	}
+
+	for _, c := range chaptersToPublish {
+		if c.Equal(chapter.ChapterInternalId) {
+			return true
+		}
+	}
+
+	return false
 }

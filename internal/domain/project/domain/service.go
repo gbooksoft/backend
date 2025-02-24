@@ -1,5 +1,5 @@
 package domain
 
 type ProjectService interface {
-	Publish(authorId AuthorId, projectId ProjectId) error
+	Publish(authorId AuthorId, projectId ProjectId, chapters []ChapterInternalId) error
 }

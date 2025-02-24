@@ -2,6 +2,8 @@ package action
 
 import (
 	"github.com/gbooksoft/backend/internal/domain/project/application"
+	"github.com/gbooksoft/backend/pkg/gerr"
+	"github.com/gbooksoft/backend/pkg/validator"
 	"github.com/gin-gonic/gin"
 	"github.com/mehdihadeli/go-mediatr"
 	"net/http"
@@ -14,7 +16,26 @@ func NewProjectPublish() *ProjectPublish {
 	return new(ProjectPublish)
 }
 
+type publishProjectRequest struct {
+	Chapters []string `json:"chapters" validate:"omitempty"`
+}
+
 func (a *ProjectPublish) Invoke(ctx *gin.Context) {
+	var req publishProjectRequest
+	if err := ctx.ShouldBind(&req); err != nil {
+		ctx.Error(gerr.NewValidationError(err))
+		return
+	}
+
+	validate := validator.NewCustomValidator()
+
+	err := validate.Struct(req)
+
+	if err != nil {
+		ctx.Error(gerr.NewValidationError(err))
+		return
+	}
+
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
 		ctx.Error(err)
@@ -26,6 +47,7 @@ func (a *ProjectPublish) Invoke(ctx *gin.Context) {
 	cmd := &application.PublishProjectCommand{
 		ProjectId: projectId,
 		AuthorId:  claims.Subject,
+		Chapters:  req.Chapters,
 	}
 
 	_, err = mediatr.Send[*application.PublishProjectCommand, *application.PublishProjectHandlerResponse](ctx, cmd)

@@ -19,7 +19,7 @@ func NewProjectService(projectRepository domain.ProjectRepository, bookAdapter *
 	}
 }
 
-func (s *ProjectService) Publish(authorId domain.AuthorId, projectId domain.ProjectId) error {
+func (s *ProjectService) Publish(authorId domain.AuthorId, projectId domain.ProjectId, chaptersToPublish []domain.ChapterInternalId) error {
 	ctx, err := s.projectRepository.BeginTransaction(context.TODO())
 	if err != nil {
 		return err
@@ -40,7 +40,7 @@ func (s *ProjectService) Publish(authorId domain.AuthorId, projectId domain.Proj
 		return gerr.NewBusinessLogicErr("project already published", gerr.ProjectAlreadyPublished)
 	}
 
-	bookId, err := s.bookAdapter.Publish(ctx, project)
+	bookId, err := s.bookAdapter.Publish(ctx, project, chaptersToPublish)
 
 	if err != nil {
 		return err

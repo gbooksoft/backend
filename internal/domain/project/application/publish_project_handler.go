@@ -9,6 +9,7 @@ import (
 type PublishProjectCommand struct {
 	ProjectId string
 	AuthorId  string
+	Chapters  []string
 }
 
 type PublishProjectHandlerResponse struct {
@@ -28,7 +29,12 @@ func (h *PublishProjectHandler) Handle(ctx context.Context, cmd *PublishProjectC
 	authorId := domain.AuthorId(uuid.MustParse(cmd.AuthorId))
 	projectId := domain.ProjectId(uuid.MustParse(cmd.ProjectId))
 
-	err := h.projectService.Publish(authorId, projectId)
+	var chaptersIds []domain.CharacterInternalId
+	for _, ch := range cmd.Chapters {
+		chaptersIds = append(chaptersIds, domain.CharacterInternalId(uuid.MustParse(ch)))
+	}
+
+	err := h.projectService.Publish(authorId, projectId, chaptersIds)
 
 	if err != nil {
 		return nil, err
