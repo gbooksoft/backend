@@ -41,6 +41,7 @@ func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*do
 			Title:   chapter.Title,
 			Content: chapter.ContentHtml,
 			Order:   chapter.Order,
+			Version: chapter.Version,
 		})
 
 		projectBookChapterId := domain.BookChapterId(uuid.MustParse(bookChapterId.String()))

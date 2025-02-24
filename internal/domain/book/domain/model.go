@@ -44,6 +44,7 @@ type Chapter struct {
 	Title   string
 	Content string
 	Order   int
+	Version int
 }
 
 func (*Chapter) TableName() string {
