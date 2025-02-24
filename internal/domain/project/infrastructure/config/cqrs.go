@@ -12,11 +12,10 @@ import (
 func RegisterMediatr() {
 	gormDb := database.GetGormDB()
 
-	projectReadmodel := infrastructure.NewMySqlProjectReadModel(gormDb)
+	projectReadModel := infrastructure.NewMySqlProjectReadModel(gormDb)
 	projectRepository := infrastructure.NewMySqlProjectRepository()
 	bookRepository := bookInfrastructure.NewMySqlBookRepository()
-	publishService := bookInfrastructure.NewPublishService(bookRepository)
-	bookAdapter := adapter.NewBookAdapter(publishService)
+	bookAdapter := adapter.NewBookAdapter(bookRepository)
 
 	projectService := infrastructure.NewProjectService(projectRepository, bookAdapter)
 
@@ -38,10 +37,11 @@ func RegisterMediatr() {
 
 	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
 
-	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadmodel)
-	getProjectsQuery := application.NewGetProjectHandler(projectReadmodel)
+	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadModel)
+	getProjectsQuery := application.NewGetProjectHandler(projectReadModel)
 
 	publishProjectHandler := application.NewPublishProjectHandler(projectService)
+	republishProjectHandler := application.NewRepublishProjectHandler(projectService)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
@@ -65,6 +65,7 @@ func RegisterMediatr() {
 	hE(mediatr.RegisterRequestHandler[*application.GetProjectQuery, *application.GetProjectHandlerResponse](getProjectsQuery))
 
 	hE(mediatr.RegisterRequestHandler[*application.PublishProjectCommand, *application.PublishProjectHandlerResponse](publishProjectHandler))
+	hE(mediatr.RegisterRequestHandler[*application.RepublishProjectCommand, *application.RepublishProjectHandlerResponse](republishProjectHandler))
 }
 
 func hE(err error) {

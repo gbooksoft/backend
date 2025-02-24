@@ -50,6 +50,7 @@ const (
 	ProjectChapterNotFound
 	ProjectCharacterNotFound
 	ProjectAlreadyPublished
+	ProjectIsNotPublished
 )
 
 const (

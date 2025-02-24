@@ -16,8 +16,10 @@ type Book struct {
 	AuthorId    AuthorId  `gorm:"type:char(36);not null"`
 	Genres      []Genre   `gorm:"many2many:book_genres;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Chapters    []Chapter `gorm:"foreignKey:book_id"`
-	PublishedAt *time.Time
 	IsPublished bool
+	PublishedAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func NewBook(id BookId, title string, authorId AuthorId, genres []Genre, chapters []Chapter, isPublished bool) *Book {
@@ -39,12 +41,14 @@ func NewBook(id BookId, title string, authorId AuthorId, genres []Genre, chapter
 }
 
 type Chapter struct {
-	Id      ChapterId `gorm:"type:char(36);primaryKey"`
-	BookId  BookId    `gorm:"type:char(36);index"`
-	Title   string
-	Content string
-	Order   int
-	Version int
+	Id        ChapterId `gorm:"type:char(36);primaryKey"`
+	BookId    BookId    `gorm:"type:char(36);index"`
+	Title     string
+	Content   string
+	Order     int
+	Version   int
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (*Chapter) TableName() string {

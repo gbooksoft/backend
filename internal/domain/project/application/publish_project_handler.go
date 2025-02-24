@@ -34,7 +34,7 @@ func (h *PublishProjectHandler) Handle(ctx context.Context, cmd *PublishProjectC
 		chaptersIds = append(chaptersIds, domain.CharacterInternalId(uuid.MustParse(ch)))
 	}
 
-	err := h.projectService.Publish(authorId, projectId, chaptersIds)
+	err := h.projectService.Publish(ctx, authorId, projectId, chaptersIds)
 
 	if err != nil {
 		return nil, err

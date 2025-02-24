@@ -18,9 +18,8 @@ func NewProjectService(projectRepository domain.ProjectRepository, bookAdapter *
 		bookAdapter:       bookAdapter,
 	}
 }
-
-func (s *ProjectService) Publish(authorId domain.AuthorId, projectId domain.ProjectId, chaptersToPublish []domain.ChapterInternalId) error {
-	ctx, err := s.projectRepository.BeginTransaction(context.TODO())
+func (s *ProjectService) Publish(ctx context.Context, authorId domain.AuthorId, projectId domain.ProjectId, chaptersToPublish []domain.ChapterInternalId) error {
+	ctx, err := s.projectRepository.BeginTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -47,6 +46,45 @@ func (s *ProjectService) Publish(authorId domain.AuthorId, projectId domain.Proj
 	}
 
 	project.BookId = bookId
+
+	err = s.projectRepository.Save(ctx, project)
+	if err != nil {
+		return err
+	}
+
+	if err := s.projectRepository.CommitTransaction(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *ProjectService) Republish(ctx context.Context, authorId domain.AuthorId, projectId domain.ProjectId, chaptersToPublish []domain.ChapterInternalId) error {
+	ctx, err := s.projectRepository.BeginTransaction(ctx)
+	if err != nil {
+		return err
+	}
+	defer s.projectRepository.RollbackTransaction(ctx)
+
+	project, err := s.projectRepository.FindByAuthorIdAndProjectId(ctx, authorId, projectId)
+
+	if err != nil {
+		return err
+	}
+
+	if project == nil {
+		return gerr.NewNotFoundErr("project not found")
+	}
+
+	if project.BookId == nil {
+		return gerr.NewBusinessLogicErr("project is not published", gerr.ProjectIsNotPublished)
+	}
+
+	err = s.bookAdapter.Republish(ctx, project, chaptersToPublish)
+
+	if err != nil {
+		return err
+	}
 
 	err = s.projectRepository.Save(ctx, project)
 	if err != nil {
