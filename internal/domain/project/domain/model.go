@@ -36,6 +36,7 @@ type Chapter struct {
 	ProjectId         ProjectId         `gorm:"type:char(36);index"`
 	Title             string
 	Content           string
+	ContentHtml       string
 	Version           int
 	IsLastVersion     bool
 	Order             int `gorm:"not null,default:1"`
@@ -174,7 +175,7 @@ func NewProject(projectId ProjectId, title string, description string, genres []
 	}, nil
 }
 
-func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content string) error {
+func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content, contentHtml string) error {
 	for _, c := range p.Chapters {
 		if c.ChapterInternalId.Equal(newInternalId) {
 			return gerr.NewBusinessLogicErr("can not create chapter with this id", gerr.ProjectChapterAlreadyExists)
@@ -186,6 +187,7 @@ func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content str
 		ChapterInternalId: newInternalId,
 		Title:             title,
 		Content:           content,
+		ContentHtml:       contentHtml,
 		Version:           1,
 		IsLastVersion:     true,
 		Order:             p.findLastOrderChapter() + 1,
@@ -239,14 +241,14 @@ func (p *Project) AddLocation(newInternalId LocationInternalId, name string, des
 	return nil
 }
 
-func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent string) error {
+func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent, newContentHtml string) error {
 	lastVersion, ok := findLastVersion(p.Chapters, chapterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
 	}
 
-	if lastVersion.Title == newTitle && lastVersion.Content == newContent {
+	if lastVersion.Title == newTitle && lastVersion.Content == newContent && lastVersion.ContentHtml == newContentHtml {
 		return nil
 	}
 
@@ -262,6 +264,7 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 		ProjectId:         lastVersion.ProjectId,
 		Title:             newTitle,
 		Content:           newContent,
+		ContentHtml:       newContentHtml,
 		Version:           lastVersion.Version + 1,
 		Order:             lastVersion.Order,
 		IsLastVersion:     true,

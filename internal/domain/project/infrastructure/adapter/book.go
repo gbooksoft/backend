@@ -35,11 +35,10 @@ func (a *BookAdapter) Publish(ctx context.Context, project *domain.Project) (*do
 		}
 
 		chapters = append(chapters, bookDomain.Chapter{
-			Id:     bookDomain.ChapterId(uuid.MustParse(chapter.Id.String())),
-			BookId: bookId,
-			Title:  chapter.Title,
-			// todo: extract content to html
-			Content: chapter.Content,
+			Id:      bookDomain.ChapterId(uuid.MustParse(chapter.Id.String())),
+			BookId:  bookId,
+			Title:   chapter.Title,
+			Content: chapter.ContentHtml,
 			Order:   chapter.Order,
 		})
 	}

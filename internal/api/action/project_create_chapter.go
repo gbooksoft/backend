@@ -17,9 +17,10 @@ func NewProjectCreateChapter() *ProjectCreateChapter {
 }
 
 type createProjectChapterRequest struct {
-	Id      string `json:"id" validate:"required,uuid"`
-	Name    string `json:"name" validate:"required,max=255"`
-	Content string `json:"content" validate:"required"`
+	Id          string `json:"id" validate:"required,uuid"`
+	Name        string `json:"name" validate:"required,max=255"`
+	Content     string `json:"content" validate:"required"`
+	ContentHtml string `json:"content_html" validate:"required"`
 }
 
 func (a *ProjectCreateChapter) Invoke(ctx *gin.Context) {
@@ -46,11 +47,12 @@ func (a *ProjectCreateChapter) Invoke(ctx *gin.Context) {
 	projectId := ctx.Params.ByName("id")
 
 	cmd := &application.CreateChapterCommand{
-		Id:        req.Id,
-		ProjectId: projectId,
-		AuthorId:  claims.Subject,
-		Name:      req.Name,
-		Content:   req.Content,
+		Id:          req.Id,
+		ProjectId:   projectId,
+		AuthorId:    claims.Subject,
+		Name:        req.Name,
+		Content:     req.Content,
+		ContentHtml: req.ContentHtml,
 	}
 
 	_, err = mediatr.Send[*application.CreateChapterCommand, *application.CreateChapterHandlerResponse](ctx, cmd)

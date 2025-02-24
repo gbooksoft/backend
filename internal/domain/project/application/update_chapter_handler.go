@@ -12,6 +12,7 @@ type UpdateChapterCommand struct {
 	AuthorId          string
 	ChapterInternalId string
 	Content           string
+	ContentHtml       string
 	Title             string
 }
 
@@ -49,7 +50,7 @@ func (h *UpdateChapterHandler) Handle(ctx context.Context, cmd *UpdateChapterCom
 		return nil, gerr.NewBusinessLogicErr("project not found", gerr.NotFound)
 	}
 
-	err = project.UpdateChapter(chapterInternalId, cmd.Title, cmd.Content)
+	err = project.UpdateChapter(chapterInternalId, cmd.Title, cmd.Content, cmd.ContentHtml)
 
 	if err != nil {
 		return nil, err
