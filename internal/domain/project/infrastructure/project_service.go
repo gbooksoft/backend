@@ -39,6 +39,10 @@ func (s *ProjectService) Publish(ctx context.Context, authorId domain.AuthorId, 
 		return gerr.NewBusinessLogicErr("project already published", gerr.ProjectAlreadyPublished)
 	}
 
+	if !project.HashChapters() {
+		return gerr.NewBusinessLogicErr("project does not have any chapter", gerr.ProjectDoesNotHaveAnyChapter)
+	}
+
 	bookId, err := s.bookAdapter.Publish(ctx, project, chaptersToPublish)
 
 	if err != nil {
@@ -78,6 +82,10 @@ func (s *ProjectService) Republish(ctx context.Context, authorId domain.AuthorId
 
 	if project.BookId == nil {
 		return gerr.NewBusinessLogicErr("project is not published", gerr.ProjectIsNotPublished)
+	}
+
+	if !project.HashChapters() {
+		return gerr.NewBusinessLogicErr("project does not have any chapter", gerr.ProjectDoesNotHaveAnyChapter)
 	}
 
 	err = s.bookAdapter.Republish(ctx, project, chaptersToPublish)

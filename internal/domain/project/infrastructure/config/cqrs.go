@@ -43,6 +43,8 @@ func RegisterMediatr() {
 	publishProjectHandler := application.NewPublishProjectHandler(projectService)
 	republishProjectHandler := application.NewRepublishProjectHandler(projectService)
 
+	getPublicationHandler := application.NewGetPublicationHandler(projectReadModel)
+
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
 
@@ -66,6 +68,8 @@ func RegisterMediatr() {
 
 	hE(mediatr.RegisterRequestHandler[*application.PublishProjectCommand, *application.PublishProjectHandlerResponse](publishProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.RepublishProjectCommand, *application.RepublishProjectHandlerResponse](republishProjectHandler))
+
+	hE(mediatr.RegisterRequestHandler[*application.GetPublicationQuery, *application.GetPublicationHandlerResponse](getPublicationHandler))
 }
 
 func hE(err error) {

@@ -40,6 +40,8 @@ var projectUpdateMetadataAction *action.ProjectUpdateMetadata
 var projectPublishAction *action.ProjectPublish
 var projectRepublishAction *action.ProjectRepublish
 
+var projectGetPublicationAction *action.ProjectGetPublication
+
 var genreGetAllAction *action.GenreGetAll
 
 func initializeDependencies() {
@@ -81,6 +83,8 @@ func initializeDependencies() {
 
 	projectPublishAction = action.NewProjectPublish()
 	projectRepublishAction = action.NewProjectRepublish()
+
+	projectGetPublicationAction = action.NewProjectGetPublication()
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()

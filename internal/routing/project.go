@@ -35,4 +35,6 @@ func projectRoutes(e *gin.Engine) {
 
 	project.POST("/:id/publish", projectPublishAction.Invoke)
 	project.POST("/:id/republish", projectRepublishAction.Invoke)
+
+	project.GET("/:id/publication", projectGetPublicationAction.Invoke)
 }

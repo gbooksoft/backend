@@ -209,3 +209,46 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 
 	return project, nil
 }
+
+func (r *MySqlProjectReadModel) GetPublication(authorId string, projectId string) (readmodel.Publication, error) {
+	/*	query := `
+		SELECT pc.chapter_id as project_chapter_id, bc.title, bc.version, bc.order
+		FROM projects p
+		JOIN book_chapters bc ON p.book_id = bc.book_id
+		join project_chapters pc ON pc.book_chapter_id = bc.id AND pc.is_last_version = 1
+		WHERE p.author_id = ? AND p.id = ? AND p.book_id IS NOT NULL
+		ORDER BY bc.order
+		`*/
+	query := `
+SELECT pc.chapter_id as project_chapter_id, bc.title, bc.version, bc.order 
+FROM book_chapters bc
+JOIN projects p ON p.book_id = bc.book_id
+join project_chapters pc ON pc.book_chapter_id = bc.id AND pc.is_last_version = 1
+WHERE p.author_id = ? AND p.id = ? AND p.book_id IS NOT NULL
+ORDER BY bc.order 
+`
+	rows, err := r.db.Raw(query, authorId, projectId).Rows()
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return readmodel.Publication{}, nil
+		}
+		return readmodel.Publication{}, err
+	}
+	defer rows.Close()
+
+	var publication readmodel.Publication
+
+	for rows.Next() {
+		var chapter readmodel.PublicationChapter
+
+		err := rows.Scan(&chapter.ProjectChapterId, &chapter.Title, &chapter.Version, &chapter.Order)
+		if err != nil {
+			return readmodel.Publication{}, err
+		}
+
+		publication.Chapters = append(publication.Chapters, chapter)
+	}
+
+	return publication, nil
+}

@@ -39,7 +39,19 @@ type Project struct {
 	Metadata    Metadata
 }
 
+type PublicationChapter struct {
+	ProjectChapterId string
+	Title            string
+	Version          int
+	Order            int
+}
+
+type Publication struct {
+	Chapters []PublicationChapter
+}
+
 type ProjectReadModel interface {
 	GetAllLoose(authorId string) ([]Project, error)
 	GetById(authorId string, projectId string) (Project, error)
+	GetPublication(authorId string, projectId string) (Publication, error)
 }
