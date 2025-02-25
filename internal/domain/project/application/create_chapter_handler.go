@@ -8,11 +8,12 @@ import (
 )
 
 type CreateChapterCommand struct {
-	Id        string
-	ProjectId string
-	AuthorId  string
-	Name      string
-	Content   string
+	Id          string
+	ProjectId   string
+	AuthorId    string
+	Name        string
+	Content     string
+	ContentHtml string
 }
 
 type CreateChapterHandlerResponse struct {
@@ -60,7 +61,7 @@ func (h *CreateChapterHandler) Handle(ctx context.Context, cmd *CreateChapterCom
 		return nil, gerr.NewBusinessLogicErr("can not create chapter with this id", gerr.ProjectChapterAlreadyExists)
 	}
 
-	err = project.AddChapter(newChapterId, cmd.Name, cmd.Content)
+	err = project.AddChapter(newChapterId, cmd.Name, cmd.Content, cmd.ContentHtml)
 
 	if err != nil {
 		return nil, err

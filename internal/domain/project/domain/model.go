@@ -22,6 +22,8 @@ type LocationId = model.Uuid
 type LocationInternalId = model.Uuid
 type ProjectId = model.Uuid
 type MetadataId = model.Uuid
+type BookId = model.Uuid
+type BookChapterId = model.Uuid
 
 type versional interface {
 	getInternalId() model.Uuid
@@ -33,12 +35,18 @@ type Chapter struct {
 	Id                ChapterId         `gorm:"type:char(36);primaryKey"`
 	ChapterInternalId ChapterInternalId `gorm:"type:char(36);index;column:chapter_id"`
 	ProjectId         ProjectId         `gorm:"type:char(36);index"`
+	BookChapterId     *BookChapterId    `gorm:"type:char(36);index;column:book_chapter_id"`
 	Title             string
 	Content           string
+	ContentHtml       string
 	Version           int
 	IsLastVersion     bool
 	Order             int `gorm:"not null,default:1"`
 	DeletedAt         *time.Time
+}
+
+func (Chapter) TableName() string {
+	return "project_chapters"
 }
 
 func (c Chapter) getInternalId() ChapterInternalId {
@@ -65,6 +73,10 @@ type Character struct {
 	DeletedAt           *time.Time
 }
 
+func (Character) TableName() string {
+	return "project_characters"
+}
+
 func (c Character) getInternalId() CharacterInternalId {
 	return c.CharacterInternalId
 }
@@ -86,6 +98,10 @@ type Location struct {
 	Version            int
 	IsLastVersion      bool
 	DeletedAt          *time.Time
+}
+
+func (Location) TableName() string {
+	return "project_locations"
 }
 
 func (l Location) getInternalId() LocationInternalId {
@@ -137,6 +153,7 @@ type Project struct {
 	Metadata    *Metadata   `gorm:"foreignKey:project_id"`
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	BookId      *BookId `gorm:"type:char(36);index"`
 }
 
 func (p *Project) TableName() string {
@@ -160,7 +177,7 @@ func NewProject(projectId ProjectId, title string, description string, genres []
 	}, nil
 }
 
-func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content string) error {
+func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content, contentHtml string) error {
 	for _, c := range p.Chapters {
 		if c.ChapterInternalId.Equal(newInternalId) {
 			return gerr.NewBusinessLogicErr("can not create chapter with this id", gerr.ProjectChapterAlreadyExists)
@@ -172,6 +189,7 @@ func (p *Project) AddChapter(newInternalId ChapterInternalId, title, content str
 		ChapterInternalId: newInternalId,
 		Title:             title,
 		Content:           content,
+		ContentHtml:       contentHtml,
 		Version:           1,
 		IsLastVersion:     true,
 		Order:             p.findLastOrderChapter() + 1,
@@ -225,14 +243,14 @@ func (p *Project) AddLocation(newInternalId LocationInternalId, name string, des
 	return nil
 }
 
-func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent string) error {
+func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, newContent, newContentHtml string) error {
 	lastVersion, ok := findLastVersion(p.Chapters, chapterInternalId)
 
 	if !ok {
 		return gerr.NewBusinessLogicErr("chapter not found", gerr.ProjectChapterNotFound)
 	}
 
-	if lastVersion.Title == newTitle && lastVersion.Content == newContent {
+	if lastVersion.Title == newTitle && lastVersion.Content == newContent && lastVersion.ContentHtml == newContentHtml {
 		return nil
 	}
 
@@ -246,8 +264,10 @@ func (p *Project) UpdateChapter(chapterInternalId ChapterInternalId, newTitle, n
 		Id:                ChapterId(uuid.New()),
 		ChapterInternalId: chapterInternalId,
 		ProjectId:         lastVersion.ProjectId,
+		BookChapterId:     lastVersion.BookChapterId,
 		Title:             newTitle,
 		Content:           newContent,
+		ContentHtml:       newContentHtml,
 		Version:           lastVersion.Version + 1,
 		Order:             lastVersion.Order,
 		IsLastVersion:     true,

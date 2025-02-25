@@ -32,4 +32,7 @@ func projectRoutes(e *gin.Engine) {
 	project.DELETE("/:id/locations/:location_internal_id", projectDeleteLocationAction.Invoke)
 
 	project.POST("/:id/metadata", projectUpdateMetadataAction.Invoke)
+
+	project.POST("/:id/publish", projectPublishAction.Invoke)
+	project.POST("/:id/republish", projectRepublishAction.Invoke)
 }

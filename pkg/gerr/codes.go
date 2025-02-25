@@ -49,6 +49,8 @@ const (
 	ProjectLocationAlreadyExists
 	ProjectChapterNotFound
 	ProjectCharacterNotFound
+	ProjectAlreadyPublished
+	ProjectIsNotPublished
 )
 
 const (

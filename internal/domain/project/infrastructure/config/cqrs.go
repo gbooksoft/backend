@@ -1,8 +1,10 @@
 package config
 
 import (
+	bookInfrastructure "github.com/gbooksoft/backend/internal/domain/book/infrastructure"
 	"github.com/gbooksoft/backend/internal/domain/project/application"
 	"github.com/gbooksoft/backend/internal/domain/project/infrastructure"
+	"github.com/gbooksoft/backend/internal/domain/project/infrastructure/adapter"
 	"github.com/gbooksoft/backend/pkg/database"
 	"github.com/mehdihadeli/go-mediatr"
 )
@@ -10,8 +12,12 @@ import (
 func RegisterMediatr() {
 	gormDb := database.GetGormDB()
 
-	projectReadmodel := infrastructure.NewMySqlProjectReadModel(gormDb)
+	projectReadModel := infrastructure.NewMySqlProjectReadModel(gormDb)
 	projectRepository := infrastructure.NewMySqlProjectRepository()
+	bookRepository := bookInfrastructure.NewMySqlBookRepository()
+	bookAdapter := adapter.NewBookAdapter(bookRepository)
+
+	projectService := infrastructure.NewProjectService(projectRepository, bookAdapter)
 
 	createProjectHandler := application.NewCreateProjectHandler(projectRepository)
 	updateProjectHandler := application.NewUpdateProjectHandler(projectRepository)
@@ -31,8 +37,11 @@ func RegisterMediatr() {
 
 	updateMetadataHandler := application.NewUpdateMetadataHandler(projectRepository)
 
-	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadmodel)
-	getProjectsQuery := application.NewGetProjectHandler(projectReadmodel)
+	getAllProjectsQuery := application.NewGetAllProjectsHandler(projectReadModel)
+	getProjectsQuery := application.NewGetProjectHandler(projectReadModel)
+
+	publishProjectHandler := application.NewPublishProjectHandler(projectService)
+	republishProjectHandler := application.NewRepublishProjectHandler(projectService)
 
 	hE(mediatr.RegisterRequestHandler[*application.CreateProjectCommand, *application.CreateProjectHandlerResponse](createProjectHandler))
 	hE(mediatr.RegisterRequestHandler[*application.UpdateProjectCommand, *application.UpdateProjectHandlerResponse](updateProjectHandler))
@@ -54,6 +63,9 @@ func RegisterMediatr() {
 
 	hE(mediatr.RegisterRequestHandler[*application.GetAllProjectsQuery, *application.GetAllProjectsHandlerResponse](getAllProjectsQuery))
 	hE(mediatr.RegisterRequestHandler[*application.GetProjectQuery, *application.GetProjectHandlerResponse](getProjectsQuery))
+
+	hE(mediatr.RegisterRequestHandler[*application.PublishProjectCommand, *application.PublishProjectHandlerResponse](publishProjectHandler))
+	hE(mediatr.RegisterRequestHandler[*application.RepublishProjectCommand, *application.RepublishProjectHandlerResponse](republishProjectHandler))
 }
 
 func hE(err error) {

@@ -17,8 +17,9 @@ func NewProjectUpdateChapter() *ProjectUpdateChapter {
 }
 
 type updateProjectChapterRequest struct {
-	Title   string `json:"title" validate:"required,max=255"`
-	Content string `json:"content" validate:"required"`
+	Title       string `json:"title" validate:"required,max=255"`
+	Content     string `json:"content" validate:"required"`
+	ContentHtml string `json:"content_html" validate:"required"`
 }
 
 func (a *ProjectUpdateChapter) Invoke(ctx *gin.Context) {
@@ -50,6 +51,7 @@ func (a *ProjectUpdateChapter) Invoke(ctx *gin.Context) {
 		AuthorId:          claims.Subject,
 		ChapterInternalId: chapterInternalId,
 		Content:           req.Content,
+		ContentHtml:       req.ContentHtml,
 		Title:             req.Title,
 	}
 

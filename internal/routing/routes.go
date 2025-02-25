@@ -14,4 +14,5 @@ func Add(e *gin.Engine) {
 	accountRoutes(e)
 	projectRoutes(e)
 	genreRoutes(e)
+	bookRoutes(e)
 }

@@ -95,9 +95,9 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
         JOIN project_metadata pm ON p.id = pm.project_id
 		JOIN project_genres pg ON pg.project_id = p.id
 		JOIN genres g ON g.id = pg.genre_id
-        LEFT JOIN chapters c ON c.project_id = p.id AND c.is_last_version = 1 AND c.deleted_at IS NULL
-        LEFT JOIN locations l ON l.project_id = p.id AND l.is_last_version = 1 AND l.deleted_at IS NULL
-        LEFT JOIN characters ch ON ch.project_id = p.id AND ch.is_last_version = 1 AND ch.deleted_at IS NULL
+        LEFT JOIN project_chapters c ON c.project_id = p.id AND c.is_last_version = 1 AND c.deleted_at IS NULL
+        LEFT JOIN project_locations l ON l.project_id = p.id AND l.is_last_version = 1 AND l.deleted_at IS NULL
+        LEFT JOIN project_characters ch ON ch.project_id = p.id AND ch.is_last_version = 1 AND ch.deleted_at IS NULL
         WHERE p.id = ? AND p.author_id = ?
         ORDER BY c.order
     `, projectId, authorId).Rows()

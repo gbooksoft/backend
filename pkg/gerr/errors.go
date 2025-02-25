@@ -80,3 +80,7 @@ type ValidationError struct {
 func (e *ValidationError) InvalidFields() map[string]string {
 	return e.invalidFields
 }
+
+func NewNotFoundErr(msg string) AppError {
+	return newAppError(msg, msg, 404, NotFound)
+}

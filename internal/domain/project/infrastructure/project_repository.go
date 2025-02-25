@@ -125,7 +125,7 @@ func (r *MySqlProjectRepository) ChapterInternalIdExists(ctx context.Context, ch
 
 	var exists bool
 	err := db.
-		Table("chapters").
+		Table("project_chapters").
 		Select("COUNT(*) > 0").
 		Where("chapter_id = ?", chapterInternalId).
 		Find(&exists).Error
@@ -142,7 +142,7 @@ func (r *MySqlProjectRepository) CharacterInternalIdExists(ctx context.Context, 
 
 	var exists bool
 	err := db.
-		Table("characters").
+		Table("project_characters").
 		Select("COUNT(*) > 0").
 		Where("character_id = ?", characterInternalId).
 		Find(&exists).Error
@@ -159,7 +159,7 @@ func (r *MySqlProjectRepository) LocationInternalIdExists(ctx context.Context, l
 
 	var exists bool
 	err := db.
-		Table("locations").
+		Table("project_locations").
 		Select("COUNT(*) > 0").
 		Where("location_id = ?", locationInternalId).
 		Find(&exists).Error
