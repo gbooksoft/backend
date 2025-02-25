@@ -5,6 +5,7 @@ type Chapter struct {
 	Name    string
 	Content string
 	Order   int
+	Version int
 }
 type Genre struct {
 	Id   string

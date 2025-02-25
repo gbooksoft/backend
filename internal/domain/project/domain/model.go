@@ -531,7 +531,7 @@ func (p *Project) findLastOrderChapter() int {
 
 func (p *Project) HashChapters() bool {
 	for _, c := range p.Chapters {
-		if c.IsLastVersion && c.DeletedAt != nil {
+		if c.IsLastVersion && c.DeletedAt == nil {
 			return true
 		}
 	}

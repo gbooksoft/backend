@@ -87,7 +87,7 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
         SELECT 
             p.id AS project_id, p.title, p.description,
             pm.author, pm.keywords, pm.language, pm.isbn,
-            c.chapter_id AS chapter_id, c.title AS chapter_title, c.content AS chapter_content, c.order AS chapter_order,
+            c.chapter_id AS chapter_id, c.title AS chapter_title, c.content AS chapter_content, c.order AS chapter_order, c.version AS chapter_version,
             l.location_id AS location_id, l.name AS location_name, l.description AS location_description,
             ch.character_id AS character_id, ch.name AS character_name, ch.description AS character_description, ch.attributes AS character_attributes,
             g.id AS genre_id, g.name AS genre_name
@@ -120,12 +120,13 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 		var projectId, title, description, author, keywords, language, isbn sql.NullString
 		var chapterId, chapterTitle, chapterContent sql.NullString
 		var chapterOrder sql.NullInt64
+		var chapterVersion int
 		var locationId, locationName, locationDescription sql.NullString
 		var characterId, characterName, characterDescription, characterAttributes sql.NullString
 		var genreId, genreName string
 
 		err := rows.Scan(&projectId, &title, &description, &author, &keywords, &language, &isbn,
-			&chapterId, &chapterTitle, &chapterContent, &chapterOrder,
+			&chapterId, &chapterTitle, &chapterContent, &chapterOrder, &chapterVersion,
 			&locationId, &locationName, &locationDescription,
 			&characterId, &characterName, &characterDescription, &characterAttributes,
 			&genreId, &genreName)
@@ -161,6 +162,7 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 					Name:    chapterTitle.String,
 					Content: chapterContent.String,
 					Order:   int(chapterOrder.Int64),
+					Version: chapterVersion,
 				})
 				seenChapters[chapterId.String] = struct{}{}
 			}

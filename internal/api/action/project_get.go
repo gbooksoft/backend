@@ -19,6 +19,7 @@ type chapterResponse struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
 	Order   int    `json:"order"`
+	Version int    `json:"version"`
 }
 
 type characterResponse struct {
@@ -105,6 +106,7 @@ func (a *ProjectGet) Invoke(ctx *gin.Context) {
 			Name:    chapter.Name,
 			Content: chapter.Content,
 			Order:   chapter.Order,
+			Version: chapter.Version,
 		})
 	}
 
