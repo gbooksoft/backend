@@ -16,6 +16,26 @@ func NewAccountGetProfile() *AccountGetProfile {
 	return new(AccountGetProfile)
 }
 
+type accountProfileSectionResponse struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Username  string `json:"username"`
+	AvatarURL string `json:"avatar_url"`
+	CoverURL  string `json:"cover_url"`
+}
+type accountProfileSecurityResponse struct {
+	Email string `json:"email"`
+}
+type accountProfileSocialsResponse struct {
+}
+
+type accountProfileResponse struct {
+	Id       string                         `json:"id"`
+	Profile  accountProfileSectionResponse  `json:"profile"`
+	Security accountProfileSecurityResponse `json:"security"`
+	Socials  accountProfileSocialsResponse  `json:"socials,omitempty"`
+}
+
 func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 	claims, err := getJwtClaims(ctx)
 	if err != nil {
@@ -41,12 +61,18 @@ func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 		url = ""
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"user_id":    claims.Subject,
-		"email":      resp.Email,
-		"username":   resp.Username,
-		"first_name": resp.FirstName,
-		"last_name":  resp.LastName,
-		"avatar_url": url,
+	ctx.JSON(http.StatusOK, accountProfileResponse{
+		Id: claims.Subject,
+		Profile: accountProfileSectionResponse{
+			FirstName: resp.FirstName,
+			LastName:  resp.LastName,
+			Username:  resp.Username,
+			AvatarURL: url,
+			CoverURL:  "",
+		},
+		Security: accountProfileSecurityResponse{
+			Email: resp.Email,
+		},
+		Socials: accountProfileSocialsResponse{},
 	})
 }
