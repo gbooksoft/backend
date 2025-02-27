@@ -44,6 +44,8 @@ var projectGetPublicationAction *action.ProjectGetPublication
 
 var genreGetAllAction *action.GenreGetAll
 
+var authorGetByUsernameAction *action.AuthorGetByUsername
+
 func initializeDependencies() {
 	// account
 	accountGetProfileAction = action.NewAccountGetProfile()
@@ -88,4 +90,7 @@ func initializeDependencies() {
 
 	// genre
 	genreGetAllAction = action.NewGenreGetAll()
+
+	// authors
+	authorGetByUsernameAction = action.NewAuthorGetByUsername()
 }

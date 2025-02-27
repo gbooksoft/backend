@@ -15,4 +15,5 @@ func Add(e *gin.Engine) {
 	projectRoutes(e)
 	genreRoutes(e)
 	bookRoutes(e)
+	authorRoutes(e)
 }

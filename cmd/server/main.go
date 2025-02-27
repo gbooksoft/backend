@@ -6,6 +6,7 @@ import (
 	"errors"
 	accountConfig "github.com/gbooksoft/backend/internal/domain/account/infrastructure/config"
 	changeEmailRequest "github.com/gbooksoft/backend/internal/domain/account/infrastructure/worker"
+	authorConfig "github.com/gbooksoft/backend/internal/domain/author/infrastructure/config"
 	authConfig "github.com/gbooksoft/backend/internal/domain/authorization/infrastructure/config"
 	bookConfig "github.com/gbooksoft/backend/internal/domain/book/infrastructure/config"
 	"github.com/gbooksoft/backend/internal/domain/email/queue"
@@ -139,4 +140,5 @@ func configureModules() {
 	accountConfig.RegisterMediatr()
 	genreConfig.RegisterMediatr()
 	bookConfig.RegisterMediatr()
+	authorConfig.RegisterMediatr()
 }
