@@ -13,11 +13,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"net/url"
 	"os"
+	"regexp"
 )
 
 type SignUpCommand struct {
 	Email     string
 	Password  string
+	Username  string
 	FirstName string
 	LastName  string
 }
@@ -40,6 +42,7 @@ func NewSignUpHandler(db *sql.DB, emailFacade *email.Facade) *SignUpHandler {
 }
 
 func (h *SignUpHandler) Handle(ctx context.Context, cmd *SignUpCommand) (*SignUpHandlerResponse, error) {
+	username := cmd.Username
 	userEmail := cmd.Email
 	uPassword := cmd.Password
 	firstName := cmd.FirstName
@@ -50,6 +53,20 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd *SignUpCommand) (*SignUp
 
 	if err == nil {
 		return nil, gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUserAlreadyExists)
+	}
+
+	err = h.db.QueryRow("SELECT 1 FROM users WHERE username = ?", username).Scan(&exists)
+
+	if err == nil {
+		return nil, gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUsernameAlreadyTaken)
+	} else {
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		}
+	}
+
+	if !IsValidUsername(username) {
+		return nil, gerr.NewBusinessLogicErr("can not register user", gerr.AuthorizationUsernameInvalid)
 	}
 
 	if !errors.Is(err, sql.ErrNoRows) {
@@ -88,7 +105,7 @@ func (h *SignUpHandler) Handle(ctx context.Context, cmd *SignUpCommand) (*SignUp
 	defer tx.Rollback()
 
 	userId := uuid.New().String()
-	_, err = tx.Exec("INSERT INTO users (id, email, password, first_name, last_name, confirmation_hash ) VALUES (?, ?, ?, ?, ?, ?)", userId, userEmail, passwordHash, firstName, lastName, confirmationHash)
+	_, err = tx.Exec("INSERT INTO users (id, username, email, password, first_name, last_name, confirmation_hash ) VALUES (?, ?, ?, ?, ?, ?, ?)", userId, username, userEmail, passwordHash, firstName, lastName, confirmationHash)
 
 	if err != nil {
 		log.Error().Err(err).Msgf("can not create user while register %s", userEmail)
@@ -137,4 +154,12 @@ func (s *SignUpHandler) generateConfirmationLink(userId, hash string) (string, e
 	u.RawQuery = params.Encode()
 
 	return u.String(), nil
+}
+
+func IsValidUsername(username string) bool {
+	if len(username) < 3 || len(username) > 30 {
+		return false
+	}
+	match, _ := regexp.MatchString(`^[a-zA-Z0-9_]+$`, username)
+	return match
 }

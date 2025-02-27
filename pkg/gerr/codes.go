@@ -19,6 +19,8 @@ const (
 	AuthorizationRefreshTokenNotFound
 	AuthorizationConfirmationNoFound
 	AuthorizationResetPasswordRequestNotFound
+	AuthorizationUsernameAlreadyTaken
+	AuthorizationUsernameInvalid
 )
 
 const (

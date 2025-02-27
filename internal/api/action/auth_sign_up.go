@@ -18,6 +18,7 @@ func NewAuthSignUp() *AuthSignUp {
 
 type signUpRequest struct {
 	Email     string `json:"email" binding:"required" validate:"email"`
+	Username  string `json:"username" binding:"required"`
 	FirstName string `json:"first_name" binding:"required"`
 	LastName  string `json:"last_name" binding:"required"`
 	Password  string `json:"password" binding:"required"`
@@ -42,6 +43,7 @@ func (a *AuthSignUp) Invoke(ctx *gin.Context) {
 	cmd := &application.SignUpCommand{
 		Email:     req.Email,
 		Password:  req.Password,
+		Username:  req.Username,
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 	}
