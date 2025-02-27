@@ -21,6 +21,7 @@ func NewAccountUpdateSettings() *AccountUpdateSettings {
 
 type updateSettingsRequest struct {
 	Email     string `json:"email" validate:"omitempty,email" form:"email"`
+	Username  string `json:"username" validate:"omitempty" form:"username"`
 	FirstName string `json:"first_name" validate:"omitempty" form:"first_name"`
 	LastName  string `json:"last_name" validate:"omitempty" form:"last_name"`
 }
@@ -59,6 +60,10 @@ func (a *AccountUpdateSettings) Invoke(ctx *gin.Context) {
 
 	if req.Email != "" {
 		settings.Email = &req.Email
+	}
+
+	if req.Username != "" {
+		settings.Username = &req.Username
 	}
 
 	if req.FirstName != "" {

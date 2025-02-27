@@ -16,6 +16,7 @@ import (
 
 type UpdateFields struct {
 	Email      *string
+	Username   *string
 	FirstName  *string
 	LastName   *string
 	AvatarPath *string
@@ -28,6 +29,7 @@ type UpdateSettingsCommand struct {
 
 type updatedFields struct {
 	Email      bool
+	Username   bool
 	FirstName  bool
 	LastName   bool
 	AvatarPath bool
@@ -57,6 +59,25 @@ func (h *UpdateSettingsHandler) Handle(ctx context.Context, cmd *UpdateSettingsC
 	data := cmd.UpdateFields
 	var result updatedFields
 
+	tx, err := h.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	if data.Username != nil {
+		err := h.checkUsernameAvailability(tx, userId, *data.Username)
+
+		if err != nil {
+			return nil, err
+		}
+
+		setClauses = append(setClauses, fmt.Sprintf("username = ?"))
+		args = append(args, *data.Username)
+		argIndex++
+		result.Username = true
+	}
+
 	if data.FirstName != nil {
 		setClauses = append(setClauses, fmt.Sprintf("first_name = ?"))
 		args = append(args, *data.FirstName)
@@ -75,12 +96,6 @@ func (h *UpdateSettingsHandler) Handle(ctx context.Context, cmd *UpdateSettingsC
 		argIndex++
 		result.AvatarPath = true
 	}
-
-	tx, err := h.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
 
 	// обновляем обычные поля
 	if len(setClauses) > 0 {
@@ -206,4 +221,18 @@ func (h *UpdateSettingsHandler) generateChangeEmailConfirmationLink(hash string)
 	u.RawQuery = params.Encode()
 
 	return u.String(), nil
+}
+
+func (h *UpdateSettingsHandler) checkUsernameAvailability(tx *sql.Tx, userId string, username string) error {
+	var exists sql.NullBool
+	query := `
+SELECT 1 FROM users WHERE username = ? AND id != ?
+`
+	err := tx.QueryRow(query, username, userId).Scan(&exists)
+
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+
+	return gerr.NewBusinessLogicErr("username already taken", gerr.AccountUsernameAlreadyTaken)
 }

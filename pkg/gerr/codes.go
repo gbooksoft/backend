@@ -33,6 +33,7 @@ const (
 	AccountEmailChangeRequestNotFound
 	AccountEmailChangeRequestExpired
 	AccountPasswordIsIncorrect
+	AccountUsernameAlreadyTaken
 )
 
 const (

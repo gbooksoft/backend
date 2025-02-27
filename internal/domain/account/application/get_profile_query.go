@@ -13,6 +13,7 @@ type GetProfileQuery struct {
 
 type GetProfileHandlerResponse struct {
 	Email      string
+	Username   string
 	FirstName  string
 	LastName   string
 	AvatarPath string
@@ -29,11 +30,12 @@ func NewGetProfileHandler(db *sql.DB) *GetProfileHandler {
 }
 
 func (h *GetProfileHandler) Handle(ctx context.Context, query *GetProfileQuery) (*GetProfileHandlerResponse, error) {
+	var uUsername sql.NullString
 	var uEmail sql.NullString
 	var uFirstName sql.NullString
 	var uLastName sql.NullString
 	var uAvatarPath sql.NullString
-	err := h.db.QueryRow("SELECT email, first_name, last_name, avatar_path FROM users WHERE id = ?", query.UserId).Scan(&uEmail, &uFirstName, &uLastName, &uAvatarPath)
+	err := h.db.QueryRow("SELECT email, username, first_name, last_name, avatar_path FROM users WHERE id = ?", query.UserId).Scan(&uEmail, &uUsername, &uFirstName, &uLastName, &uAvatarPath)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -44,6 +46,7 @@ func (h *GetProfileHandler) Handle(ctx context.Context, query *GetProfileQuery) 
 
 	return &GetProfileHandlerResponse{
 		Email:      uEmail.String,
+		Username:   uUsername.String,
 		FirstName:  uFirstName.String,
 		LastName:   uLastName.String,
 		AvatarPath: uAvatarPath.String,

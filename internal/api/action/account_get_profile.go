@@ -44,6 +44,7 @@ func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"user_id":    claims.Subject,
 		"email":      resp.Email,
+		"username":   resp.Username,
 		"first_name": resp.FirstName,
 		"last_name":  resp.LastName,
 		"avatar_url": url,
