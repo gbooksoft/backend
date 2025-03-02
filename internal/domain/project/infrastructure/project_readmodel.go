@@ -120,7 +120,7 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 		var projectId, title, description, author, keywords, language, isbn sql.NullString
 		var chapterId, chapterTitle, chapterContent sql.NullString
 		var chapterOrder sql.NullInt64
-		var chapterVersion int
+		var chapterVersion sql.NullInt64
 		var locationId, locationName, locationDescription sql.NullString
 		var characterId, characterName, characterDescription, characterAttributes sql.NullString
 		var genreId, genreName string
@@ -162,7 +162,7 @@ func (r *MySqlProjectReadModel) GetById(authorId string, projectId string) (read
 					Name:    chapterTitle.String,
 					Content: chapterContent.String,
 					Order:   int(chapterOrder.Int64),
-					Version: chapterVersion,
+					Version: int(chapterVersion.Int64),
 				})
 				seenChapters[chapterId.String] = struct{}{}
 			}
