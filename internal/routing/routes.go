@@ -6,6 +6,9 @@ import (
 )
 
 func Add(e *gin.Engine) {
+	e.GET("/logo_36_transparent", func(c *gin.Context) {
+		c.File("static/images/logo_36_transparent.png")
+	})
 	e.Use(middleware.RateLimiterMiddleware())
 
 	initializeDependencies()

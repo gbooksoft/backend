@@ -2,6 +2,17 @@
     <p>Здравствуйте, <strong>{{ .Data.FirstName }} {{ .Data.LastName }}</strong>,</p>
     <p>Спасибо за регистрацию в нашем сервисе. Мы рады приветствовать вас! Чтобы начать, просто нажмите на кнопку ниже, чтобы подтвердить ваш адрес электронной почты и настроить учетную запись.</p>
     <p>Мы стремимся предоставить вам наилучший опыт и всегда готовы помочь, если у вас возникнут вопросы.</p>
-    <a href="{{ .Data.ConfirmationLink }}" class="button">Подтвердить электронную почту</a>
+<div style="text-align: center; margin: 32px 0;">
+    <a href="{{ .Data.ConfirmationLink }}"
+       style="background-color: #4e6cf4;
+                    color: #ffffff;
+                    text-decoration: none;
+                    font-weight: 600;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    display: inline-block;
+                  ">Подтвердить электронную почту</a>
+</div>
     <p>Если вы не регистрировались на нашем сайте, просто проигнорируйте это письмо.</p>
 {{end}}

@@ -1,6 +1,17 @@
 {{define "content"}}
     <p>Здравствуйте, <strong>{{ .Data.FirstName }} {{ .Data.LastName }}</strong>!</p>
     <p>Вы запросили смену адреса электронной почты для вашей учетной записи. Чтобы подтвердить этот запрос и завершить смену почты, пожалуйста, нажмите на кнопку ниже:</p>
-    <a href="{{ .Data.ConfirmationLink }}" class="button">Подтвердить новый адрес</a>
+<div style="text-align: center; margin: 32px 0;">
+    <a href="{{ .Data.ConfirmationLink }}"
+       style="background-color: #4e6cf4;
+                    color: #ffffff;
+                    text-decoration: none;
+                    font-weight: 600;
+                    padding: 12px 24px;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    display: inline-block;
+                  ">Подтвердить новый адрес</a>
+</div>
     <p>Если вы не инициировали этот запрос, пожалуйста, проигнорируйте это письмо. Ваш текущий адрес останется без изменений.</p>
 {{end}}

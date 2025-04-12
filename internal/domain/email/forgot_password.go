@@ -6,7 +6,7 @@ import (
 )
 
 const TemplateForgotPassword queue.TemplateFile = "templates/notification/email/forgot_password.html"
-const ForgotPassword = "GBook - сброс пароля"
+const ForgotPassword = "сброс пароля"
 
 type ForgotPasswordData struct {
 	ResetPasswordLink string

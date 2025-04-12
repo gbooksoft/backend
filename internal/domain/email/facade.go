@@ -6,9 +6,10 @@ import (
 )
 
 type baseData struct {
-	Title        string
-	AppName      string
-	WebAppDomain string
+	Title             string
+	AppName           string
+	WebAppDomain      string
+	Logo36Transparent string
 }
 
 type Facade struct {
@@ -32,8 +33,9 @@ func (f *Facade) mergeWithDefault(title string, data any) any {
 
 func (f *Facade) getBaseData(pageTitle string) baseData {
 	return baseData{
-		Title:        pageTitle,
-		AppName:      os.Getenv("APP_NANE"),
-		WebAppDomain: os.Getenv("WEB_FRONT_FULL_DOMAIN"),
+		Title:             pageTitle,
+		AppName:           os.Getenv("APP_NANE"),
+		WebAppDomain:      os.Getenv("WEB_FRONT_FULL_DOMAIN"),
+		Logo36Transparent: os.Getenv("LOGO_36_TRANSPORT_URL"),
 	}
 }
