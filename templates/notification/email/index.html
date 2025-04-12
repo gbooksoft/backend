@@ -1,89 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ .Base.AppName }} | {{ .Base.Title }}</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f4f7fa;
-            margin: 0;
-            padding: 0;
-            color: #2c3e50;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 40px auto;
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            border: 1px solid #e5e5e5;
-        }
-        .header {
-            padding: 20px;
-            text-align: center;
-            color: #ffffff;
-            background-color: #405189;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
-        }
-        .logo-container {
-            margin-bottom: 15px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        .content {
-            padding: 25px;
-            font-size: 15px;
-            line-height: 1.6;
-        }
-        .content p {
-            margin: 0 0 15px;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 25px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            background-color: #405189;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: 600;
-            box-shadow: 0 2px 5px rgba(64, 81, 137, 0.4);
-        }
-        .button:hover {
-            background-color: #364a7a;
-        }
-        .footer {
-            padding: 20px;
-            text-align: center;
-            font-size: 14px;
-            color: #95a5a6;
-        }
-        .footer a {
-            color: #405189;
-            text-decoration: none;
-        }
-    </style>
 </head>
-<body>
-<div class="email-container">
-    <div class="header">
-        <h1>{{ .Base.Title }}</h1>
-    </div>
-    <div class="content">
-    {{block "content" .}}<p>Содержимое по умолчанию</p>{{end}}
-    </div>
-    <div class="footer">
-        <p>Если у вас возникли вопросы, не стесняйтесь <a href="#">связаться с нами</a> в любое время.</p>
-        <p>&copy; 2024 {{ .Base.AppName }}. Все права защищены.</p>
-    </div>
-</div>
+<body style="margin: 0; padding: 0; background-color: #f5f6fa; font-family: 'Segoe UI', sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0"
+       style="padding: 40px 0;background-image: url('https://www.transparenttextures.com/patterns/groovepaper.png');background-color: #f8f9fb;background-repeat: repeat;padding: 40px 0;">
+    <tbody>
+    <tr>
+        <td align="center">
+            <table width="100%"
+                   style="max-width: 480px; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.05);">
+
+                <!-- Шапка -->
+                <tbody>
+                <tr>
+                    <td style="
+                background: linear-gradient(90deg, #6e00ff, #338fff);
+                padding: 24px;
+                text-align: center;
+                color: white;
+              ">
+                        <img src="{{ .Base.Logo36Transparent }}" alt="Логотип" width="28" height="28"
+                             style="vertical-align: middle; margin-right: 8px;">
+                        <span style="font-size: 18px; font-weight: 600;">GBook — {{ .Base.Title }}</span>
+                    </td>
+                </tr>
+
+                <!-- Тело письма -->
+                <tr>
+                    <td style="padding: 32px;">
+                        {{block "content" .}}<p>Содержимое по умолчанию</p>{{end}}
+                    </td>
+                </tr>
+
+                <!-- Футер -->
+                <tr>
+                    <td style="padding: 24px; text-align: center; font-size: 12px; color: #999;">
+                        © 2025 {{ .Base.AppName }}. Все права защищены. &nbsp;
+                        <a href="#" style="color: #3366ff; text-decoration: none;">Связаться с нами</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+    </tbody>
+</table>
 </body>
 </html>
