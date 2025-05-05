@@ -22,5 +22,6 @@ func accountRoutes(e *gin.Engine) {
 	account.POST("/settings", accountUpdateSettingsAction.Invoke)
 	account.POST("/settings/password", accountUpdatePasswordAction.Invoke)
 	account.POST("/settings/cover", accountUpdateCover.Invoke)
+	account.POST("/settings/avatar", accountUpdateAvatar.Invoke)
 	accountWithoutAuth.POST("/confirm-email-change", accountConfirmEmailChangeAction.Invoke)
 }

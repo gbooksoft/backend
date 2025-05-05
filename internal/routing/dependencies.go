@@ -9,6 +9,7 @@ var accountUpdatePasswordAction *action.AccountUpdatePassword
 var accountUpdateSettingsAction *action.AccountUpdateSettings
 var accountConfirmEmailChangeAction *action.AccountConfirmEmailChange
 var accountUpdateCover *action.AccountUpdateCover
+var accountUpdateAvatar *action.AccountUpdateAvatar
 
 var authSignInAction *action.AuthSignIn
 var authSignUpAction *action.AuthSignUp
@@ -54,6 +55,7 @@ func initializeDependencies() {
 	accountUpdateSettingsAction = action.NewAccountUpdateSettings()
 	accountConfirmEmailChangeAction = action.NewAccountConfirmEmailChange()
 	accountUpdateCover = action.NewAccountUpdateCover()
+	accountUpdateAvatar = action.NewAccountUpdateAvatar()
 
 	// auth
 	authSignInAction = action.NewAuthSignIn()

@@ -12,9 +12,11 @@ import (
 type UploadAvatarCommand struct {
 	File       multipart.File
 	S3FilePath string
+	UserId     string
 }
 
 type UploadAvatarHandlerResponse struct {
+	AvatarUrl string
 }
 
 type UploadAvatarHandler struct {
@@ -38,5 +40,28 @@ func (h *UploadAvatarHandler) Handle(ctx context.Context, cmd *UploadAvatarComma
 		return nil, err
 	}
 
-	return nil, nil
+	tx, err := h.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec("UPDATE users SET avatar_path = ? WHERE id = ?", cmd.S3FilePath, cmd.UserId)
+
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to update user's avatar")
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	avatarUrl, err := filesystem.GetPresignedURL(cmd.S3FilePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &UploadAvatarHandlerResponse{AvatarUrl: avatarUrl}, nil
 }

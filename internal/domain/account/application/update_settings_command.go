@@ -15,11 +15,10 @@ import (
 )
 
 type UpdateFields struct {
-	Email      *string
-	Username   *string
-	FirstName  *string
-	LastName   *string
-	AvatarPath *string
+	Email     *string
+	Username  *string
+	FirstName *string
+	LastName  *string
 }
 
 type UpdateSettingsCommand struct {
@@ -28,11 +27,10 @@ type UpdateSettingsCommand struct {
 }
 
 type updatedFields struct {
-	Email      bool
-	Username   bool
-	FirstName  bool
-	LastName   bool
-	AvatarPath bool
+	Email     bool
+	Username  bool
+	FirstName bool
+	LastName  bool
 }
 
 type UpdateSettingsHandlerResponse struct {
@@ -89,12 +87,6 @@ func (h *UpdateSettingsHandler) Handle(ctx context.Context, cmd *UpdateSettingsC
 		args = append(args, *data.LastName)
 		argIndex++
 		result.LastName = true
-	}
-	if data.AvatarPath != nil {
-		setClauses = append(setClauses, fmt.Sprintf("avatar_path = ?"))
-		args = append(args, *data.AvatarPath)
-		argIndex++
-		result.AvatarPath = true
 	}
 
 	// обновляем обычные поля
