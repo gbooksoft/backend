@@ -61,6 +61,13 @@ func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 		url = ""
 	}
 
+	coverUrl, err := filesystem.GetPresignedURL(resp.CoverPath)
+
+	if err != nil {
+		// todo: default avatar?
+		coverUrl = ""
+	}
+
 	ctx.JSON(http.StatusOK, accountProfileResponse{
 		Id: claims.Subject,
 		Profile: accountProfileSectionResponse{
@@ -68,7 +75,7 @@ func (a *AccountGetProfile) Invoke(ctx *gin.Context) {
 			LastName:  resp.LastName,
 			Username:  resp.Username,
 			AvatarURL: url,
-			CoverURL:  "",
+			CoverURL:  coverUrl,
 		},
 		Security: accountProfileSecurityResponse{
 			Email: resp.Email,
